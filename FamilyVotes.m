@@ -13,10 +13,10 @@ function G = FamilyVotes(G,w)
     G.Nodes.FArea=zeros(length(G.Nodes.Area),1);
     G.Nodes.FgB=cell(length(G.Nodes.Area),1);
     
-    G.Edges.FRArea=zeros(length(G.Edges.SF),2);
-    G.Edges.FRgB=zeros(length(G.Edges.SF),2);
-    G.Edges.FRSF=zeros(length(G.Edges.SF),2);
-    G.Edges.Vote=zeros(length(G.Edges.SF),2);
+    G.Edges.FRArea=zeros(length(G.Edges.EffSF),2);
+    G.Edges.FRgB=zeros(length(G.Edges.EffSF),2);
+    G.Edges.FREffSF=zeros(length(G.Edges.EffSF),2);
+    G.Edges.Vote=zeros(length(G.Edges.EffSF),2);
     
     mineral=G.Nodes.Properties.UserData.mineral; %For defining phase boundary in the case there is unindexed data
     
@@ -31,7 +31,7 @@ function G = FamilyVotes(G,w)
         Area=G.Nodes.Area(ngroupId); %Fragment Area
         pairsGb=G.Edges.Gb(egroupId); %Twin/parent pairs grain boundary
         pairs=G.Edges.pairs(egroupId,1:2); %Twin/parent pairs
-        SF=G.Edges.SF(egroupId,1:2); %Twin/parent Schmid factor
+        EffSF=G.Edges.EffSF(egroupId,1:2); %Twin/parent Schmid factor
 
         %Family Areas to be stored in nodes 
         FArea= FamilyArea(Area,FID);
@@ -51,11 +51,11 @@ function G = FamilyVotes(G,w)
         G.Edges.FRgB(egroupId,:) = FRgB;
         
         %Schmid factor difference 
-        FRSF = SchmidFactorDifference(SF,pairs);  
-        G.Edges.FRSF(egroupId,:) = FRSF;
+        FREffSF = SchmidFactorDifference(EffSF,pairs);  
+        G.Edges.FREffSF(egroupId,:) = FREffSF;
         
         %Calculate Vote
-        G.Edges.Vote(egroupId,:) = CalcVote(FRSF,FRArea,FRgB,w);
+        G.Edges.Vote(egroupId,:) = CalcVote(FREffSF,FRArea,FRgB,w);
     end
 
     function FArea = FamilyArea(Area,FID)
@@ -109,16 +109,16 @@ function G = FamilyVotes(G,w)
     %     hold off
     end
 
-    function FRSF= SchmidFactorDifference(SF,pairs)
+    function FREffSF= SchmidFactorDifference(EffSF,pairs)
         for j=1:size(pairs,1)
-            FRSF(j,2)=diff(SF(j,1:2)); %diff defined as second-first
-            FRSF(j,1)=-FRSF(j,2);
+            FREffSF(j,2)=diff(EffSF(j,1:2)); %diff defined as second-first
+            FREffSF(j,1)=-FREffSF(j,2);
         end     
     end
 
-    function Vote = CalcVote(FRSF,RFArea,FRgB,w)
-        Vote(:,1) = w(1)*FRSF(:,1)+w(2)*RFArea(:,1)+w(3)*FRgB(:,1);
-        Vote(:,2) = w(1)*FRSF(:,2)+w(2)*RFArea(:,2)+w(3)*FRgB(:,2);    
+    function Vote = CalcVote(FREffSF,RFArea,FRgB,w)
+        Vote(:,1) = w(1)*FREffSF(:,1)+w(2)*RFArea(:,1)+w(3)*FRgB(:,1);
+        Vote(:,2) = w(1)*FREffSF(:,2)+w(2)*RFArea(:,2)+w(3)*FRgB(:,2);    
     end
 end
 

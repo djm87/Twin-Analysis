@@ -1,72 +1,77 @@
-function G = GetSchmidRelative(G,twins,CRSS,sS,sigma)
-%The script returns the sign of the schmid factor for WE43 for given grains.
+function G = GetSchmidRelative(G,twin,sigma)
+%The script returns the effective schmid factor on K1 plane in the eta1
+%direction. In addition, the symmetry operators are returned so the exact
+%twin variant is known.
+
     % extract grains 
-    grainId1=G.Edges.pairs(:,1);
-    grainId2=G.Edges.pairs(:,2);
-    grains1=G.Nodes.meanOrientation(grainId1);
-    grains2=G.Nodes.meanOrientation(grainId2);
+    grainIdA = G.Edges.pairs(:,1);
+    grainIdB = G.Edges.pairs(:,2);
+    grainsA = G.Nodes.meanOrientation(grainIdA);
+    grainsB = G.Nodes.meanOrientation(grainIdB);
     
-    % Rotate loading to crystal frame  
-    rCS1=rotate(sigma,inv(grains1));
-    rCS2=rotate(sigma,inv(grains2));
-             
-    %Set the twin rotation axes for variant determination.
-    twinAxes={};
-    for i=1:length(twins)
-        twinAxes{i}=twins{i}.axis.symmetrise;
-    end
+    %Compute the max shear with principle stresses
+    %Remember that principle stresses are eigenvalues and the ordering of
+    %the principle stress is from large (1) to small (3). Look at mohrs 
+    %circle for info.
+    sigmaPrinciple = sigma.eig;
+    tauMax = (max(sigmaPrinciple) - min(sigmaPrinciple)) / 2;  
     
-    %Find twin shear direction 
+    %Allocate arrays for storage
+    ngrains = length(G.Nodes.Id);
+    nedges = length(G.Edges.pairs);
+    sigma13 = zeros(nedges,2);
+    sym_ops = zeros(nedges,2);
+    grainEffSF = zeros(ngrains, max(G.Edges.type));
     
+    %Loop over twin types
+    for type = 1:length(twin)
+        %Set the symmetry operator for the twin
+        CS = twin{type}.CS;
     
-    %Initialize variables
-    nedges=length(G.Edges.pairs); 
-    TwinVarActive=zeros(nedges,1);
-    sF1Active=zeros(nedges,1);
-    sF2Active=zeros(nedges,1);    
-    sFRelative12=zeros(nedges,1); 
-    sFActiveVar=zeros(nedges,1); 
-    for i=1:nedges 
-        %For some pair (edge) get the type of twin relation
-        type=G.Edges.type(i); %vectorize this
+        %Vectorize what we can for grain misorientation
+%         Lg2=CS(:) * grainsB;
+%         g1g2tLt = Lg2;
+%         for i = 1:length(CS)
+%             g1g2tLt(i,:) = grainsA .* transpose(Lg2(i,:)');
+%         end
         
-        if type >0 %0 if not twin type
-            %For the first grain in the pair compute the twin axes
-            vari=grains1(i)*twinAxes{type};
+        %Loop over edges
+        for i = 1:nedges  
+            if G.Edges.type(i) == type
+                %Compute grain misorientation
+                Lg2=CS(:)*grainsB(i);
+                g1g2tLt=(grainsA(i)*Lg2');
 
-            %set a rotation around that axis
-            rot=rotation('axis',vari,'angle',twins{type}.angle);
+                M = CS(:) * g1g2tLt;
 
-            % rotate around the twin axis, and save orientation
-            oriV=rot*grains1(i);
-            
-            %calculate misorientation between twin variants in the second
-            %grain
-            mis=angle(oriV, grains2(i))/degree; %all the varients of the twin mode
+                %Find the difference between twin and grain misorientation
+                MM = M * twin{type}.RMT;
+                angs = angle(MM, 'noSymmetry')' / degree;
 
-            [misIdeal(i),TwinVarActive(i)]=min(abs(mis)); %active twin variant
-            
-            sF1 = sS{type}.SchmidFactor(rCS1(i)); %Compute Schmid for the two twin orientations
-            sF2 = sS{type}.SchmidFactor(rCS2(i));
-            
-            %Look at: https://github.com/mtex-toolbox/mtex/issues/288 and 
-            %https://gist.github.com/jhiscocks/4acc046799d90dfe54e01936527a51e5
-            %to determine the appropriate general way of calculating this. 
-            %also see rod's article. a given twin should have one slip
-            %direction and plane.
-%             sS{type}.SchmidFactor(rotate(sigma,inv(oriV(TwinVarActive(i)))))
-            
-            % compute the maximum relative Schmid factors
-            sF1Active(i) = sF1(TwinVarActive(i));      
-            sF2Active(i) = sF2(TwinVarActive(i));
-            sFRelative12(i)=sF1Active(i)-sF2Active(i);
-        end
-    end
+                %Extract the closest match along with the symmetry operations
+                [~,id] = min(angs);
+                [sym_ops(i,1),sym_ops(i,2)] = ...
+                    ind2sub([length(CS) length(CS)],id);
+
+                %Find the resolved shear stress on the K1 plane in the eta1
+                %direction
+                aA=twin{type}.Rtw.matrix * CS(sym_ops(i,1)).matrix * grainsA(i).matrix;
+                aB=twin{type}.Rtw.matrix * CS(sym_ops(i,2)).matrix * grainsB(i).matrix;
+
+                sigma13(i,1) = dot(aA(1,:), aA(3,:) * sigma.matrix');
+                sigma13(i,2) = dot(aB(1,:), aB(3,:) * sigma.matrix');
+
+                grainEffSF(grainIdA(i),type) = sigma13(i,1) / (2*tauMax);
+                grainEffSF(grainIdB(i),type) = sigma13(i,2) / (2*tauMax);
+            end
+        end %Loop over edges
+    end %Loop over twin types
     
-    %Save to the graph data structure
-    G.Edges.SF=[sF1Active,sF2Active]; %Schmid factors for relation type 
-    G.Edges.SFRelative12=sFRelative12;
-    G.Edges.SFActiveVar=sFActiveVar; 
+    %Store arrays
+    G.Nodes.EffSF = grainEffSF;
+    G.Edges.sigma13 = sigma13;
+    G.Edges.EffSF = sigma13 ./ (2 * tauMax);
+    G.Edges.EffSFRelative = G.Edges.EffSF(:,1) - G.Edges.EffSF(:,2);
     
 end
 

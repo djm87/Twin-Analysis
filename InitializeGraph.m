@@ -1,4 +1,4 @@
-function G = InitializeGraph(ebsd,grains,twins,Mistol,meanMistol,...
+function G = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,...
     meanMistolRelaxed,doplot)
 %This function initializes graph objects for grains. 
 %Initialization entails computation of all local grain properties such as
@@ -19,7 +19,7 @@ G.Nodes.Id=str2num(cell2mat(G.Nodes.Name));
 G.Nodes.Area=grains.area; 
 G.Nodes.Perimeter=grains.perimeter; 
 G.Nodes.AspectRatio=grains.aspectRatio;
-G.Nodes.Paris=grains.calcParis;
+G.Nodes.Paris=grains.paris;
 G.Nodes.centroids=grains.centroid;
 G.Nodes.meanOrientation=grains.meanOrientation;
 G.Nodes.Properties.UserData.mineral=grains.mineral; %For single phase material
@@ -39,7 +39,7 @@ mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
     grains(G.Edges.pairs(:,2)).meanOrientation; 
 
 %Test if mean misorientation is a twin type so we can cluster grains
-[combine,type] = TestTwinRelationship(mori,meanMistol,twins);
+[combine,type] = TestTwinRelationship(mori,meanMistol,twin);
 
 G.Edges.type=type; %Twin relation type (# from twin list definitions)
 G.Edges.combine=combine; %whether pairs should be grouped into grains

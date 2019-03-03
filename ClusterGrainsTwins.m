@@ -1,17 +1,20 @@
-function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twins,...
+function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twin,...
     removeList,doplot,dolabel)
     
 %Clusters grains by removing edges of grains that should not be combined
     %Returns G.Edges.combineBoundary and G.Edges.groupMerge (currently not
     %returned)
-    [G,mergedGrains]= CompareBoundaryAndMean(G,grains,Mistol,twins) 
-      
+    [G,mergedGrains]= MergeByBoundary(G,grains,Mistol,twin) 
+    
+    
+
+    
     %Compute misorientation between all pairs
     mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
         grains(G.Edges.pairs(:,2)).meanOrientation; 
 
     %Get the type of misorientation
-    [~,type] = TestTwinRelationship(mori,meanMistolRelaxed,twins);
+    [~,type] = TestTwinRelationship(mori,meanMistolRelaxed,twin);
     G.Edges.type=type;
 
     %Any grains that don't match up with meanMistolRelaxed should be
@@ -21,11 +24,13 @@ function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twins,..
     G.Edges.combineCleaned=G.Edges.combineBoundary; %Reinitialize combine
     G.Edges.combineCleaned(removeList)=false; %
     G.Edges.combineCleaned(toRemove)=false; %
-    
+    [mergedGrains,parentId,combinedTwinBoundary,G.Edges.combineCleaned] = MergeByEdge(G,G.Edges.combineCleaned,grains)    
     %combineMerge comes from CompareBoundaryAndMean
 %     G.Edges.combineDiff=G.Edges.combineMerge~=G.Edges.combineCleaned;
     G_clust=rmedge(G,G.Edges.pairs(~G.Edges.combineCleaned,1),...
-        G.Edges.pairs(~G.Edges.combineCleaned,2)); 
+        G.Edges.pairs(~G.Edges.combineCleaned,2));
+    
+
     
     %Make cases 
     %1) if mean orientation gives grains surrounded by other fragments
@@ -52,8 +57,9 @@ function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twins,..
         hold on 
         plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-',...
         'displayName','merged grains')
+        plot(combinedTwinBoundary,'linecolor','w','linewidth',2,'displayName','merging boundary');
         p=plot(G_clust,'XData',G_clust.Nodes.centroids(:,1),...
-            'YData',G_clust.Nodes.centroids(:,2));
+            'YData',G_clust.Nodes.centroids(:,2),'displayName','graph');
         hold off
         p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
         if dolabel
