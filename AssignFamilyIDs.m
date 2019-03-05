@@ -4,8 +4,8 @@ function G_clust = AssignFamilyIDs(G_clust,grains,seg_angle,doplot,dolabel)
 
     %remove the grains we don't want to consider in the clustering
     Grains2Keep=unique(G_clust.Edges.pairs);
-    G_clust=rmnode(G_clust,G_clust.Nodes.Id(~ismember(G_clust.Nodes.Id,...
-        Grains2Keep)));
+%     G_clust=rmnode(G_clust,G_clust.Nodes.Id(~ismember(G_clust.Nodes.Id,...
+%         Grains2Keep)));
     %Get the nodes that are connected by edges
     %repeat values mean they are connected
     G_clust.Nodes.Group = conncomp(G_clust)'; 

@@ -1,4 +1,4 @@
-function G_Complete = MakeFamilyTree(G_Complete,grains)
+function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
 %MakeFamilyTree the base parent and all twins that stem from the parent
 %
 %The parent - a child of no other families
@@ -17,6 +17,7 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
     G_Complete.Nodes.isTwin = zeros(length(G_Complete.Nodes.Id),1);
     G_Complete.Nodes.isAParent = zeros(length(G_Complete.Nodes.Id),1,'logical');
     
+    runCleanupAgain=false;
     %loop over groups
     for i=1:max(G_Complete.Edges.Group) 
         egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
@@ -105,7 +106,7 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
         assert(~isempty(FamilyTreeParent),'no clear parent from relationships!')
 %         assert(any(sum(FamilyMatrix,1)<3),'Circular relationship between more than two grains')
         circularFamily=find(sum(FamilyMatrix,1)>1)
-        
+        rEdge=[];    
         for j=1:length(circularFamily)
             cF=circularFamily(j);
             pF=find(FamilyMatrix(:,cF));
@@ -133,7 +134,6 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
                 end
                 circularEdge=find(sum(EdgeMatrix(:,:,5),1)>1);
     %             assert(all(sum(EdgeMatrix,1)<3),'Need to handle multiple circular relationships with single Parent')
-            rEdge=[];    
             for k=1:length(circularEdge)
                     %In the case of circular twin relations a child has more than one parent. The script 
                     %compares the boundary ratio between the two parents. If one parent has 90%
@@ -161,7 +161,7 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
                     end
                      
                     eGlobalId(eId)
-                    [ePairs,eFamily,Parent]
+                    [ePairs(eId,:),eFamily(eId,:),Parent(eId,:)]
                     
                     
                     %group edges with same family edge relationship and
@@ -179,33 +179,37 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
                         pdiff=abs(FRgBls(end)-FRgBls(1))/((FRgBls(end)+FRgBls(1))/2);
                         
                         %Vote on the parent
-                        eGlobalId(eId(IA(1:end-1)))
-                        if pdiff>0.9
-                            rEdge=[rEdge;eId(IA(1:end-1))];
+                        %if the same relationship as the last edge, vote
+                        %the same way
+                        if pdiff>0.9 
+                            rEdge=[rEdge;eId(FRgB~=FRgBls(end))];
+                            eGlobalId(eId(FRgB~=FRgBls(end)))
+
                         else
-                            [~,EffSF_I]=sort(EffSF);
-                            rEdge=[rEdge;eId(EffSF_I(end))];
+                            [EffSF_sorted,EffSF_I]=sort(EffSF);
+                            rEdge=[rEdge;eId(EffSF~=EffSF_sorted(end))];
+                            eGlobalId(eId(EffSF~=EffSF_sorted(end)))
                         end
                     end
 
 
-            end
-            
-            %Remove the edges
-            rEdgeId=egroupId(rEdge);
-            removeEdges=zeros(size(G_Complete.Edges.pairs,1),1,'logical');
-            removeEdges(rEdgeId)=true;
-            G_Complete=rmedge(G_Complete,G_Complete.Edges.pairs(removeEdges,1),...
-                G_Complete.Edges.pairs(removeEdges,2));
-            %Reinitialize group quantities
-            egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
-            eType = G_Complete.Edges.type(egroupId);
-            eVote = G_Complete.Edges.Vote(egroupId,:);
-            ePairs = G_Complete.Edges.pairs(egroupId,:);
-            eFamily = G_Complete.Edges.FamilyID(egroupId,:);
-            eGlobalId = G_Complete.Edges.GlobalID(egroupId);
-            Parent(rEdge,:)=[];
+            end           
         end
+        eGlobalId(rEdge)
+        %Remove the edges
+        rEdgeId=egroupId(rEdge);
+        removeEdges=zeros(size(G_Complete.Edges.pairs,1),1,'logical');
+        removeEdges(rEdgeId)=true;
+        G_Complete=rmedge(G_Complete,G_Complete.Edges.pairs(removeEdges,1),...
+            G_Complete.Edges.pairs(removeEdges,2));
+        %Reinitialize group quantities
+        egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
+        eType = G_Complete.Edges.type(egroupId);
+        eVote = G_Complete.Edges.Vote(egroupId,:);
+        ePairs = G_Complete.Edges.pairs(egroupId,:);
+        eFamily = G_Complete.Edges.FamilyID(egroupId,:);
+        eGlobalId = G_Complete.Edges.GlobalID(egroupId);
+        Parent(rEdge,:)=[];   
         
         %Recalculate Parent 
         FamilyMatrix=zeros(max(nFamily),'logical');
@@ -216,8 +220,12 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
             c=eFamily(j,~Parent(j,:)); 
             FamilyMatrix(p,c)=true;
         end
-        
-        assert(isempty(find(sum(FamilyMatrix,1)>1)),'the circular relation routine failed this case.. debug')
+        [ePairs,eFamily,Parent]
+
+        if (~isempty(find(sum(FamilyMatrix,1)>1)))
+            runCleanupAgain=true;
+        end
+%         assert(isempty(find(sum(FamilyMatrix,1)>1)),'the circular relation routine failed this case.. debug')
         
         
 %         if length(FamilyTreeParent)>1
@@ -239,6 +247,7 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
             hold off
             p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
             labeledge(p,G_Complete.Edges.pairs(:,1),G_Complete.Edges.pairs(:,2),G_Complete.Edges.GlobalID);
+       
         end
             
         %The number of relation types for each family 

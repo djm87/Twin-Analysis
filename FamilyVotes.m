@@ -32,30 +32,30 @@ function G = FamilyVotes(G,w)
         pairsGb=G.Edges.Gb(egroupId); %Twin/parent pairs grain boundary
         pairs=G.Edges.pairs(egroupId,1:2); %Twin/parent pairs
         EffSF=G.Edges.EffSF(egroupId,1:2); %Twin/parent Schmid factor
+        if ~isempty(pairs)
+            %Family Areas to be stored in nodes 
+            FArea= FamilyArea(Area,FID);
+            G.Nodes.FArea(ngroupId) = FArea;
 
-        %Family Areas to be stored in nodes 
-        FArea= FamilyArea(Area,FID);
-        G.Nodes.FArea(ngroupId) = FArea;
-        
-        %Relative Family Areas to be stored in edges
-        FRArea = AreaRatio(pairs,FArea,nID);
-        G.Edges.FRArea(egroupId,:) = FRArea; 
-        
-        %Family Boundaries (returns a cell)
-        FgB = FamilyGrainBoundary(nGb,FID);
-        G.Nodes.FgB(ngroupId) = FgB;
-        
-        %Boundary length ratio between connected families
-        
-        FRgB = GrainBoundaryRatio(FgB,pairs,nID,mineral);
-        G.Edges.FRgB(egroupId,:) = FRgB;
-        
-        %Schmid factor difference 
-        FREffSF = SchmidFactorDifference(EffSF,pairs);  
-        G.Edges.FREffSF(egroupId,:) = FREffSF;
-        
-        %Calculate Vote
-        G.Edges.Vote(egroupId,:) = CalcVote(FREffSF,FRArea,FRgB,w);
+            %Relative Family Areas to be stored in edges
+            FRArea = AreaRatio(pairs,FArea,nID);
+            G.Edges.FRArea(egroupId,:) = FRArea; 
+
+            %Family Boundaries (returns a cell)
+            FgB = FamilyGrainBoundary(nGb,FID);
+            G.Nodes.FgB(ngroupId) = FgB;
+
+            %Boundary length ratio between connected families
+            FRgB = GrainBoundaryRatio(FgB,pairs,nID,mineral);
+            G.Edges.FRgB(egroupId,:) = FRgB;
+
+            %Schmid factor difference 
+            FREffSF = SchmidFactorDifference(EffSF,pairs);  
+            G.Edges.FREffSF(egroupId,:) = FREffSF;
+
+            %Calculate Vote
+            G.Edges.Vote(egroupId,:) = CalcVote(FREffSF,FRArea,FRgB,w);
+        end
     end
 
     function FArea = FamilyArea(Area,FID)

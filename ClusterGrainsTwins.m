@@ -6,9 +6,6 @@ function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twin,...
     %returned)
     [G,mergedGrains]= MergeByBoundary(G,grains,Mistol,twin) 
     
-    
-
-    
     %Compute misorientation between all pairs
     mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
         grains(G.Edges.pairs(:,2)).meanOrientation; 

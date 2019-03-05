@@ -216,14 +216,16 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
             c=eFamily(j,~Parent(j,:)); 
             FamilyMatrix(p,c)=true;
         end
-        
+        FamilyMatrix
+        %Find child of none
+        FamilyTreeParent=find(sum(FamilyMatrix,1)==0)
         assert(isempty(find(sum(FamilyMatrix,1)>1)),'the circular relation routine failed this case.. debug')
         
         
-%         if length(FamilyTreeParent)>1
-%            %We need to split the parent
-%            
-%         end
+        if length(FamilyTreeParent)>1
+           %We need to split the parent
+           
+        end
         
         if 1==0
             %visualize grain to debug             
@@ -257,19 +259,17 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
 %         end
 
         %Assign pairwise labels
-%         %% Important 3/5/19
-%         TwinLabel=-1.*ones(size(ePairs));
-%         TwinLabel(Parent)=0;
-%         for j=1:size(ePairs,1)
-%             if all(Parent(j,:)==true)
-%                 error('edge with parent definition')
-%             elseif Parent(j,2)==true
-%                 TwinLabel(j,1)=eType(j); 
-%             elseif Parent(j,1)==true
-%                 TwinLabel(j,2)=eType(j); 
-%             end
-%         end
-%         %% Important 3/5/19
+        TwinLabel=-1.*ones(size(ePairs));
+        TwinLabel(Parent)=0;
+        for j=1:size(ePairs,1)
+            if all(Parent(j,:)==true)
+                error('edge with parent definition')
+            elseif Parent(j,2)==true
+                TwinLabel(j,1)=eType(j); 
+            elseif Parent(j,1)==true
+                TwinLabel(j,2)=eType(j); 
+            end
+        end
         
         %Here take care of second order twins 
 %         loopCnt=0;
@@ -307,30 +307,28 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
 % %         
         %Finally assign twin label to nodes
 %         G_Complete.Nodes.isTwin(ngroupId(ismember(nId,ePairs(~Parent))))=5; 
-%         %% Important 3/5/19
-%         for j=1:length(nId)
-%             loc1=find(ePairs(:,1)==nId(j));
-%             loc2=find(ePairs(:,2)==nId(j));
-%             
-%             %find a row that has the parent
-%             if ~isempty(loc1)
-%                 [row,col] = find(TwinLabel(loc1,:)==0,1);
-%                 if ~isempty(row)
-%                     G_Complete.Nodes.Type(ngroupId(j))=TwinLabel(loc1(row),1);
-%                 else
-%                     G_Complete.Nodes.Type(ngroupId(j))=-1;
-%                 end
-%             end
-%             if ~isempty(loc2)
-%                 [row,col] = find(TwinLabel(loc2,:)==0,1);
-%                 if ~isempty(row)
-%                     G_Complete.Nodes.Type(ngroupId(j))=TwinLabel(loc2(row),2);
-%                 else
-%                     G_Complete.Nodes.Type(ngroupId(j))=-1;
-%                 end
-%             end
-%         end
-%         %% Important 3/5/19
 
+        for j=1:length(nId)
+            loc1=find(ePairs(:,1)==nId(j));
+            loc2=find(ePairs(:,2)==nId(j));
+            
+            %find a row that has the parent
+            if ~isempty(loc1)
+                [row,col] = find(TwinLabel(loc1,:)==0,1);
+                if ~isempty(row)
+                    G_Complete.Nodes.Type(ngroupId(j))=TwinLabel(loc1(row),1);
+                else
+                    G_Complete.Nodes.Type(ngroupId(j))=-1;
+                end
+            end
+            if ~isempty(loc2)
+                [row,col] = find(TwinLabel(loc2,:)==0,1);
+                if ~isempty(row)
+                    G_Complete.Nodes.Type(ngroupId(j))=TwinLabel(loc2(row),2);
+                else
+                    G_Complete.Nodes.Type(ngroupId(j))=-1;
+                end
+            end
+        end
     end
 end

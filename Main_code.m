@@ -145,9 +145,8 @@ G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 
 %% Compute Schmid info for twin/parents in clustered grains
 %This computes Schmid factor for twin/parent identification
-tic
 G_clust = GetSchmidRelative(G_clust,twin,sigma);
-toc
+
 tmp=G_clust.Nodes.EffSF(:,2);
 notZero=tmp<1;
   figure; 
@@ -178,12 +177,35 @@ G_clust = AssignFamilyIDs(G_clust,grains,seg_angle_grouped,doplot,dolabel);
 %of a particular type and since each pair is its own type this should be
 %relatively simple. 
 w=[1,1,1]
-G_Complete = FamilyVotes(G_clust,w);
+G_Complete_unclean = FamilyVotes(G_clust,w);
 
 
-%% Make the family tree
-G_Complete = MakeFamilyTree(G_Complete);
+%% Cleanup the family tree
+runCleanup=true
+maxIter=3;
+CleanupIter=0;
+while runCleanup && CleanupIter<maxIter
+    [G_Complete_unclean,runCleanup] = CleanFamilyTree(G_Complete_unclean,grains);
+    
+    
+    G_Complete_unclean=ClusterGrainsTwins(G_Complete_unclean,grains,Mistol,meanMistolRelaxed,...
+    twin,[],false,false);
 
+    CleanupIter=CleanupIter+1;
+end
+if CleanupIter > maxIter
+    disp('More CleanupIter than expected, likely need to solve something manually or improve the code')
+    pause;
+end
+%% Reconstruct grains based on cleanup (some new grains may have been created
+edgeList2Remove=[]; % number of edge from label 
+
+doplot=true;
+dolabel=true;
+G_Complete = ClusterGrainsTwins(G_Complete_unclean,grains,Mistol,meanMistolRelaxed,...
+    twin,edgeList2Remove,doplot,dolabel)
+
+%%
 figure; 
 plot(grains(G_Complete.Nodes.Id(G_Complete.Nodes.Type==1)),...
     G_Complete.Nodes.Type(G_Complete.Nodes.Type==1),'Micronbar','off')
