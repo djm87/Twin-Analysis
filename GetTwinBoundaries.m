@@ -10,9 +10,9 @@ function twinBoundary = GetTwinBoundaries(G_Complete,grains,twin,Mistol)
         twinBoundary{i} = gB_mineral(isTwinning);
     end
     figure; 
-    plot(grains(G_Complete.Nodes.Id(G_Complete.Nodes.Type>-2)),...
-        G_Complete.Nodes.Type(G_Complete.Nodes.Type>-2),'Micronbar','off')
+    plot(grains,G_Complete.Nodes.Type,'Micronbar','off')
     hold on 
+
     colors=hsv(ntwins);
     for i=1:ntwins
         plot(twinBoundary{i},'linecolor',colors(i,:),'linewidth',2,'DisplayName',twin{i}.name);

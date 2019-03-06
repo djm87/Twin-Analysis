@@ -1,24 +1,58 @@
 function [twin] = getTwinProperties(twin)
 %getTwinProperties Summary of this function goes here
-    for i=1:length(twin)
-
-        %Define the twin frame Rtw such that Rtw transforms crystal to twin
-        twin{i}.Rtw=orientation.map(twin{i}.k1,twin{i}.CS.cAxis,...
-            twin{i}.eta1,twin{i}.CS.aAxis); 
-        
-%         twin{i}.Rtw=getRtw(twin{i}.k1.hkl,twin{i}.eta1.UVTW,twin{i}.CS);
+    ntwin=length(twin)
+    for i=1:ntwin
         %Define the transformation types
         tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
-        tType{2}=orientation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS); 
-        tType{3}=tType{1}*tType{2};
-        tType{4}=tType{2}*tType{1};
-
-        % Create the twin misorientation
-        twin{i}.RMT=twin{i}.Rtw'*tType{twin{i}.actType}*twin{i}.Rtw;
+        tType{2}=orientation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS);   
         
-        % Compute misorientation axis and angle
-        twin{i}.axis=round(twin{i}.RMT.axis);
-        twin{i}.angle=angle(twin{i}.RMT)/degree;
+        %handle double and single twins
+        if length(twin{i}.k1)==2
+           %Define the twin frame Rtw such that Rtw transforms crystal to twin
+            twin{i}.Rtw(1)=orientation.map(twin{i}.k1(1),twin{i}.CS.cAxis,...
+                twin{i}.eta1(1),twin{i}.CS.aAxis); 
+            twin{i}.Rtw(2)=orientation.map(twin{i}.k1(2),twin{i}.CS.cAxis,...
+                twin{i}.eta1(2),twin{i}.CS.aAxis);
+            
+            twin{i}.RMT=twin{i}.Rtw(1)'*tType{twin{i}.actType}*twin{i}.Rtw(1)
+            % Create the twin misorientation
+            twin{i}.RMT=twin{i}.Rtw(1)'*tType{twin{i}.actType}*twin{i}.Rtw(1)*twin{i}.CS*...
+                twin{i}.Rtw(2)'*tType{twin{i}.actType}*twin{i}.Rtw(2);
+            
+            %Extract
+            [uAngle,IA,IC]=unique(round(twin{i}.RMT.angle,2));
+            twin{i}.RMT=twin{i}.RMT(IA(twin{i}.variantsToUse));
+            
+            % Compute misorientation axis and angle
+            twin{i}.axis=round(twin{i}.RMT.axis);
+            twin{i}.angle=angle(twin{i}.RMT)/degree;
+            
+            twin{ntwin+1}=twin{i};
+            twin{ntwin+2}=twin{i};
+            twin{ntwin+1}.RMT=twin{i}.RMT(1);
+            twin{ntwin+2}.RMT=twin{i}.RMT(2);
+            twin{ntwin+1}.angle=twin{i}.angle(1);
+            twin{ntwin+2}.angle=twin{i}.angle(2);
+            twin{ntwin+1}.axis=twin{i}.axis(1);
+            twin{ntwin+2}.axis=twin{i}.axis(2);
+            twin{ntwin+1}.name=twin{i}.name(1);
+            twin{ntwin+2}.name=twin{i}.name(2);
+            twin{ntwin+1}.variantsToUse=1;
+            twin{ntwin+2}.variantsToUse=1;
+            twin(i)=[];
+        else
+            %Define the twin frame Rtw such that Rtw transforms crystal to twin
+            twin{i}.Rtw=orientation.map(twin{i}.k1,twin{i}.CS.cAxis,...
+                twin{i}.eta1,twin{i}.CS.aAxis); 
+  
+
+            % Create the twin misorientation
+            twin{i}.RMT=twin{i}.Rtw'*tType{twin{i}.actType}*twin{i}.Rtw;
+
+            % Compute misorientation axis and angle
+            twin{i}.axis=round(twin{i}.RMT.axis);
+            twin{i}.angle=angle(twin{i}.RMT)/degree;
+        end
     end
 end
 

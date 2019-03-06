@@ -16,7 +16,7 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
 
     G_Complete.Nodes.isTwin = zeros(length(G_Complete.Nodes.Id),1);
     G_Complete.Nodes.isAParent = zeros(length(G_Complete.Nodes.Id),1,'logical');
-    
+    G_Complete.Edges.Parent = zeros(size(G_Complete.Edges.pairs),'logical');
     %loop over groups
     for i=1:max(G_Complete.Edges.Group) 
         egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
@@ -206,7 +206,7 @@ function G_Complete = MakeFamilyTree(G_Complete,grains)
             eGlobalId = G_Complete.Edges.GlobalID(egroupId);
             Parent(rEdge,:)=[];
         end
-        
+        G_Complete.Edges.Parent(egroupId,:)=Parent
         %Recalculate Parent 
         FamilyMatrix=zeros(max(nFamily),'logical');
         FamilyTree=zeros(max(nFamily),1)

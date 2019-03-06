@@ -5,9 +5,14 @@ function [G,mergedGrains] = MergeByBoundary(G,grains,Mistol,twin)
     gB=grains.boundary;
     gB_mineral = gB(mineral,mineral);
     twinBoundary={};
-    for i=1:ntwins    
-        isTwinning = angle(gB_mineral.misorientation,twin{i}.RMT) < Mistol;
-        twinBoundary{i} = gB_mineral(isTwinning);
+    cnt=0;
+    for i=1:ntwins 
+        twinBoundary{i}=[];
+        for j=1:length(twin{i}.variantsToUse) %for double twins
+            cnt=cnt+1;
+            isTwinning = angle(gB_mineral.misorientation,twin{i}.RMT(j)) < Mistol;
+            twinBoundary{cnt} = gB_mineral(isTwinning);
+        end
     end
     combinedTwinBoundary=[twinBoundary{:}];
     [mergedGrains,parentId] = merge(grains,combinedTwinBoundary);

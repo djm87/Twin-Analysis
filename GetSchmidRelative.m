@@ -27,7 +27,7 @@ function G = GetSchmidRelative(G,twin,sigma)
     for type = 1:length(twin)
         %Set the symmetry operator for the twin
         CS = twin{type}.CS;
-    
+        
         %Vectorize what we can for grain misorientation
 %         Lg2=CS(:) * grainsB;
 %         g1g2tLt = Lg2;
@@ -55,9 +55,13 @@ function G = GetSchmidRelative(G,twin,sigma)
 
                 %Find the resolved shear stress on the K1 plane in the eta1
                 %direction
-                aA=twin{type}.Rtw.matrix * CS(sym_ops(i,1)).matrix * grainsA(i).matrix;
-                aB=twin{type}.Rtw.matrix * CS(sym_ops(i,2)).matrix * grainsB(i).matrix;
-
+                if length(twin{type}.Rtw)==2
+                    aA=twin{type}.Rtw(1).matrix * CS(sym_ops(i,1)).matrix * grainsA(i).matrix;
+                    aB=twin{type}.Rtw(2).matrix * CS(sym_ops(i,2)).matrix * grainsB(i).matrix;
+                else
+                    aA=twin{type}.Rtw.matrix * CS(sym_ops(i,1)).matrix * grainsA(i).matrix;
+                    aB=twin{type}.Rtw.matrix * CS(sym_ops(i,2)).matrix * grainsB(i).matrix;  
+                end
                 sigma13(i,1) = dot(aA(1,:), aA(3,:) * sigma.matrix');
                 sigma13(i,2) = dot(aB(1,:), aB(3,:) * sigma.matrix');
 

@@ -16,7 +16,8 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
 
     G_Complete.Nodes.isTwin = zeros(length(G_Complete.Nodes.Id),1);
     G_Complete.Nodes.isAParent = zeros(length(G_Complete.Nodes.Id),1,'logical');
-    
+    G_Complete.Edges.Parent = zeros(size(G_Complete.Edges.pairs),'logical');
+
     runCleanupAgain=false;
     %loop over groups
     for i=1:max(G_Complete.Edges.Group) 
@@ -71,14 +72,15 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         %To Do:
         %start building the tree here!
         %Add circular 
+        %eVotesSummed are the votes for each for a family and a type
         eVotesSummed = zeros(max(nFamily),max(eType));
         for j = 1:max(nFamily)
             for k = 1:max(eType)
                 eVotesSummed(j,k) = sum(eVote(FamilyRelationList{j,k}(:,:)));
             end
         end
-        [~,parentID] = sort(eVotesSummed,'descend');
-        for j = 1:length(parentID)
+        [~,parentID] = sort(eVotesSummed,'descend'); %sorts each column
+        for j = 1:size(parentID,1)
             for k = 1:max(eType)
                 toSet=FamilyRelationList{parentID(j,k),k};
                 notSet=sum(Parent,2)~=0;
@@ -100,13 +102,36 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             c=eFamily(j,~Parent(j,:)); 
             FamilyMatrix(p,c)=true;
         end
-        FamilyMatrix
+        FamilyMatrix 
         %Find child of none
         FamilyTreeParent=find(sum(FamilyMatrix,1)==0)
-        assert(~isempty(FamilyTreeParent),'no clear parent from relationships!')
+%         assert(~isempty(FamilyTreeParent),'no clear parent from relationships!')
+        if 1==0
+            %visualize grain to debug             
+            figure; 
+            plot(grains(nId),...
+                G_Complete.Nodes.FamilyID(nId),'Micronbar','off')
+%                 grains(nId).meanOrientation,'Micronbar','off')
+            hold on
+            e2keep=(i==G_Complete.Edges.Group)==true;
+            
+%             Ggrain=rmedge(G_Complete,G_Complete.Edges.pairs(~e2keep,1),G_Complete.Edges.pairs(~e2keep,2));
+            p=plot(G_Complete,'XData',G_Complete.Nodes.centroids(:,1),...
+                'YData',G_Complete.Nodes.centroids(:,2),'displayName','graph');
+            hold off
+            p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
+            labeledge(p,G_Complete.Edges.pairs(:,1),G_Complete.Edges.pairs(:,2),G_Complete.Edges.GlobalID);
+       
+        end
+        
+        
 %         assert(any(sum(FamilyMatrix,1)<3),'Circular relationship between more than two grains')
         circularFamily=find(sum(FamilyMatrix,1)>1)
         rEdge=[];    
+        if isempty(FamilyTreeParent)
+           %circular relationship exists but it is in the parents column!
+           circularFamily=1:max(nFamily);
+        end
         for j=1:length(circularFamily)
             cF=circularFamily(j);
             pF=find(FamilyMatrix(:,cF));
@@ -195,6 +220,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
 
             end           
         end
+        
         eGlobalId(rEdge)
         %Remove the edges
         rEdgeId=egroupId(rEdge);
@@ -210,7 +236,8 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         eFamily = G_Complete.Edges.FamilyID(egroupId,:);
         eGlobalId = G_Complete.Edges.GlobalID(egroupId);
         Parent(rEdge,:)=[];   
-        
+        G_Complete.Edges.Parent(egroupId,:)=Parent
+
         %Recalculate Parent 
         FamilyMatrix=zeros(max(nFamily),'logical');
         FamilyTree=zeros(max(nFamily),1)
@@ -233,22 +260,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
 %            
 %         end
         
-        if 1==0
-            %visualize grain to debug             
-            figure; 
-            plot(grains(nId),...
-                grains(nId).meanOrientation,'Micronbar','off')
-            hold on
-            e2keep=(i==G_Complete.Edges.Group)==true;
-            
-%             Ggrain=rmedge(G_Complete,G_Complete.Edges.pairs(~e2keep,1),G_Complete.Edges.pairs(~e2keep,2));
-            p=plot(G_Complete,'XData',G_Complete.Nodes.centroids(:,1),...
-                'YData',G_Complete.Nodes.centroids(:,2),'displayName','graph');
-            hold off
-            p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-            labeledge(p,G_Complete.Edges.pairs(:,1),G_Complete.Edges.pairs(:,2),G_Complete.Edges.GlobalID);
-       
-        end
+
             
         %The number of relation types for each family 
         %Here we also assign the parent for the case of two tensile variants 

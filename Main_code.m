@@ -1,4 +1,5 @@
 %% Initialize Matlab
+tic
 clear all
 close all
 %% Initialize run parameters 
@@ -184,6 +185,10 @@ G_Complete_unclean = FamilyVotes(G_clust,w);
 runCleanup=true
 maxIter=3;
 CleanupIter=0;
+%I think this shouldn't take more than 2 itterations. There can be some
+%cases that aren't solved until grains are regroupd (i.e you have two
+%seperate grains that need still need to be split and a circular relationship exists
+%because the same families are in both grains. It's a thing.. go figure!)
 while runCleanup && CleanupIter<maxIter
     [G_Complete_unclean,runCleanup] = CleanFamilyTree(G_Complete_unclean,grains);
     
@@ -204,13 +209,19 @@ doplot=true;
 dolabel=true;
 G_Complete = ClusterGrainsTwins(G_Complete_unclean,grains,Mistol,meanMistolRelaxed,...
     twin,edgeList2Remove,doplot,dolabel)
+%% Redo Families in grain clusters 
+%Remove nodes that aren't connected by edges, alternatively use condition
+%on minimum occurance from conncomp
+doplot=true;
+dolabel=false;
+G_Complete = AssignFamilyIDs(G_Complete,grains,seg_angle_grouped,doplot,dolabel);
 
-%%
+%% Create the family tree 
+%uses the recursive relationship as described in Pradalier et al. 2018
+[G_Complete] = CreateFamilyTree(G_Complete,grains);
 figure; 
-plot(grains(G_Complete.Nodes.Id(G_Complete.Nodes.Type==1)),...
-    G_Complete.Nodes.Type(G_Complete.Nodes.Type==1),'Micronbar','off')
-
-
+plot(grains,G_Complete.Nodes.Type,'Micronbar','off')
+%%
 % Compare results with boundaries 
 % Mistol=5*degree
 [twinBoundary] = GetTwinBoundaries(G_Complete,grains,twin,8*degree);
@@ -224,6 +235,6 @@ T2=sum(Areas(G_Complete.Nodes.Type==2))/ sum(area(grains)) * 100
 C=sum(Areas(G_Complete.Nodes.Type==3))/ sum(area(grains)) * 100
 
 sum([T1 T2 C])
-
+toc
 
 
