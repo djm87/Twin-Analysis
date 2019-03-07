@@ -62,6 +62,7 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.k1=Miller(1,0,-1,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(-1,0,1,1,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta, compound K1 then eta1, compound eta1 then K1
+ twin{tnum}.variantsToUse=1 
 
  tnum=2;
  twin{tnum}.CS=CS{2};
@@ -69,14 +70,16 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.k1=Miller(-1,-1,2,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(1,1,-2,6,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta, compound K1 then eta1, compound eta1 then K1
-    
+ twin{tnum}.variantsToUse=1 
+ 
  tnum=3;
  twin{tnum}.CS=CS{2};
  twin{tnum}.name='C1 <11-2-3>(11-22)';
  twin{tnum}.k1=Miller(-1,-1,2,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(-1,-1,2,-3,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
-     
+  twin{tnum}.variantsToUse=1 
+    
  %Compute twin properties 
  twin=getTwinProperties(twin);
  
@@ -148,8 +151,8 @@ G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 %This computes Schmid factor for twin/parent identification
 G_clust = GetSchmidRelative(G_clust,twin,sigma);
 
-tmp=G_clust.Nodes.EffSF(:,2);
-notZero=tmp<1;
+tmp=G_clust.Nodes.EffSF(:,1);
+notZero=tmp<0;
   figure; 
     plot(grains(G_clust.Nodes.Id(notZero)),...
         tmp(notZero),'Micronbar','off');
@@ -177,7 +180,7 @@ G_clust = AssignFamilyIDs(G_clust,grains,seg_angle_grouped,doplot,dolabel);
 %To compute the relative boundary between families we need to sum boundary
 %of a particular type and since each pair is its own type this should be
 %relatively simple. 
-w=[1,1,1]
+w=[1,0,0]
 G_Complete_unclean = FamilyVotes(G_clust,w);
 
 

@@ -1,6 +1,6 @@
 function [twin] = getTwinProperties(twin)
 %getTwinProperties Summary of this function goes here
-    ntwin=length(twin)
+    ntwin=length(twin);
     for i=1:ntwin
         %Define the transformation types
         tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
@@ -35,6 +35,8 @@ function [twin] = getTwinProperties(twin)
             twin{ntwin+2}.angle=twin{i}.angle(2);
             twin{ntwin+1}.axis=twin{i}.axis(1);
             twin{ntwin+2}.axis=twin{i}.axis(2);
+            twin{ntwin+1}.axisVariants=twin{ntwin+1}.axis.symmetrise;
+            twin{ntwin+2}.axisVariants=twin{ntwin+1}.axis.symmetrise;
             twin{ntwin+1}.name=twin{i}.name(1);
             twin{ntwin+2}.name=twin{i}.name(2);
             twin{ntwin+1}.variantsToUse=1;
@@ -52,6 +54,9 @@ function [twin] = getTwinProperties(twin)
             % Compute misorientation axis and angle
             twin{i}.axis=round(twin{i}.RMT.axis);
             twin{i}.angle=angle(twin{i}.RMT)/degree;
+            
+            % Compute twin axis variants 
+            twin{i}.axisVariants=twin{i}.axis.symmetrise;
         end
     end
 end

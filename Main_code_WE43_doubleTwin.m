@@ -80,15 +80,15 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta, compound K1 then eta1, compound eta1 then K1
  twin{tnum}.variantsToUse=1;
  
- tnum=4;
- twin{tnum}.CS=CS{2};
- twin{tnum}.name=['DT1 (10-12)-(10-1-1)','DT2 (10-12)-(10-1-1)'];
- twin{tnum}.k1(2)=Miller(1,0,-1,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
- twin{tnum}.k1(1)=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
- twin{tnum}.eta1(2)=Miller(-1,0,1,1,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
- twin{tnum}.eta1(1)=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
- twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta   
- twin{tnum}.variantsToUse=[1,2]; %ordered from least rotation to highest
+%  tnum=4;
+%  twin{tnum}.CS=CS{2};
+%  twin{tnum}.name=['DT1 (10-12)-(10-1-1)','DT2 (10-12)-(10-1-1)'];
+%  twin{tnum}.k1(2)=Miller(1,0,-1,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
+%  twin{tnum}.k1(1)=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
+%  twin{tnum}.eta1(2)=Miller(-1,0,1,1,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
+%  twin{tnum}.eta1(1)=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
+%  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta   
+%  twin{tnum}.variantsToUse=[1,2]; %ordered from least rotation to highest
 
  %Compute twin properties 
  twin=getTwinProperties(twin);
@@ -107,7 +107,7 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  hold off
 
  %Specify specimen stress state
- sigma = tensor([0 0 0; 0 0 0; 0 0 -1],'name','stress') %Sign of loading does more than just invert twin/parent flag
+sigma = stressTensor([0 0 0; 0 0 0; 0 0 -1]) %Sign of loading does more than just invert twin/parent flag
 %% Import the Data
 % create an EBSD variable containing the data
 ebsd = loadEBSD(EBSDfname,CS,'interface',EBSDinterface,EBSDframe);
@@ -174,8 +174,8 @@ G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 %This computes Schmid factor for twin/parent identification
 G_clust = GetSchmidRelative(G_clust,twin,sigma);
 
-tmp=G_clust.Nodes.EffSF(:,5);
-notZero=tmp<1;
+tmp=G_clust.Nodes.EffSF(:,1);
+notZero=tmp>0;
   figure; 
     plot(grains(G_clust.Nodes.Id(notZero)),...
         tmp(notZero),'Micronbar','off');
