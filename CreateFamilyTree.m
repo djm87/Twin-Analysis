@@ -31,30 +31,49 @@ function [G_Complete] = CreateFamilyTree(G_Complete,grains)
         
         %Call labeling function
         [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                                            nGeneration,nType,[],0);
+                                            nGeneration,nType,[],0,8);
         G_Complete.Nodes.Type(ngroupId)=nType;
-        G_Complete.Nodes.Generation(ngroupId)=nGeneration
+        G_Complete.Nodes.Generation(ngroupId)=nGeneration;
         G_Complete.Nodes.TypeColored(ngroupId,:)=colors(nType+1,:);
+
     end
 end
 function [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                                        nGeneration,nType,genId,gen)
+                                        nGeneration,nType,genId,gen,maxGen)
     %Simple recursive function to label type and generation 
     if gen==0
         genId = find(sum(EdgeMatrix,1)==0);
-        nType(genId)=0;
-        nGeneration(genId)=0;
-        gen=1;
-    end
-    for i=1:length(genId)
-        genId1 = find(EdgeMatrix(genId(i),:)~=0);
-        if ~isempty(genId1)
-            nGeneration(genId1)=gen;
-            nType(genId1)=EdgeMatrix(genId(i),genId1);
-            if any(nGeneration==-1)
-                [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                    nGeneration,nType,genId1,gen+1);
-            end
+        if ~isempty(genId)
+            nType(genId)=0;
+            nGeneration(genId)=0;
+            gen=1;
+        else
+            nType(:)=0;
+            nGeneration(:)=-1;
+            disp('Warning: No parent generation is obvious')
         end
     end
+    if gen==maxGen
+        %Reset nGeneration so we know to debug.
+        nGeneration(:)=-1;
+        nType(:)=0;
+    else
+        for i=1:length(genId)
+            genId1 = find(EdgeMatrix(genId(i),:)~=0);
+            if ~isempty(genId1)
+                nGeneration(genId1)=gen;
+                nType(genId1)=EdgeMatrix(genId(i),genId1);
+                if any(nGeneration==-1)
+                    [nGeneration,nType] = fillGenerations(EdgeMatrix,...
+                        nGeneration,nType,genId1,gen+1,maxGen);
+                end
+            end
+        end
+        if any(nGeneration==-1) && gen==1
+            nGeneration(:)=-1;
+            nType(:)=0;
+            disp('Warning: Failure to relate all fragments')
+        end
+    end
+    
 end

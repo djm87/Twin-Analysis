@@ -1,4 +1,4 @@
-function twinBoundary = GetTwinBoundaries(G_Complete,grains,twin,Mistol)
+function twinBoundary = GetTwinBoundaries(G_Complete,grains,mergedGrains,twin,Mistol)
 %Returns the twin bounaries
     ntwins=length(twin);
     mineral=grains.mineral;
@@ -12,11 +12,13 @@ function twinBoundary = GetTwinBoundaries(G_Complete,grains,twin,Mistol)
     figure; 
     plot(grains,G_Complete.Nodes.Type,'Micronbar','off')
     hold on 
-
+    plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-')
     colors=hsv(ntwins);
     for i=1:ntwins
-        plot(twinBoundary{i},'linecolor',colors(i,:),'linewidth',2,'DisplayName',twin{i}.name);
+        plot(twinBoundary{i},'linecolor','w','linewidth',2);
     end
     hold off
+    legend off
+%     legend('merged grains','twin boundaries')
 end
 

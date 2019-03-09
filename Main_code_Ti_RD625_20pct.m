@@ -13,8 +13,8 @@ CS = {'notIndexed',crystalSymmetry('622', [2.95 2.95 4.6855],...
     'X||a', 'Y||b*', 'Z||c', 'mineral', 'Ti', 'color', 'light blue')};
 
 % EBSD import 
-EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Rods Data\Zr-LN-IP-5\LN-IP-05-6\Zr_LN_5pct_06.ang';
-% EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Example Data\625C-RD-20pct cleaned-Dil cropped.ang'
+% EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Rods Data\Zr-LN-IP-5\LN-IP-05-6\Zr_LN_5pct_06.ang';
+EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Example Data\625C-RD-20pct cleaned-Dil cropped.ang'
 EBSDinterface='ang';
 % EBSDinterface='osc';
 EBSDframe='convertSpatial2EulerReferenceFrame';
@@ -83,13 +83,13 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
   twin{tnum}.variantsToUse=1 
  
-%  tnum=4;
-%  twin{tnum}.CS=CS{2};
-%  twin{tnum}.name='C2 <10-12>(10-1-1)';
-%  twin{tnum}.k1=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
-%  twin{tnum}.eta1=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
-%  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
-%   twin{tnum}.variantsToUse=1 
+ tnum=4;
+ twin{tnum}.CS=CS{2};
+ twin{tnum}.name='C2 <10-12>(10-1-1)';
+ twin{tnum}.k1=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
+ twin{tnum}.eta1=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
+ twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
+  twin{tnum}.variantsToUse=1 
  %Compute twin properties 
  twin=getTwinProperties(twin);
  
@@ -108,7 +108,7 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
 %  hold off
  %
  %Specify specimen stress state
-sigma = stressTensor([0 0 0; 0 -1 0; 0 0 0]) %Sign of loading does more than just invert twin/parent flag
+sigma = stressTensor([0 0 0; 0 0 0; 0 0 -1]) %Sign of loading does more than just invert twin/parent flag
 
 %% Import the Data
 % create an EBSD variable containing the data
@@ -155,9 +155,17 @@ doplot=true;
 
 G = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,meanMistolRelaxed,doplot)
 
+%% Cluster grains based on twin boundaries alone
+
+doplot=true;
+dolabel=true;
+
+G_clust_twin = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
+    twin,[],doplot,dolabel)
+
 %% Create user list to delete incorrect twin relationships
 %Remove edges that that don't look right for a twin.
-edgeList2Remove=[]; % number of edge from label 
+edgeList2Remove=[1033,620,678,1039,1128,305,333,602,723,793,817,595,610,1223,1652,1645,1679,2194,2204,2269,938,1033,1032,1044]; % number of edge from label 
 
 doplot=true;
 dolabel=true;
@@ -167,7 +175,6 @@ G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 %% Compute Schmid info for twin/parents in clustered grains
 %This computes Schmid factor for twin/parent identification
 G_clust = GetSchmidRelative(G_clust,twin,sigma);
-G_Complete2 = GetSchmidVariants(G_clust,twin,sigma)
 
 tmp=G_clust.Nodes.EffSF(:,1);
 notZero=tmp<0;
@@ -198,7 +205,7 @@ G_clust = AssignFamilyIDs(G_clust,grains,seg_angle_grouped,doplot,dolabel);
 %To compute the relative boundary between families we need to sum boundary
 %of a particular type and since each pair is its own type this should be
 %relatively simple. 
-w=[1,1,1]
+w=[3,1,1]
 G_Complete_unclean = FamilyVotes(G_clust,w);
 
 
@@ -264,33 +271,7 @@ plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-')
 hold off
 
 % figure; plot(ebsd,ebsd.orientations)
-%% Verify node ID and edge ID are matching up
-figure; 
-plot(grains,G_Complete.Nodes.meanOrientation ,'Micronbar','off')
-hold on 
- p=plot(G_Complete,'XData',G_Complete.Nodes.centroids(:,1),...
-            'YData',G_Complete.Nodes.centroids(:,2),'displayName','graph');
-p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-labeledge(p,G_Complete.Edges.pairs(:,1),...
-    G_Complete.Edges.pairs(:,2),G_Complete.Edges.GlobalID);
-labelnode(p,G_Complete.Nodes.Id,G_Complete.Nodes.Id);
-hold off
 
-figure; 
-plot(grains,G_clust.Nodes.meanOrientation ,'Micronbar','off')
-hold on 
- p=plot(G_clust,'XData',G_clust.Nodes.centroids(:,1),...
-            'YData',G_clust.Nodes.centroids(:,2),'displayName','graph');
-p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-labeledge(p,G_clust.Edges.pairs(:,1),...
-    G_clust.Edges.pairs(:,2),1:length(G_clust.Edges.pairs));
-labelnode(p,G_clust.Nodes.Id,G_clust.Nodes.Id);
-hold off
-
-G_Complete.Edges.pairs(261,:)
-G_Complete.Nodes.meanOrientation(352)
-G_Complete.Nodes.meanOrientation(410)
-G_clust.Edges.pairs(265,:)
 %%
 % Compare results with boundaries 
 % Mistol=5*degree
@@ -300,7 +281,6 @@ G_clust.Edges.pairs(265,:)
 
 %% Extract parent stats for schmid
 G_Complete2 = GetSchmidVariants(G_Complete,twin,sigma)
-% G_Complete2 = GetSchmidRelative(G_Complete,twin,sigma)
 
 
 %% Compute the volume fractions 

@@ -9,12 +9,12 @@ close all
 %                       Set loadEBSD parameters
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 % Crystal symmetry
-CS = {'notIndexed',crystalSymmetry('622', [2.95 2.95 4.6855],...
-    'X||a', 'Y||b*', 'Z||c', 'mineral', 'Ti', 'color', 'light blue')};
+CS = {'notIndexed',crystalSymmetry('622', [3.23 3.23 5.15],...
+    'X||a', 'Y||b*', 'Z||c', 'mineral', 'Zr', 'color', 'light blue')};
 
 % EBSD import 
-EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Rods Data\Zr-LN-IP-5\LN-IP-05-6\Zr_LN_5pct_06.ang';
-% EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Example Data\625C-RD-20pct cleaned-Dil cropped.ang'
+% EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Rods Data\Zr-LN-IP-5\LN-IP-05-6\Zr_LN_5pct_06.ang';
+EBSDfname = 'E:\Dropbox\Research\Source\Twin-Analysis\Rods Data\Zr-LN-IP-10\Scan1\Scan1.ang'
 EBSDinterface='ang';
 % EBSDinterface='osc';
 EBSDframe='convertSpatial2EulerReferenceFrame';
@@ -41,7 +41,7 @@ min_grainSz = 1.5; %minimum indexed points per grain
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 % grain boundary reconstruction
 seg_angle = 5*degree; %misorientation of for determining fragments
-seg_angle_grouped = 15*degree; % misorientation for grouping fragments (just family
+seg_angle_grouped = 15*degree; % misorientation for grouping fragments
 
 
 %Misorientation tolerence for ebsd pixels being grouped
@@ -58,7 +58,6 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 %Notes: All HCP are compound twins. Don't both with the types.
 %Specify the twins
- twin={};
  tnum=1;
  twin{tnum}.CS=CS{2};
  twin{tnum}.name='T1 <10-1-1>(10-12)';
@@ -82,33 +81,14 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.eta1=Miller(-1,-1,2,-3,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
   twin{tnum}.variantsToUse=1 
- 
-%  tnum=4;
-%  twin{tnum}.CS=CS{2};
-%  twin{tnum}.name='C2 <10-12>(10-1-1)';
-%  twin{tnum}.k1=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
-%  twin{tnum}.eta1=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
-%  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
-%   twin{tnum}.variantsToUse=1 
+    
  %Compute twin properties 
  twin=getTwinProperties(twin);
  
- %Visualize twins convention as described in Li eta al. 2015 
- %
-%  tnum=3;
-%  figure(19);plot(crystalShape.hex(CS{2}),'FaceAlpha',0.5)
-%  hold on 
-%  arrow3d(1.2*normalize(vector3d(twin{tnum}.k1)),'facecolor','black')
-%  arrow3d(0.8*normalize(vector3d(twin{tnum}.eta1)),'facecolor','black')
-%  arrow3d(normalize(vector3d(twin{tnum}.Rtw * twin{tnum}.k1)),'facecolor','green')
-%  arrow3d(normalize(vector3d(twin{tnum}.Rtw * twin{tnum}.eta1)),'facecolor','green')
-%  arrow3d(0.8*normalize(vector3d(CS{2}.aAxis)),'facecolor','red')
-% %  arrow3d(0.8*normalize(vector3d(CS{2}.bAxis)),'facecolor','red')
-%  arrow3d(0.8*normalize(vector3d(CS{2}.cAxis)),'facecolor','red')
-%  hold off
- %
  %Specify specimen stress state
-sigma = stressTensor([0 0 0; 0 -1 0; 0 0 0]) %Sign of loading does more than just invert twin/parent flag
+%  sigma = tensor([0 0 0; 0 -1 0; 0 0 0],'name','stress') %Sign of loading does more than just invert twin/parent flag
+%  sigma = tensor([-1 0 0; 0 0 0; 0 0 0],'name','stress') %Sign of loading does more than just invert twin/parent flag
+sigma = stressTensor([-1 0 0; 0 0 0; 0 0 0]) %Sign of loading does more than just invert twin/parent flag
 
 %% Import the Data
 % create an EBSD variable containing the data
@@ -126,7 +106,7 @@ color = oM.orientation2color(ebsd('indexed').orientations);
 %Cleaned data
 ebsd(ebsd.prop.iq==0).phaseId=1;
 ebsd=ebsd(ebsd.prop.ci>min_CI);
-figure; plot(ebsd,ebsd.orientations)
+% figure; plot(ebsd,ebsd.orientations)
 
 %% Reconstruct and clean grains
 %Calculate all grains
@@ -155,9 +135,18 @@ doplot=true;
 
 G = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,meanMistolRelaxed,doplot)
 
+%% Cluster grains based on twin boundaries alone
+
+doplot=true;
+dolabel=true;
+
+G_clust_twin = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
+    twin,[],doplot,dolabel)
+
 %% Create user list to delete incorrect twin relationships
 %Remove edges that that don't look right for a twin.
-edgeList2Remove=[]; % number of edge from label 
+edgeList2Remove=[4246,2803,2812,652,743,810,3441,3375,3352,3351,3615,4101,4387,4288,4250,4275,3385,3384,1801,1798,1810,1809,1814,1766,2353,1806,2961,3044,3096,3140,...
+    3000,3175,2409,2315,2144,2295,2031,2019,2020,1995]; % number of edge from label 
 
 doplot=true;
 dolabel=true;
@@ -167,7 +156,6 @@ G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 %% Compute Schmid info for twin/parents in clustered grains
 %This computes Schmid factor for twin/parent identification
 G_clust = GetSchmidRelative(G_clust,twin,sigma);
-G_Complete2 = GetSchmidVariants(G_clust,twin,sigma)
 
 tmp=G_clust.Nodes.EffSF(:,1);
 notZero=tmp<0;
@@ -178,7 +166,7 @@ notZero=tmp<0;
     p=plot(G_clust,'XData',G_clust.Nodes.centroids(:,1),...
         'YData',G_clust.Nodes.centroids(:,2));
     hold off
-drawnow
+
 %% Identify Families in grain clusters 
 %Remove nodes that aren't connected by edges, alternatively use condition
 %on minimum occurance from conncomp
@@ -204,7 +192,7 @@ G_Complete_unclean = FamilyVotes(G_clust,w);
 
 %% Cleanup the family tree
 runCleanup=true
-maxIter=5;
+maxIter=3;
 CleanupIter=0;
 %I think this shouldn't take more than 2 itterations. There can be some
 %cases that aren't solved until grains are regroupd (i.e you have two
@@ -213,21 +201,21 @@ CleanupIter=0;
 while runCleanup && CleanupIter<maxIter
     [G_Complete_unclean,runCleanup] = CleanFamilyTree(G_Complete_unclean,grains);
     
-    if runCleanup
-        G_Complete_unclean=ClusterGrainsTwins(G_Complete_unclean,grains,Mistol,meanMistolRelaxed,...
-        twin,[],false,false);
-    end
+    
+    G_Complete_unclean=ClusterGrainsTwins(G_Complete_unclean,grains,Mistol,meanMistolRelaxed,...
+    twin,[],false,false);
 
     CleanupIter=CleanupIter+1;
 end
-if CleanupIter == maxIter
+if CleanupIter > maxIter
     disp('More CleanupIter than expected, likely need to solve something manually or improve the code')
+    pause;
 end
 %% Reconstruct grains based on cleanup (some new grains may have been created
 edgeList2Remove=[]; % number of edge from label 
 
 doplot=true;
-dolabel=false;
+dolabel=true;
 G_Complete = ClusterGrainsTwins(G_Complete_unclean,grains,Mistol,meanMistolRelaxed,...
     twin,edgeList2Remove,doplot,dolabel)
 %% Redo Families in grain clusters 
@@ -240,77 +228,24 @@ G_Complete = AssignFamilyIDs(G_Complete,grains,seg_angle_grouped,doplot,dolabel)
 %% Create the family tree 
 %uses the recursive relationship as described in Pradalier et al. 2018
 [G_Complete] = CreateFamilyTree(G_Complete,grains);
-
-
-%% Make some pretty plots
-[mergedGrains] = MergeByEdge(G_Complete,ones(length(G_Complete.Edges.pairs),1,'logical'),grains)
-
 figure; 
 plot(grains,G_Complete.Nodes.Type,'Micronbar','off')
-hold on 
-plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-')
-hold off
-mtexColorbar
 figure; 
 plot(grains,G_Complete.Nodes.Generation,'Micronbar','off')
-hold on 
-plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-')
-hold off
-mtexColorbar
-figure; 
-plot(grains,grains.meanOrientation,'Micronbar','off')
-hold on 
-plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-')
-hold off
-
-% figure; plot(ebsd,ebsd.orientations)
-%% Verify node ID and edge ID are matching up
-figure; 
-plot(grains,G_Complete.Nodes.meanOrientation ,'Micronbar','off')
-hold on 
- p=plot(G_Complete,'XData',G_Complete.Nodes.centroids(:,1),...
-            'YData',G_Complete.Nodes.centroids(:,2),'displayName','graph');
-p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-labeledge(p,G_Complete.Edges.pairs(:,1),...
-    G_Complete.Edges.pairs(:,2),G_Complete.Edges.GlobalID);
-labelnode(p,G_Complete.Nodes.Id,G_Complete.Nodes.Id);
-hold off
-
-figure; 
-plot(grains,G_clust.Nodes.meanOrientation ,'Micronbar','off')
-hold on 
- p=plot(G_clust,'XData',G_clust.Nodes.centroids(:,1),...
-            'YData',G_clust.Nodes.centroids(:,2),'displayName','graph');
-p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-labeledge(p,G_clust.Edges.pairs(:,1),...
-    G_clust.Edges.pairs(:,2),1:length(G_clust.Edges.pairs));
-labelnode(p,G_clust.Nodes.Id,G_clust.Nodes.Id);
-hold off
-
-G_Complete.Edges.pairs(261,:)
-G_Complete.Nodes.meanOrientation(352)
-G_Complete.Nodes.meanOrientation(410)
-G_clust.Edges.pairs(265,:)
 %%
 % Compare results with boundaries 
 % Mistol=5*degree
-[twinBoundary] = GetTwinBoundaries(G_Complete,grains,mergedGrains,twin,8*degree);
+[twinBoundary] = GetTwinBoundaries(G_Complete,grains,twin,8*degree);
 % toc/60
 % Need to rethink how grains are selected 
-
-%% Extract parent stats for schmid
-G_Complete2 = GetSchmidVariants(G_Complete,twin,sigma)
-% G_Complete2 = GetSchmidRelative(G_Complete,twin,sigma)
-
 
 %% Compute the volume fractions 
 Areas=G_Complete.Nodes.Area;
 T1=sum(Areas(G_Complete.Nodes.Type==1))/ sum(area(grains)) * 100
 T2=sum(Areas(G_Complete.Nodes.Type==2))/ sum(area(grains)) * 100
-C1=sum(Areas(G_Complete.Nodes.Type==3))/ sum(area(grains)) * 100
-C2=sum(Areas(G_Complete.Nodes.Type==4))/ sum(area(grains)) * 100
+C=sum(Areas(G_Complete.Nodes.Type==3))/ sum(area(grains)) * 100
 
-sum([T1 T2 C1 C2])
+sum([T1 T2 C])
 toc
 
 

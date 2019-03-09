@@ -283,14 +283,14 @@ hold on
             'YData',G_clust.Nodes.centroids(:,2),'displayName','graph');
 p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
 labeledge(p,G_clust.Edges.pairs(:,1),...
-    G_clust.Edges.pairs(:,2),1:length(G_clust.Edges.pairs));
+    G_clust.Edges.pairs(:,2),G_clust.Edges.	);
 labelnode(p,G_clust.Nodes.Id,G_clust.Nodes.Id);
 hold off
 
 G_Complete.Edges.pairs(261,:)
 G_Complete.Nodes.meanOrientation(352)
 G_Complete.Nodes.meanOrientation(410)
-G_clust.Edges.pairs(265,:)
+G_clust.Edges.pairs(781,:)
 %%
 % Compare results with boundaries 
 % Mistol=5*degree

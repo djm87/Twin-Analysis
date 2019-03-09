@@ -1,0 +1,87 @@
+function G = GetSchmidVariants(G,twin,sigma)
+%The script returns the effective schmid factor on K1 plane in the eta1
+%direction. In addition, the symmetry operators are returned so the exact
+%twin variant is known.
+
+    % extract grains 
+%     grainIdP = G.Edges.pairs(G.Edges.Parent);
+%     grainsP = G.Nodes.meanOrientation(grainIdP);
+%     grainIdC = G.Edges.pairs(~G.Edges.Parent); 
+%     grainsC = G.Nodes.meanOrientation(grainIdC);
+%     TypeC = G.Nodes.Type(grainIdC)
+    
+%     grainIdP = G.Edges.pairs(:,1);
+%     grainIdC = G.Edges.pairs(:,2);
+%     grainsP = G.Nodes.meanOrientation(grainIdP);
+%     grainsC = G.Nodes.meanOrientation(grainIdC);
+%     TypeC=G.Edges.type;
+    
+    
+    %Compute the max shear with principle stresses
+    %Remember that principle stresses are eigenvalues and the ordering of
+    %the principle stress is from large (1) to small (3). Look at mohrs 
+    %circle for info.
+    sigmaPrinciple = sigma.eig;
+    tauMax = (max(sigmaPrinciple) - min(sigmaPrinciple)) / 2;  
+    
+    %Allocate arrays for storage
+    ngrains = length(G.Nodes.Id);
+    nedges = length(G.Edges.pairs);
+    sigma13 = zeros(nedges,2);
+    grainEffSF = zeros(ngrains, max(G.Edges.type));
+    isAxisVariantSchmidRanking = zeros(nedges,1,'uint8');
+    %Loop over twin types
+    %Set the symmetry operator for the twin
+    %Loop over edges
+    for i = 1:nedges  
+            grainIdP = G.Edges.pairs(i,G.Edges.Parent(i,:));
+            grainsP = G.Nodes.meanOrientation(grainIdP);
+            grainIdC = G.Edges.pairs(i,~G.Edges.Parent(i,:));
+            grainsC = G.Nodes.meanOrientation(grainIdC);
+            TypeC = G.Nodes.Type(grainIdC)
+        
+            type=TypeC;
+%             type=1
+            CS = twin{type}.CS;
+
+            %Verify twin variant selection 
+            twinAxes=twin{type}.axis.symmetrise;
+            vari=grainsP*twinAxes;
+            %set a rotation around that axis
+            rot=rotation('axis',vari,'angle',twin{type}.angle*degree);
+
+            % rotate around the twin axis,
+            oriV=rot*grainsP;
+            %calculate misorientation between twin variants in the second
+            %grain
+            mis=angle(oriV, grainsC,'noSymmetry')/degree %all the varients of the twin mode
+
+            [misIdeal,TwinVarActive]=min(abs(mis)); %active twin variant
+%             misIdeal
+%             twinAxes(TwinVarActive)
+            TwinVarActive
+            G.Edges.isAxisVariant(i)
+            tic
+
+%             gA=inv(grainsA(i).symmetrise); 
+%             gB=inv(grainsB(i).symmetrise);
+% 
+%             sigmaA = matrix(twin{type}.Rtw * (gA(sym_ops(i,1)) * sigma));
+%             sigmaB = matrix(twin{type}.Rtw * (gB(sym_ops(i,2)) * sigma));
+%             sigma13(i,1)=sigmaA(1,3);
+%             sigma13(i,2)=sigmaB(1,3);
+
+%             grainEffSF(grainIdA(i),type) = sigma13(i,1) / (2*tauMax);
+
+
+    end %Loop over edges
+    
+    %Store arrays
+%     G.Nodes.EffSF = grainEffSF;
+%     G.Edges.sigma13 = sigma13;
+%     G.Edges.isAxisVariant=isAxisVariant;
+%     G.Edges.EffSF = sigma13 ./ (2 * tauMax);
+%     G.Edges.EffSFRelative = G.Edges.EffSF(:,1) - G.Edges.EffSF(:,2);
+    
+end
+

@@ -15,7 +15,7 @@ function [mergedGrains,parentId,combinedTwinBoundary,combine] = MergeByEdge(G,co
             count=count+1;
             isTwinning=sum(G.Edges.pairs(i,:)==gB_mineral.grainId,2)==2;
             twinBoundary{count} = gB_mineral(isTwinning);
-            if size(twinBoundary{count},1)<4
+            if size(twinBoundary{count},1)<8
                twinBoundary(count)=[];
                count=count-1; 
                combine(i)=false;

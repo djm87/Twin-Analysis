@@ -46,7 +46,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         
         %Check if a family has the same relationship with more than one
         %twin varient
-        if max(nFamily)>2 %i.e. more than parent and one twin type
+        if max(nFamily)>100%usualy 2 %i.e. more than parent and one twin type
             for j = 1:max(nFamily)
                 for k = 1:max(eType)
                     %Get current edges
@@ -68,7 +68,9 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             end
         end
         %Sum the votes for a family 
-        
+        if any(sum(Parent,2)==2)
+            Parent = zeros(size(ePairs,1),2,'logical');
+        end
         %To Do:
         %start building the tree here!
         %Add circular 
