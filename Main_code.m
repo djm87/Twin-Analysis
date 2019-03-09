@@ -65,7 +65,7 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.k1=Miller(1,0,-1,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(-1,0,1,1,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta, compound K1 then eta1, compound eta1 then K1
- twin{tnum}.variantsToUse=1 
+ twin{tnum}.variantsToUse=1; 
 
  tnum=2;
  twin{tnum}.CS=CS{2};
@@ -73,7 +73,7 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.k1=Miller(-1,-1,2,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(1,1,-2,6,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta, compound K1 then eta1, compound eta1 then K1
- twin{tnum}.variantsToUse=1 
+ twin{tnum}.variantsToUse=1;
  
  tnum=3;
  twin{tnum}.CS=CS{2};
@@ -81,7 +81,7 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.k1=Miller(-1,-1,2,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(-1,-1,2,-3,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
-  twin{tnum}.variantsToUse=1 
+  twin{tnum}.variantsToUse=1;
  
 %  tnum=4;
 %  twin{tnum}.CS=CS{2};
@@ -166,8 +166,9 @@ G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 
 %% Compute Schmid info for twin/parents in clustered grains
 %This computes Schmid factor for twin/parent identification
+
+%Should be updated with the mtex method as in GetSChmidVariants
 G_clust = GetSchmidRelative(G_clust,twin,sigma);
-G_Complete2 = GetSchmidVariants(G_clust,twin,sigma)
 
 tmp=G_clust.Nodes.EffSF(:,1);
 notZero=tmp<0;
@@ -299,9 +300,14 @@ G_clust.Edges.pairs(265,:)
 % Need to rethink how grains are selected 
 
 %% Extract parent stats for schmid
-G_Complete2 = GetSchmidVariants(G_Complete,twin,sigma)
-% G_Complete2 = GetSchmidRelative(G_Complete,twin,sigma)
 
+G_Complete = GetSchmidVariants(G_Complete,twin,sigma);
+figure;
+hist(G_Complete.Edges.schmidActive)
+figure;
+hist(G_Complete.Edges.schmidActiveN)
+figure;
+hist(G_Complete.Edges.schmidActiveRank)
 
 %% Compute the volume fractions 
 Areas=G_Complete.Nodes.Area;

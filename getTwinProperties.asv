@@ -14,6 +14,7 @@ function [twin] = getTwinProperties(twin)
             twin{i}.Rtw(2)=orientation.map(twin{i}.k1(2),twin{i}.CS.cAxis,...
                 twin{i}.eta1(2),twin{i}.CS.aAxis);
             
+            twin{i}.RMT=twin{i}.Rtw(1)'*tType{twin{i}.actType}*twin{i}.Rtw(1)
             % Create the twin misorientation
             twin{i}.RMT=twin{i}.Rtw(1)'*tType{twin{i}.actType}*twin{i}.Rtw(1)*twin{i}.CS*...
                 twin{i}.Rtw(2)'*tType{twin{i}.actType}*twin{i}.Rtw(2);
@@ -58,10 +59,6 @@ function [twin] = getTwinProperties(twin)
             
             % Compute twin axis variants 
             twin{i}.axisVariants=twin{i}.axis.symmetrise;
-            
-            % Compute the slip systems for schmid calculations
-            twin{i}.sS=slipSystem(twin{i}.eta1,twin{i}.k1);
-
         end
     end
 end
