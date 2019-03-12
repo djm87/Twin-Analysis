@@ -39,7 +39,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             for k = 1:max(eType)
             FamilyInPair = ismember(eFamily(:,:),j);
             [r,c]=find(FamilyInPair);
-            FamilyInPair(FamilyInPair) = eType(r)==k
+            FamilyInPair(FamilyInPair) = eType(r)==k;
             FamilyRelationList{j,k} = FamilyInPair;
             end
         end
@@ -104,9 +104,9 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             c=eFamily(j,~Parent(j,:)); 
             FamilyMatrix(p,c)=true;
         end
-        FamilyMatrix 
+        FamilyMatrix ;
         %Find child of none
-        FamilyTreeParent=find(sum(FamilyMatrix,1)==0)
+        FamilyTreeParent=find(sum(FamilyMatrix,1)==0);
 %         assert(~isempty(FamilyTreeParent),'no clear parent from relationships!')
         if 1==0
             %visualize grain to debug             
@@ -157,7 +157,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
                     EdgeMatrix(p,c,4)=eFamily(k,~Parent(k,:));
                 end
                 for k = 1:length(pF)
-                EdgeMatrix(:,:,5)=EdgeMatrix(:,:,5)+uint8(and(EdgeMatrix(:,:,3)==pF(k),EdgeMatrix(:,:,4)==cF))
+                EdgeMatrix(:,:,5)=EdgeMatrix(:,:,5)+uint8(and(EdgeMatrix(:,:,3)==pF(k),EdgeMatrix(:,:,4)==cF));
                 end
                 circularEdge=find(sum(EdgeMatrix(:,:,5),1)>1);
     %             assert(all(sum(EdgeMatrix,1)<3),'Need to handle multiple circular relationships with single Parent')
@@ -172,7 +172,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
     %                 circularEdgeId=
 
 
-                    cE=circularEdge(k)
+                    cE=circularEdge(k);
                     pE=find(EdgeMatrix(:,cE,1)==1);
                     eId=zeros(length(pE),1);
                     eFId=zeros(length(pE),1);
@@ -187,14 +187,14 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
                         EffSF(kk)=G_Complete.Edges.EffSF(egroupId(eId(kk)),Parent(eId(kk),:));    
                     end
                      
-                    eGlobalId(eId)
-                    [ePairs(eId,:),eFamily(eId,:),Parent(eId,:)]
+                    eGlobalId(eId);
+                    [ePairs(eId,:),eFamily(eId,:),Parent(eId,:)];
                     
                     
                     %group edges with same family edge relationship and
                     %assign max schmid for the family
-                    [uniqueParent,IA,IC]=unique(eFId)
-                    vecUnique=1:length(uniqueParent)
+                    [uniqueParent,IA,IC]=unique(eFId);
+                    vecUnique=1:length(uniqueParent);
                     if length(uniqueParent)~=1
                         for kk=vecUnique
                            group=kk==IC;
@@ -215,7 +215,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
                         else
                             [EffSF_sorted,EffSF_I]=sort(EffSF);
                             rEdge=[rEdge;eId(EffSF~=EffSF_sorted(end))];
-                            eGlobalId(eId(EffSF~=EffSF_sorted(end)))
+                            eGlobalId(eId(EffSF~=EffSF_sorted(end)));
                         end
                     end
 
@@ -223,7 +223,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             end           
         end
         
-        eGlobalId(rEdge)
+        eGlobalId(rEdge);
         %Remove the edges
         rEdgeId=egroupId(rEdge);
         removeEdges=zeros(size(G_Complete.Edges.pairs,1),1,'logical');
@@ -238,20 +238,20 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         eFamily = G_Complete.Edges.FamilyID(egroupId,:);
         eGlobalId = G_Complete.Edges.GlobalID(egroupId);
         Parent(rEdge,:)=[];   
-        G_Complete.Edges.Parent(egroupId,:)=Parent
+        G_Complete.Edges.Parent(egroupId,:)=Parent;
 
         %Recalculate Parent 
         FamilyMatrix=zeros(max(nFamily),'logical');
-        FamilyTree=zeros(max(nFamily),1)
+        FamilyTree=zeros(max(nFamily),1);
         %Make Family Tree 
         for j = 1:size(eFamily,1)
             p=eFamily(j,Parent(j,:));
             c=eFamily(j,~Parent(j,:)); 
             FamilyMatrix(p,c)=true;
         end
-        [ePairs,eFamily,Parent]
+        [ePairs,eFamily,Parent];
 
-        if (~isempty(find(sum(FamilyMatrix,1)>1)))
+        if (~isempty(find(sum(FamilyMatrix,1)>1)));
             runCleanupAgain=true;
         end
 %         assert(isempty(find(sum(FamilyMatrix,1)>1)),'the circular relation routine failed this case.. debug')

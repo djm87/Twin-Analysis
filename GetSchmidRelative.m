@@ -24,6 +24,8 @@ function G = GetSchmidRelative(G,twin,sigma)
     
     %Allocate arrays for storage
     sigma13 = zeros(nedges,2);
+    EffSFRelative = zeros(nedges,1);
+    EffSF = zeros(nedges,2);
 %     sym_ops = zeros(nedges,2);
     grainEffSF = zeros(ngrains, max(G.Edges.type));
   
@@ -57,14 +59,17 @@ function G = GetSchmidRelative(G,twin,sigma)
         %Compute the effective schmid factor
         grainEffSF(grainIdA(i),type) = sigma13(i,1) / (2*tauMax);
         grainEffSF(grainIdB(i),type) = sigma13(i,2) / (2*tauMax);
+        EffSF(i,1) = sigma13(i,1) / (2*tauMax);
+        EffSF(i,2) = sigma13(i,1) / (2*tauMax);
         
+        EffSFRelative(i) = (sigma13(i,1) - sigma13(i,2)) / (2*tauMax);
 
     end %Loop over edges
     
     %Store arrays
     G.Edges.sigma13 = sigma13;
     G.Nodes.EffSF = grainEffSF;
-    G.Edges.EffSFRelative = G.Edges.EffSF(:,1) - G.Edges.EffSF(:,2);
-    
+    G.Edges.EffSFRelative = EffSFRelative;
+    G.Edges.EffSF = EffSF;
 end
 
