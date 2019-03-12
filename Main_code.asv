@@ -303,19 +303,73 @@ G_clust.Edges.pairs(265,:)
 
 G_Complete = GetSchmidVariants(G_Complete,twin,sigma);
 figure;
-hist(G_Complete.Edges.schmidActive)
+hist(G_Complete.Edges.schmidActive) %Value of active schmid
 figure;
-hist(G_Complete.Edges.schmidActiveN)
-
+hist(G_Complete.Edges.schmidActiveN) %variant of rotation of the axis variant that is active
+figure;
+hist(G_Complete.Edges.schmidActiveRank) %variant order in decreasing SF
 
 %% Compute the volume fractions 
+
+%Move to a function
 Areas=G_Complete.Nodes.Area;
 T1=sum(Areas(G_Complete.Nodes.Type==1))/ sum(area(grains)) * 100
 T2=sum(Areas(G_Complete.Nodes.Type==2))/ sum(area(grains)) * 100
 C1=sum(Areas(G_Complete.Nodes.Type==3))/ sum(area(grains)) * 100
 C2=sum(Areas(G_Complete.Nodes.Type==4))/ sum(area(grains)) * 100
 
+
 sum([T1 T2 C1 C2])
 toc
 
+%% Fit ellipses
 
+alongated_grains = grains(grains.aspectRatio > 5);
+
+% get the grain alongation
+dir = alongated_grains.principalComponents;
+
+% transfer this into degree and project it into the interval [0,180]
+dir = mod(dir./degree,180);
+
+% plot the direction
+plot(alongated_grains,dir,'micronbar','off')
+G_Complete.Nodes.Type>0
+selection=G_Complete.Nodes.Id(G_Complete.Nodes.Type>0);
+
+[omega,a,b] = fitEllipse(grains(selection));
+figure;
+plot(grains,grains.meanOrientation)
+hold on
+plotEllipse(grains(selection).centroid,a,b,omega,'lineColor','w','linewidth',2)
+hold off
+
+ebsd2=ebsd;
+
+
+%% Prototype removing a line 
+Gid1=402
+Gid2=399
+uc= ebsd.unitCell 
+xdist = sqrt(3)*sqrt((uc(1,1)-uc(4,1))^2+(uc(1,2)-uc(4,2))^2)
+v=grains(402).centroid-grains(399).centroid;
+vo=grains(399).centroid
+u=v/norm(v);
+vp=[u(2),-u(1)]*xdist
+polyRegion=[grains(402).centroid-vp/4;grains(402).centroid+vp/4;
+    grains(399).centroid+vp/4;grains(399).centroid-vp/4]
+
+% figure;plot(grains(402),grains(402).meanOrientation)
+
+% figure;scatter(polyRegion(:,1),polyRegion(:,2))
+% rectangle('position',polyRegion,'edgecolor','r','linewidth',2)
+
+%
+ebsd2(ebsd2.inpolygon(polyRegion)).orientations=grains(402).meanOrientation;
+
+figure;plot(ebsd2,ebsd2.orientations)
+
+%% Call reconstruction 
+[ebsd2,G_Complete] = fragmentReconstruction(G_Complete,ebsd,grains)
+figure;plot(ebsd2,ebsd2.orientations)
+figure; plot(grains(G_Complete.Nodes.MergeTwin),grains(G_Complete.Nodes.MergeTwin).meanOrientation)

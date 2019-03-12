@@ -66,17 +66,19 @@ function G = GetSchmidRelative(G,twin,sigma)
         %determines active twin variant
         [~,activeVariant] = min(abs(mis)); 
         
-        %determine the schmid on each twin variant
-        schmidVariants = twin{type}.sS.SchmidFactor(oriV \ sigma);
-        
+        %determine the schmid on each twin variant. The schmid in the twin
+        %is the negative of the parent. We want the parent stats so multipy
+        %by -
+        schmidVariants = -twin{type}.sS.SchmidFactor( oriV \ sigma);
+
         %rank the twin variant
-        [~,schmidVariantRank] = sort(abs(schmidVariants),'descend');
+        [~,schmidVariantRank] = sort(schmidVariants,'descend');
         
         noriV = length(oriV);
         schmid(i,1:noriV) = schmidVariants;
         schmidRank(i,1:noriV) = schmidVariantRank;
         schmidActiveN(i) = activeVariant;
-        schmidActiveRank(i) = schmidVariantRank(activeVariant);
+        schmidActiveRank(i) = find(schmidVariantRank==activeVariant);
         schmidActive(i) = schmidVariants(activeVariant);
 
     end %Loop over edges
