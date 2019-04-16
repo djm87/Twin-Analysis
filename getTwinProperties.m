@@ -1,7 +1,10 @@
 function [twin] = getTwinProperties(twin)
 %getTwinProperties Summary of this function goes here
     ntwin=length(twin);
+    toRemove=zeros(ntwin,1,'logical');
+    newTwinCnt=1;
     for i=1:ntwin
+        i
         %Define the transformation types
         tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
         tType{2}=orientation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS);   
@@ -26,23 +29,16 @@ function [twin] = getTwinProperties(twin)
             twin{i}.axis=round(twin{i}.RMT.axis);
             twin{i}.angle=angle(twin{i}.RMT)/degree;
             
-            twin{ntwin+1}=twin{i};
-            twin{ntwin+2}=twin{i};
-            twin{ntwin+1}.RMT=twin{i}.RMT(1);
-            twin{ntwin+2}.RMT=twin{i}.RMT(2);
-            twin{ntwin+1}.angle=twin{i}.angle(1);
-            twin{ntwin+2}.angle=twin{i}.angle(2);
-            twin{ntwin+1}.axis=twin{i}.axis(1);
-            twin{ntwin+2}.axis=twin{i}.axis(2);sS = slipSystem(twin{i}.eta1(1),twin{i}.k1(1));
-            twin{ntwin+1}.sS=slipSystem(twin{i}.eta1(1),twin{i}.k1(1));
-            twin{ntwin+2}.sS=slipSystem(twin{i}.eta1(2),twin{i}.k1(2));
-            twin{ntwin+1}.axisVariants=twin{ntwin+1}.axis.symmetrise;
-            twin{ntwin+2}.axisVariants=twin{ntwin+1}.axis.symmetrise;
-            twin{ntwin+1}.name=twin{i}.name(1);
-            twin{ntwin+2}.name=twin{i}.name(2);
-            twin{ntwin+1}.variantsToUse=1;
-            twin{ntwin+2}.variantsToUse=1;
-            twin(i)=[];
+            twin{ntwin+newTwinCnt}=twin{i};
+            twin{ntwin+newTwinCnt}.RMT=twin{i}.RMT;
+            twin{ntwin+newTwinCnt}.angle=twin{i}.angle;
+            twin{ntwin+newTwinCnt}.axis=twin{i}.axis;
+            twin{ntwin+newTwinCnt}.sS=slipSystem(twin{i}.eta1(1),twin{i}.k1(1));
+            twin{ntwin+newTwinCnt}.axisVariants=twin{ntwin+1}.axis.symmetrise;
+            twin{ntwin+newTwinCnt}.name=twin{i}.name;
+            twin{ntwin+newTwinCnt}.variantsToUse=1;
+            newTwinCnt=newTwinCnt+1;
+            toRemove(i)=true;
         else
             %Define the twin frame Rtw such that Rtw transforms crystal to twin
             twin{i}.Rtw=orientation.map(twin{i}.k1,twin{i}.CS.cAxis,...
@@ -64,6 +60,7 @@ function [twin] = getTwinProperties(twin)
 
         end
     end
+    twin(find(toRemove))=[];
 end
 
 % function [Rtw] = getRtw(k1in,eta1in,CS)

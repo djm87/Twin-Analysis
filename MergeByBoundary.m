@@ -1,4 +1,4 @@
-function [G,mergedGrains] = MergeByBoundary(G,grains,Mistol,twin)
+function [G,mergedGrains,twinBoundary] = MergeByBoundary(G,grains,Mistol,twin)
 %Applies standard mtex grain merging from boundaries.
     ntwins=length(twin);
     mineral=grains.mineral;
@@ -66,6 +66,8 @@ function [G,mergedGrains] = MergeByBoundary(G,grains,Mistol,twin)
         hold off
         p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
     hold off
+    
+    
 
 end
 

@@ -16,8 +16,8 @@ try
   %Need to handle data like prius or EDS
   nCols=size(data,2);
   
-  colNames={'phi1','Phi','phi2','x','y','ImageQuality',...
-    'ConfidenceIndex','Phase','SemSignal','Fit'};
+  colNames={'phi1','Phi','phi2','x','y','iq',...
+    'ci','Phase','SemSignal','Fit'};
   if nCols > 10
       for col = length(colNames)+1:nCols
           colNames{col}=strcat('unknown_',int2str(col)); 

@@ -4,7 +4,7 @@ function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twin,...
 %Clusters grains by removing edges of grains that should not be combined
     %Returns G.Edges.combineBoundary and G.Edges.groupMerge (currently not
     %returned)
-    [G,mergedGrains]= MergeByBoundary(G,grains,Mistol,twin) 
+    [G,mergedGrains,twinBoundary]= MergeByBoundary(G,grains,Mistol,twin) 
     
     %Compute misorientation between all pairs
     mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
@@ -52,17 +52,40 @@ function G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,twin,...
         figure;
         plot(grains,grains.meanOrientation,'Micronbar','off','silent');
         hold on 
-        plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-',...
-        'displayName','merged grains')
-        plot(combinedTwinBoundary,'linecolor','w','linewidth',2,'displayName','merging boundary');
+%         plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-',...
+%         'displayName','merged grains')
+        colors=hsv(length(twin));
+        for i=1:length(twin)
+            plot(twinBoundary{i},'linecolor',colors(i,:),'linewidth',2,'displayName',twin{i}.name);
+        end
+%         plot(combinedTwinBoundary,'linecolor','w','linewidth',2,'displayName','merging boundary');
         p=plot(G_clust,'XData',G_clust.Nodes.centroids(:,1),...
             'YData',G_clust.Nodes.centroids(:,2),'displayName','graph');
+         plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-',...
+        'displayName','merged grains')
         hold off
         p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
         if dolabel
             labeledge(p,G_clust.Edges.pairs(:,1),...
                 G_clust.Edges.pairs(:,2),G_clust.Edges.GlobalID);
         end
+        
+%         figure; 
+%         plot(grains,grains.meanOrientation,'Micronbar','off')
+%         hold on 
+%         colors=hsv(ntwins);
+%         for i=1:ntwins
+%             plot(twinBoundary{i},'linecolor',colors(i,:),'linewidth',2,'displayName',twin{i}.name);
+%         end
+%         plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-',...
+%             'displayName','merged grains')
+%         p=plot(G,'XData',G.Nodes.centroids(:,1),...
+%                 'YData',G.Nodes.centroids(:,2),'displayName','graph');
+%             hold off
+%             p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
+%         hold off
+        
+        
     end
 end
 

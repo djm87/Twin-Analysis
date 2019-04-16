@@ -7,7 +7,7 @@ function [G_Complete] = BuildTwinRelationships(G_clust,grains,w,twin,sigma,seg_a
     %Should be updated with the mtex method as in GetSChmidVariants
     G_clust = GetSchmidRelative(G_clust,twin,sigma);
 
-    tmp=G_clust.Nodes.EffSF(:,1);
+    tmp=G_clust.Nodes.EffSF(:,2);
     notZero=tmp<0;
       figure; 
         plot(grains(G_clust.Nodes.Id(notZero)),...

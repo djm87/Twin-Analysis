@@ -80,15 +80,15 @@ meanMistolRelaxed=15*degree; %used when including twin boundaries
  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta, compound K1 then eta1, compound eta1 then K1
  twin{tnum}.variantsToUse=1;
  
-%  tnum=4;
-%  twin{tnum}.CS=CS{2};
-%  twin{tnum}.name=['DT1 (10-12)-(10-1-1)','DT2 (10-12)-(10-1-1)'];
-%  twin{tnum}.k1(2)=Miller(1,0,-1,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
-%  twin{tnum}.k1(1)=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
-%  twin{tnum}.eta1(2)=Miller(-1,0,1,1,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
-%  twin{tnum}.eta1(1)=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
-%  twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta   
-%  twin{tnum}.variantsToUse=[1,2]; %ordered from least rotation to highest
+ tnum=4;
+ twin{tnum}.CS=CS{2};
+ twin{tnum}.name=['DT1 (10-12)-(10-1-1)','DT2 (10-12)-(10-1-1)'];
+ twin{tnum}.k1(2)=Miller(1,0,-1,2,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
+ twin{tnum}.k1(1)=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
+ twin{tnum}.eta1(2)=Miller(-1,0,1,1,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
+ twin{tnum}.eta1(1)=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
+ twin{tnum}.actType=1; %i.e. 180 around K1, 180 around eta   
+ twin{tnum}.variantsToUse=[1,2]; %ordered from least rotation to highest
 
  %Compute twin properties 
  twin=getTwinProperties(twin);

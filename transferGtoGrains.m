@@ -1,4 +1,4 @@
-function [grains] = transferGtoGrains(G_Complete,grains)
+function [grains] = transferGtoGrains(G_Complete,grains,mergedGrains)
 %The graph structure is only need for computations, not for storing the
 %analysis for datamining key variables are outputed for further analysis
     grains.prop.EffSF=G_Complete.Nodes.EffSF;
@@ -16,20 +16,25 @@ function [grains] = transferGtoGrains(G_Complete,grains)
     grains.prop.schmidActiveRank = zeros(length(grains),1);
     grains.prop.schmidActiveN = zeros(length(grains),1);
     grains.prop.schmid = zeros(length(grains),size(G_Complete.Edges.schmid,2));
-
-
+    
+    area=grains.area;
     for i=1:max(G_Complete.Edges.Group) 
         egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
         ePairs = G_Complete.Edges.pairs(egroupId,:);
         eParent = G_Complete.Edges.Parent(egroupId,:);
-        
+         ngroupId = find((i==G_Complete.Nodes.Group)==true);
+        nId = G_Complete.Nodes.Id(ngroupId);
+        grains.prop.totalForTwinnedArea(nId)=sum(area(nId));
         grains.prop.schmidRank(ePairs(eParent)) = G_Complete.Edges.schmidRank(egroupId);
         grains.prop.schmidActive(ePairs(eParent)) = G_Complete.Edges.schmidActive(egroupId);
         grains.prop.schmidActiveRank(ePairs(eParent)) = G_Complete.Edges.schmidActiveRank(egroupId);
         grains.prop.schmid(ePairs(eParent),:) = G_Complete.Edges.schmid(egroupId,:);
         grains.prop.schmid(ePairs(eParent)) = G_Complete.Edges.schmidActiveN(egroupId);
-
+        
     end
+    grains.prop.totalForAllArea=grains.prop.totalForTwinnedArea;
+    grains.prop.totalForAllArea(grains.prop.totalForTwinnedArea==0)=...
+        area(grains.prop.totalForTwinnedArea==0);
 
 end
 

@@ -89,6 +89,10 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
                 toSet([notSet notSet])=false;
                 Parent(toSet) = true;
             end
+            if any(sum(Parent,2)==2)
+                id=find(sum(Parent,2)==2)
+                Parent(id,1)=false;
+            end
             if all(sum(Parent,2)) 
                 break;
             end
@@ -153,7 +157,11 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
                     c=find(ePairs(k,~Parent(k,:))==nId);
                     EdgeMatrix(p,c,1)=1;
                     EdgeMatrix(p,c,2)=k;
+                    try
                     EdgeMatrix(p,c,3)=eFamily(k,Parent(k,:));
+                    catch
+                       tic 
+                    end
                     EdgeMatrix(p,c,4)=eFamily(k,~Parent(k,:));
                 end
                 for k = 1:length(pF)

@@ -80,9 +80,10 @@ function G = GetSchmidRelative(G,twin,sigma)
         schmidActiveN(i) = activeVariant;
         schmidActiveRank(i) = find(schmidVariantRank==activeVariant);
         schmidActive(i) = schmidVariants(activeVariant);
-
-        k1NormalAngle(grainIdC(i))=cos(angle(oriV(activeVariant) \ twin{type}.k1,Miller(0,0,0,1,twin{type}.CS)));
-    end %Loop over edges
+        if length(twin{type}.k1)==1
+            k1NormalAngle(grainIdC(i))=cos(angle(oriV(activeVariant) \ twin{type}.k1,Miller(0,0,0,1,twin{type}.CS)));
+        end
+        end %Loop over edges
     
     %Store arrays in table
     G.Edges.schmid = schmid;

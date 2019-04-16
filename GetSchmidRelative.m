@@ -60,7 +60,7 @@ function G = GetSchmidRelative(G,twin,sigma)
         grainEffSF(grainIdA(i),type) = sigma13(i,1) / (2*tauMax);
         grainEffSF(grainIdB(i),type) = sigma13(i,2) / (2*tauMax);
         EffSF(i,1) = sigma13(i,1) / (2*tauMax);
-        EffSF(i,2) = sigma13(i,1) / (2*tauMax);
+        EffSF(i,2) = sigma13(i,2) / (2*tauMax);
         
         EffSFRelative(i) = (sigma13(i,1) - sigma13(i,2)) / (2*tauMax);
 

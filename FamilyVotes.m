@@ -117,8 +117,8 @@ function G = FamilyVotes(G,w)
     end
 
     function Vote = CalcVote(FREffSF,RFArea,FRgB,w)
-        Vote(:,1) = w(1)*FREffSF(:,1)+w(2)*RFArea(:,1)+w(3)*FRgB(:,1);
-        Vote(:,2) = w(1)*FREffSF(:,2)+w(2)*RFArea(:,2)+w(3)*FRgB(:,2);    
+            Vote(:,1) = w(1)*FREffSF(:,1)+w(2)*RFArea(:,1)+w(3)*FRgB(:,1);
+            Vote(:,2) = w(1)*FREffSF(:,2)+w(2)*RFArea(:,2)+w(3)*FRgB(:,2);    
     end
 end
 
