@@ -33,7 +33,8 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         %Initialize parent
         Parent = zeros(size(ePairs,1),2,'logical');
 
-        %Make list of each family relation  
+        %Returns max(nFamily) x max(eType) cell array containing a logical
+        %array of size(ePairs) of the family correlated with the edge Type 
         FamilyRelationList = cell(max(nFamily),max(eType));
         for j = 1:max(nFamily)
             for k = 1:max(eType)
@@ -43,7 +44,8 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             FamilyRelationList{j,k} = FamilyInPair;
             end
         end
-        
+       
+        %{
         %Check if a family has the same relationship with more than one
         %twin varient
         if max(nFamily)>100%usualy 2 %i.e. more than parent and one twin type
@@ -71,6 +73,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         if any(sum(Parent,2)==2)
             Parent = zeros(size(ePairs,1),2,'logical');
         end
+        %}
         %To Do:
         %start building the tree here!
         %Add circular 
@@ -90,7 +93,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
                 Parent(toSet) = true;
             end
             if any(sum(Parent,2)==2)
-                id=find(sum(Parent,2)==2)
+                id=find(sum(Parent,2)==2) %How do we avoid this altogether?
                 Parent(id,1)=false;
             end
             if all(sum(Parent,2)) 
@@ -108,7 +111,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
             c=eFamily(j,~Parent(j,:)); 
             FamilyMatrix(p,c)=true;
         end
-        FamilyMatrix ;
+        FamilyMatrix 
         %Find child of none
         FamilyTreeParent=find(sum(FamilyMatrix,1)==0);
 %         assert(~isempty(FamilyTreeParent),'no clear parent from relationships!')

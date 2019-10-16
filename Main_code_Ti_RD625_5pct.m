@@ -58,6 +58,7 @@ meanMistolRelaxed=10*degree; %used when including twin boundaries
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 %Notes: All HCP are compound twins. Don't both with the types.
 %Specify the twins
+%Move to twin database
  twin={};
  tnum=1;
  twin{tnum}.CS=CS{2};
@@ -82,14 +83,15 @@ meanMistolRelaxed=10*degree; %used when including twin boundaries
  twin{tnum}.eta1=Miller(-1,-1,2,-3,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
   twin{tnum}.variantsToUse=1 
- 
- tnum=4;
+  
+ twin={};
+ tnum=1;
  twin{tnum}.CS=CS{2};
  twin{tnum}.name='C2 <10-12>(10-1-1)';
  twin{tnum}.k1=Miller(-1,0,1,1,twin{tnum}.CS,'hkl'); %What you specify here affects sign and schmid value
  twin{tnum}.eta1=Miller(1,0,-1,2,twin{tnum}.CS,'uvtw'); %What you specify here affects sign and schmid value
  twin{tnum}.actType=1; %(pick 1-4):180 around K1, 180 around eta1, compound - K1 then eta1, compound - eta1 then K1
-  twin{tnum}.variantsToUse=1 
+ twin{tnum}.variantsToUse=1 
  %Compute twin properties 
  twin=getTwinProperties(twin);
  
@@ -98,7 +100,7 @@ meanMistolRelaxed=10*degree; %used when including twin boundaries
 %  tnum=3;
 %  figure(19);plot(crystalShape.hex(CS{2}),'FaceAlpha',0.5)
 %  hold on 
-%  arrow3d(1.2*normalize(vector3d(twin{tnum}.k1)),'facecolor','black')
+%  arrow3d(1.0*normalize(vector3d(twin{tnum}.k1)),'facecolor','black')
 %  arrow3d(0.8*normalize(vector3d(twin{tnum}.eta1)),'facecolor','black')
 %  arrow3d(normalize(vector3d(twin{tnum}.Rtw * twin{tnum}.k1)),'facecolor','green')
 %  arrow3d(normalize(vector3d(twin{tnum}.Rtw * twin{tnum}.eta1)),'facecolor','green')
@@ -106,8 +108,9 @@ meanMistolRelaxed=10*degree; %used when including twin boundaries
 % %  arrow3d(0.8*normalize(vector3d(CS{2}.bAxis)),'facecolor','red')
 %  arrow3d(0.8*normalize(vector3d(CS{2}.cAxis)),'facecolor','red')
 %  hold off
- %
- %Specify specimen stress state
+%
+
+%Specify specimen stress state
 sigma = stressTensor([0 0 0; 0 0 0; 0 0 -1]) %Sign of loading does more than just invert twin/parent flag
 %% Import the Data
 % create an EBSD variable containing the data

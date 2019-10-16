@@ -4,7 +4,7 @@ function [twin] = getTwinProperties(twin)
     toRemove=zeros(ntwin,1,'logical');
     newTwinCnt=1;
     for i=1:ntwin
-        i
+        
         %Define the transformation types
         tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
         tType{2}=orientation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS);   

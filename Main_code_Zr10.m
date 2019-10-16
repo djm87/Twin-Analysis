@@ -145,9 +145,9 @@ G_clust_twin = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
 
 %% Create user list to delete incorrect twin relationships
 %Remove edges that that don't look right for a twin.
-edgeList2Remove=[4246,2803,2812,652,743,810,3441,3375,3352,3351,3615,4101,4387,4288,4250,4275,3385,3384,1801,1798,1810,1809,1814,1766,2353,1806,2961,3044,3096,3140,...
-    3000,3175,2409,2315,2144,2295,2031,2019,2020,1995]; % number of edge from label 
-
+% edgeList2Remove=[4246,2803,2812,652,743,810,3441,3375,3352,3351,3615,4101,4387,4288,4250,4275,3385,3384,1801,1798,1810,1809,1814,1766,2353,1806,2961,3044,3096,3140,...
+%     3000,3175,2409,2315,2144,2295,2031,2019,2020,1995]; % number of edge from label 
+edgeList2Remove=[];
 doplot=true;
 dolabel=true;
 G_clust = ClusterGrainsTwins(G,grains,Mistol,meanMistolRelaxed,...
@@ -189,6 +189,10 @@ G_clust = AssignFamilyIDs(G_clust,grains,seg_angle_grouped,doplot,dolabel);
 w=[1,1,1]
 G_Complete_unclean = FamilyVotes(G_clust,w);
 
+%% Apply grouping filters
+useVariantGroup=false;
+nVariantGroup=2
+[G_Complete_unclean] = filterClusters(G_Complete_unclean,grains,useVariantGroup,nVariantGroup)
 
 %% Cleanup the family tree
 runCleanup=true

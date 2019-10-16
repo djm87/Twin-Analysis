@@ -1,0 +1,31 @@
+
+TY  - JOUR
+T1  - Automatic twin statistics from electron backscattered diffraction data
+AU  - MARSHALL, P.E.
+AU  - PROUST, G.
+AU  - ROGERS, J.T.
+AU  - MCCABE, R.J.
+Y1  - 2010/06/01
+PY  - 2010
+DA  - 2010/06/01
+N1  - doi: 10.1111/j.1365-2818.2009.03343.x
+DO  - 10.1111/j.1365-2818.2009.03343.x
+T2  - Journal of Microscopy
+JF  - Journal of Microscopy
+JO  - Journal of Microscopy
+SP  - 218
+EP  - 229
+VL  - 238
+IS  - 3
+KW  - EBSD
+KW  - magnesium
+KW  - twinning
+KW  - uranium
+KW  - zirconium
+PB  - John Wiley & Sons, Ltd (10.1111)
+SN  - 0022-2720
+M3  - doi: 10.1111/j.1365-2818.2009.03343.x
+UR  - https://doi.org/10.1111/j.1365-2818.2009.03343.x
+Y2  - 2019/04/16
+N2  - Summary A new computer code has been developed to automatically extract quantitative twin statistics from electron backscatter diffraction data. The new code is an improvement upon previous codes in that it handles materials of any crystal symmetry, type I, Type II and compound twins, and general stress states. Moreover, accuracy of the results has been greatly improved. In addition, twin statistics including number, area fraction, twin thickness and twinning dependencies on orientation, grain size and neighbourhood effects can be routinely analysed. The new code has been applied to scan data from deformed magnesium, zirconium and uranium, and can potentially be used for any twinning material for which reliable electron backscatter diffraction results can be obtained.
+ER  - 
