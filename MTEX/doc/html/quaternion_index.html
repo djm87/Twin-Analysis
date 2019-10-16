@@ -1,0 +1,96 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>Quaternions (The Class quaternion) (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: quaternion_index -->
+      <!-- HEADSTUFF: quaternion_index -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:quaternion_index">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div>
+         <table class="nav" summary="Navigation aid" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline"><b>MTEX</b> - A MATLAB Toolbox for Quantitative Texture Analysis</td>
+            </tr>
+         </table>
+         <p style="font-size:1px;"></p>
+      </div>
+      <div class="content">
+         <h1 class="refname">Quaternions (The Class <a href="quaternion_index.html">quaternion</a>)
+         </h1>
+         <div class="subheading">
+            <p>class representing orientations</p>
+         </div>
+         <div>
+            <table class="content">
+               <tr>
+                  <td class="header">On this page ...</td>
+               </tr>
+               <tr>
+                  <td><a href="#2">Class Description</a></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#3"> Defining quaternions</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#4"> Calculating with three dimensional vectors</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#5"> Conversion</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#6"> Plotting quaternions</a></span></td>
+               </tr>
+               <tr>
+                  <td><a href="#7">Complete Function list</a></td>
+               </tr>
+            </table>
+         </div>
+         <h2>Class Description<a name="2"> </a></h2>
+         <p>The class quaternion allows working with rotations in MTEX, as they occur e.g. as crystal orientation or symmetries. Quaternions
+            may be multiplied with <a href="vector3d_index.html">three-dimensional vecotors</a> which means rotating the vector or may be multiplied with another quaternion which means to concatenate both rotations.
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Defining quaternions<a name="3"> </a></h3>
+         <p>The standard way is to define a quaternion q is to give its coordinates (a,b,c,d). However, making use of one of the following
+            conversion methods is much more human readable.
+         </p><pre>q = <a href="quaternion.quaternion.html">quaternion</a>(a,b,c,d)          % by coordinates
+q = <a href="axis2quat.html">axis2quat</a>(axis,angle);       % by rotational axis and rotational angle
+q = <a href="euler2quat.html">euler2quat</a>(alpha,beta,gamma) % by Euler angles
+q = <a href="Miller2quat.html">Miller2quat</a>([h k l],[u v w],symmetry); % by Miller indece
+q = <a href="quaternion.id.html">quaternion.id</a>;                % identical quaternion
+q = <a href="vec42quat.html">vec42quat</a>(u1,v1,u2,v2);      % by four vectors</pre><p>Additional methods to define a rotation are <a href="hr2quat.html">hr2quat</a> and <a href="vec42quat.html">vec42quat</a>. Using the brackets <tt>q = [q1,q2]</tt> two quaternions can be concatened. Now each single quaternion is accesable via <tt>q(1)</tt> and <tt>q(2)</tt>.
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Calculating with three dimensional vectors<a name="4"> </a></h3>
+         <p>Besides the standard linear algebra operations there are also the following functions available in MTEX.</p><pre><a href="quaternion.angle.html">angle</a>(q); % rotational angle
+<a href="quaternion.axis.html">axis</a>(q);  % rotational axis
+<a href="quaternion.inverse.html">inverse</a>(q);  % inverse rotation</pre><p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Conversion<a name="5"> </a></h3>
+         <p>There are methods to transform quaternion in almost any other parameterization of rotations as they are:</p><pre><a href="quaternion.Euler.html">Euler</a>(q)     % in Euler angle
+<a href="quaternion.Rodrigues.html">Rodrigues</a>(q) % in Rodrigues parameter</pre><p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Plotting quaternions<a name="6"> </a></h3>
+         <p>The <a href="quaternion.plot.html">plot</a> function allows you to visualize an quaternion by plotting how the standard basis x,y,z transforms under the rotation.
+         </p><pre class="codeinput">plot(quaternion.rand(100))</pre><img src="quaternion_index_01.png"> <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>Complete Function list<a name="7"> </a></h2>
+         <p><table width="90%"><tr><td width="200px"><a href="quaternion.    q = quaternion(varargin).html"><tt>    q = quaternion(varargin)</tt></a></td><td/></tr></table></p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

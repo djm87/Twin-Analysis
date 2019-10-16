@@ -1,0 +1,69 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>Discretisation of Orientation Space (The Class SO3Grid) (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: SO3Grid_index -->
+      <!-- HEADSTUFF: SO3Grid_index -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:SO3Grid_index">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div>
+         <table class="nav" summary="Navigation aid" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline"><b>MTEX</b> - A MATLAB Toolbox for Quantitative Texture Analysis</td>
+            </tr>
+         </table>
+         <p style="font-size:1px;"></p>
+      </div>
+      <div class="content">
+         <h1 class="refname">Discretisation of Orientation Space (The Class SO3Grid)</h1>
+         <div class="subheading">
+            <p>represents a set of orientations</p>
+         </div>
+         <h2>Complete Function list<a name="2"> </a></h2>
+         <p><table width="90%"><tr><td width="200px"><a href="SO3Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.
+            Syntax.html"><tt>  Syntax</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.    S3G = regularSO3Grid(CS).html"><tt>
+            S3G = regularSO3Grid(CS)</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.    S3G = regularSO3Grid(CS,SS,'resolution',2.5*degree)
+            % specify the resolution.html"><tt>    S3G = regularSO3Grid(CS,SS,'resolution',2.5*degree)     % specify the resolution</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="SO3Grid.    S3G = regularSO3Grid(CS,SS,'resolution',5*degree,'ZYZ') % use ZYZ convention.html"><tt>
+            S3G = regularSO3Grid(CS,SS,'resolution',5*degree,'ZYZ') % use ZYZ convention</tt></a></td><td/></tr><tr><td width="200px"><a
+            href="SO3Grid.    S3G = regularSO3Grid(CS,SS,'phi2','sections',10) % 10 phi2 sections.html"><tt>    S3G = regularSO3Grid(CS,SS,'phi2','sections',10)
+            % 10 phi2 sections</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.    S3G = regularSO3Grid.html"><tt>    S3G
+            = regularSO3Grid</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.    S3G = equispacedSO3Grid(CS,SS,'points',n).html"><tt>
+            S3G = equispacedSO3Grid(CS,SS,'points',n)</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.    S3G = equispacedSO3Grid(CS,'resolution',res).html"><tt>
+            S3G = equispacedSO3Grid(CS,'resolution',res)</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="SO3Grid.    % fill only a ball with radius of 20 degree.html"><tt>    % fill only a ball with radius
+            of 20 degree</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.    S3G = equispacedSO3Grid(CS,'maxAngle',20*degree).html"><tt>
+            S3G = equispacedSO3Grid(CS,'maxAngle',20*degree)</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="SO3Grid.  Input.html"><tt>  Input</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.  
+            CS.html"><tt>   CS</tt></a></td><td>@crystalSymmetry</td></tr><tr><td width="200px"><a href="SO3Grid.   SS.html"><tt>   SS</tt></a></td><td>@specimenSymmetry</td></tr><tr><td
+            width="200px"><a href="SO3Grid.    n.html"><tt>    n</tt></a></td><td>approximate number of points</td></tr><tr><td width="200px"><a
+            href="SO3Grid.   res.html"><tt>   res</tt></a></td><td>resolution in radiant</td></tr><tr><td width="200px"><a href="SO3Grid..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="SO3Grid.  Ouptut.html"><tt>  Ouptut</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.
+            S3G.html"><tt>   S3G</tt></a></td><td>@SO3Grid</td></tr><tr><td width="200px"><a href="SO3Grid..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="SO3Grid.  Options.html"><tt>  Options</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.
+            maxAngle.html"><tt>   maxAngle</tt></a></td><td>radius of the ball to be filles</td></tr><tr><td width="200px"><a href="SO3Grid.
+            center.html"><tt>   center</tt></a></td><td>center of the ball</td></tr><tr><td width="200px"><a href="SO3Grid.   sections.html"><tt>
+            sections</tt></a></td><td>number of sections</td></tr><tr><td width="200px"><a href="SO3Grid..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="SO3Grid.  Flags.html"><tt>  Flags</tt></a></td><td/></tr><tr><td width="200px"><a href="SO3Grid.  
+            phi1 | Phi | phi2.html"><tt>   phi1 | Phi | phi2</tt></a></td><td>sections along which variable</td></tr></table>
+         </p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

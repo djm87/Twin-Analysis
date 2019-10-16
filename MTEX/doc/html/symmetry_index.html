@@ -1,0 +1,168 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>Crystal and Specimen Symmetries (The Class symmetry) (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: symmetry_index -->
+      <!-- HEADSTUFF: symmetry_index -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:symmetry_index">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div class="myheader">
+         <table border="0" width="100%" cellpadding="10" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="left" style="color:white"><a style="color:white" href="matlab:edit symmetry_index">Open Matlab File in the Editor</a></td>
+               <td valign="baseline" align="right" style="color:white"><a style="color:white" href="mtex_product_page.html">MTEX</a></td>
+            </tr>
+         </table>
+      </div>
+      <div class="content">
+         <h1 class="refname">Crystal and Specimen Symmetries (The Class <a href="symmetry_index.html">symmetry</a>)
+         </h1>
+         <div class="subheading">
+            <p>This section describes the class <b>symmetry</b> and gives an overview how to deal with crystal symmetries in MTEX.
+            </p>
+         </div>
+         <div>
+            <table class="content">
+               <tr>
+                  <td class="header">On this page ...</td>
+               </tr>
+               <tr>
+                  <td><a href="#3">Class Description</a></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#4"> Defining a Crystal Symmetry</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#9"> The Crystal Coordinate System</a></span></td>
+               </tr>
+               <tr>
+                  <td><a href="#12">Complete Function list</a></td>
+               </tr>
+            </table>
+         </div>
+         <h2>Class Description<a name="3"> </a></h2>
+         <p>Crystal symmetries are sets of rotations and mirroring operations that leave the lattice of a crystal invariant. They form
+            so-called groups since the concatenation of two symmetry operations is again a symmetry operation. Crystal symmetries are
+            classified in various ways - either according to the corresponding space group or the corresponding point group, or the corresponding
+            Laue group. In total, there are only 11 different Laue groups present in crystallography. All these 11 Laue groups are supported
+            by MTEX. More precisely, in MTEX a Laue group is represented by a variable of the class <b>symmetry</b>.
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Defining a Crystal Symmetry<a name="4"> </a></h3>
+         <p>MTEX supports the <b>Schoenflies</b> notation on Laue groups as well as the <b>international</b> notation. In the case of noncubic crystal symmetry the length of the crystal axis has to be specified as a second argument
+            to the constructor <a href="symmetry.symmetry.html">symmtry</a> and in the case of triclinic crystal symmetry the angles between the axes has to be passed as the third argument. Hence,
+            valid definitions are:
+         </p>
+         <p><b>Laue Group - international notation</b></p><pre class="codeinput">cs = crystalSymmetry(<span class="string">'m-3m'</span>)</pre><pre class="codeoutput"> 
+cs = crystalSymmetry  
+ 
+  symmetry: m-3m   
+  a, b, c : 1, 1, 1
+ 
+</pre><p><b>Laue Group - Schoenflies notation</b></p><pre class="codeinput">cs = crystalSymmetry(<span class="string">'O'</span>)</pre><pre class="codeoutput"> 
+cs = crystalSymmetry  
+ 
+  symmetry: 432    
+  a, b, c : 1, 1, 1
+ 
+</pre><p><b>Point Group or its Space Group</b></p>
+         <p>If not the name of a Laue group was specified but the name of a point group or a space group MTEX automatically determines
+            the corresponding Laue group and assigns it to the variable.
+         </p><pre class="codeinput">cs = crystalSymmetry(<span class="string">'Td'</span>)</pre><pre class="codeoutput"> 
+cs = crystalSymmetry  
+ 
+  symmetry: -43m   
+  a, b, c : 1, 1, 1
+ 
+</pre><p><b>CIF Files</b></p>
+         <p>Finally, MTEX allows defining a crystal symmetry by importing a crystallographic information file (*.cif).</p><pre class="codeinput">cs = loadCIF(<span class="string">'quartz'</span>)</pre><pre class="codeoutput"> 
+cs = crystalSymmetry  
+ 
+  mineral        : Quartz            
+  symmetry       : 321               
+  a, b, c        : 4.9, 4.9, 5.4     
+  reference frame: X||a*, Y||b, Z||c*
+ 
+</pre><p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> The Crystal Coordinate System<a name="9"> </a></h3>
+         <p>In the case of cubic crystal symmetry the crystal coordinate system is already well defined. However, especially in the case
+            of low order crystal symmetry, the crystal coordinate system has to be specified by the length of the axis and the angle between
+            the axis.
+         </p><pre class="codeinput">cs = crystalSymmetry(<span class="string">'triclinic'</span>,[1,2.2,3.1],[80*degree,85*degree,95*degree]);</pre><p><b>A and B Configurations</b></p>
+         <p>In the case of trigonal and hexagonal crystal symmetries different conventions are used. One distinguishes between the A and
+            the B configuration depending whether the a-axis is aligned parallel to the x-axis or parallel to the y-axis. In order to
+            specify the concrete
+         </p><pre>        <html>
+           <table class="usertable"/>
+        </html></pre><pre class="codeinput">cs = crystalSymmetry(<span class="string">'-3m'</span>,[1.7,1.7,1.4],<span class="string">'X||a'</span>);
+plot(cs)</pre><img src="symmetry_index_01.png"> <pre class="codeinput">cs = crystalSymmetry(<span class="string">'-3m'</span>,[1.7,1.7,1.4],<span class="string">'Y||a'</span>);
+plot(cs)</pre><img src="symmetry_index_02.png"> <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>Complete Function list<a name="12"> </a></h2>
+         <p><table width="90%"><tr><td width="200px"><a href="symmetry.  Supported Symmetries.html"><tt>  Supported Symmetries</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="symmetry..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   id crystal system
+            Schoen.html"><tt>   id crystal system  Schoen</tt></a></td><td> Inter    Laue     Rotational</td></tr><tr><td width="200px"><a
+            href="symmetry.                      flies    national  class    axes.html"><tt>                      flies    national  class
+            axes</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   1  triclinic       C1       1.html"><tt>   1  triclinic
+            C1       1</tt></a></td><td>       1</td></tr><tr><td width="200px"><a href="symmetry.   2  triclinic       Ci.html"><tt>
+            2  triclinic       Ci</tt></a></td><td>        1       1</td></tr><tr><td width="200px"><a href="symmetry.   3  monoclinic
+            C2       2         2/m      2.html"><tt>   3  monoclinic      C2       2         2/m      2</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="symmetry.   4  monoclinic      Cs       m         2/m      2.html"><tt>   4  monoclinic      Cs   
+            m         2/m      2</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   5  monoclinic      C2h      2/m   
+            2/m      2.html"><tt>   5  monoclinic      C2h      2/m       2/m      2</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.
+            6  orthorhombic    D2       222       mmm      222.html"><tt>   6  orthorhombic    D2       222       mmm      222</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="symmetry.   7  orthorhombic    C2v      mm2       mmm      222.html"><tt>   7  orthorhombic    C2v
+            mm2       mmm      222</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   8  orthorhombic    D2h      mmm 
+            mmm      222.html"><tt>   8  orthorhombic    D2h      mmm       mmm      222</tt></a></td><td/></tr><tr><td width="200px"><a
+            href="symmetry.   9  tetragonal      C4       4         4/m      4.html"><tt>   9  tetragonal      C4       4         4/m
+            4</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   10 tetragonal      S4.html"><tt>   10 tetragonal     
+            S4</tt></a></td><td>        4/m      4</td></tr><tr><td width="200px"><a href="symmetry.   11 tetragonal      C4h      4/m
+            4/m      4.html"><tt>   11 tetragonal      C4h      4/m       4/m      4</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.
+            12 tetragonal      D4       422       4/mmm    422.html"><tt>   12 tetragonal      D4       422       4/mmm    422</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="symmetry.   13 tetragonal      C4v      4mm       4/mmm    422.html"><tt>   13 tetragonal      C4v
+            4mm       4/mmm    422</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   14 tetragonal      D2d.html"><tt>
+            14 tetragonal      D2d</tt></a></td><td>2m      4/mmm    422</td></tr><tr><td width="200px"><a href="symmetry.   15 tetragonal
+            D4h      4/mmm     4/mmm    422.html"><tt>   15 tetragonal      D4h      4/mmm     4/mmm    422</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="symmetry.   16 trigonal        C3       3.html"><tt>   16 trigonal        C3       3</tt></a></td><td>
+            3</td></tr><tr><td width="200px"><a href="symmetry.   17 trigonal        C3i.html"><tt>   17 trigonal        C3i</tt></a></td><td>
+            3       3</td></tr><tr><td width="200px"><a href="symmetry.   18 trigonal        D3       32.html"><tt>   18 trigonal    
+            D3       32</tt></a></td><td>m      32</td></tr><tr><td width="200px"><a href="symmetry.   19 trigonal        C3v      3m.html"><tt>
+            19 trigonal        C3v      3m</tt></a></td><td>m      32</td></tr><tr><td width="200px"><a href="symmetry.   20 trigonal
+            D3d.html"><tt>   20 trigonal        D3d</tt></a></td><td>m       3m      32</td></tr><tr><td width="200px"><a href="symmetry.
+            21 hexagonal       C6       6         6/m      6.html"><tt>   21 hexagonal       C6       6         6/m      6</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="symmetry.   22 hexagonal       C3h.html"><tt>   22 hexagonal       C3h</tt></a></td><td>        6/m
+            6</td></tr><tr><td width="200px"><a href="symmetry.   23 hexagonal       C6h      6/m       6/m      6.html"><tt>   23 hexagonal
+            C6h      6/m       6/m      6</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   24 hexagonal       D6    
+            622       6/mmm    622.html"><tt>   24 hexagonal       D6       622       6/mmm    622</tt></a></td><td/></tr><tr><td width="200px"><a
+            href="symmetry.   25 hexagonal       C6v      6mm       6/mmm    622.html"><tt>   25 hexagonal       C6v      6mm       6/mmm
+            622</tt></a></td><td/></tr><tr><td width="200px"><a href="symmetry.   26 hexagonal       D3h.html"><tt>   26 hexagonal   
+            D3h</tt></a></td><td>m2      6/mmm    622</td></tr><tr><td width="200px"><a href="symmetry.   27 hexagonal       D6h     
+            6/mmm     6/mmm    622.html"><tt>   27 hexagonal       D6h      6/mmm     6/mmm    622</tt></a></td><td/></tr><tr><td width="200px"><a
+            href="symmetry.   28 cubic           T        23        m.html"><tt>   28 cubic           T        23        m</tt></a></td><td>
+            23</td></tr><tr><td width="200px"><a href="symmetry.   29 cubic           Th       m.html"><tt>   29 cubic           Th  
+            m</tt></a></td><td>       m3      23</td></tr><tr><td width="200px"><a href="symmetry.   30 cubic           O        432 
+            m.html"><tt>   30 cubic           O        432       m</tt></a></td><td>m     432</td></tr><tr><td width="200px"><a href="symmetry.
+            31 cubic           Td.html"><tt>   31 cubic           Td</tt></a></td><td>3m      m3m     432</td></tr><tr><td width="200px"><a
+            href="symmetry.   32 cubic           Oh       m.html"><tt>   32 cubic           Oh       m</tt></a></td><td>m      m3m   
+            432</td></tr></table>
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

@@ -1,0 +1,146 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>Specimen Directions (The Class vector3d) (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: vector3d_index -->
+      <!-- HEADSTUFF: vector3d_index -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:vector3d_index">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div class="myheader">
+         <table border="0" width="100%" cellpadding="10" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="left" style="color:white"><a style="color:white" href="matlab:edit vector3d_index">Open Matlab File in the Editor</a></td>
+               <td valign="baseline" align="right" style="color:white"><a style="color:white" href="mtex_product_page.html">MTEX</a></td>
+            </tr>
+         </table>
+      </div>
+      <div class="content">
+         <h1 class="refname">Specimen Directions (The Class <a href="vector3d_index.html">vector3d</a>)
+         </h1>
+         <div class="subheading">
+            <p>This section describes the class <b>vector3d</b> and gives an overview how to deal with specimen directions in MTEX.
+            </p>
+         </div>
+         <div>
+            <table class="content">
+               <tr>
+                  <td class="header">On this page ...</td>
+               </tr>
+               <tr>
+                  <td><a href="#3">Class Description</a></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#4"> Defining Specimen Directions</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#7"> Calculating with Specimen Directions</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#11"> Plotting three dimensionl vectors</a></span></td>
+               </tr>
+               <tr>
+                  <td><a href="#12">random vectors</a></td>
+               </tr>
+               <tr>
+                  <td><a href="#13">equispaced grids</a></td>
+               </tr>
+               <tr>
+                  <td><a href="#14">regular grids</a></td>
+               </tr>
+               <tr>
+                  <td><a href="#15">alginment of the plot</a></td>
+               </tr>
+               <tr>
+                  <td><a href="#16">Complete Function list</a></td>
+               </tr>
+            </table>
+         </div>
+         <h2>Class Description<a name="3"> </a></h2>
+         <p>Specimen directions are three-dimensional vectors in the Euclidean space represented by coordinates with respect to an outer
+            specimen coordinate system x, y, z. In MTEX Specimen directions are represented by variables of the class <b>vector3d</b>.
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Defining Specimen Directions<a name="4"> </a></h3>
+         <p>The standard way to define a specimen directions is by its coordinates.</p><pre class="codeinput">v = vector3d(1,1,0);</pre><p>This gives a single vector with coordinates (1,1,0) with respect to the x, y , z coordinate system. A second way to define
+            a specimen directions is by its spherical coordinates, i.e. by its polar angle and its azimuth angle. This is done by the
+            option <b>polar</b>.
+         </p><pre class="codeinput">polar_angle = 60*degree;
+azimuth_angle = 45*degree;
+v = vector3d(<span class="string">'polar'</span>,polar_angle,azimuth_angle);</pre><p>Finally, one can also define a vector as a linear combination of the predefined vectors <a href="xvector.html">xvector</a>, <a href="yvector.html">yvector</a>, and <a href="zvector.html">zvector</a></p><pre class="codeinput">v = xvector + 2*yvector;</pre><p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Calculating with Specimen Directions<a name="7"> </a></h3>
+         <p>As we have seen in the last example. One can calculate with specimen directions as with ordinary number. Moreover, all basic
+            vector operation as <a href="vector3d.plus.html">"+"</a>, <a href="vector3d.minus.html">"-"</a>, <a href="vector3d.times.html">"*"</a>, <a href="vector3d.dot.html">inner product</a>, <a href="vector3d.cross.html">cross product</a> are implemented.
+         </p><pre class="codeinput">u = dot(v,xvector) * yvector + 2 * cross(v,zvector);</pre><p>Using the brackets <tt>v = [v1,v2]</tt> two specimen directions can be concatened. Now each single vector is accesable via <tt>v(1)</tt> and <tt>v(2)</tt>.
+         </p><pre class="codeinput">w = [v,u];
+w(1)
+w(2)</pre><pre class="codeoutput"> 
+ans = vector3d  
+ size: 1 x 1
+  x y z
+  1 2 0
+ 
+ans = vector3d  
+ size: 1 x 1
+  x  y  z
+  4 -1  0
+</pre><p>When calculating with concatenated specimen directions all operations are performed componentwise for each specimen direction.</p><pre class="codeinput">w = w + v;</pre><p>Besides the standard linear algebra operations, there are also the following functions available in MTEX.</p><pre><a href="vector3d.angle.html">angle(v1,v2)</a> % angle between two specimen  directions
+<a href="vector3d.dot.html">dot(v1,v2)</a>   % inner product
+<a href="vector3d.cross.html">cross(v1,v2)</a> % cross product
+<a href="vector3d.norm.html">norm(v)</a>      % length of the specimen directions
+<a href="vector3d.sum.html">sum(v)</a>       % sum over all specimen directions in v
+<a href="vector3d.mean.html">mean(v)</a>      % mean over all specimen directions in v
+<a href="vector3d.polar.html">polar(v)</a>     % conversion to spherical coordinates</pre><pre class="codeinput"><span class="comment">% A simple example for applying the norm function is to normalize a set of</span>
+<span class="comment">% specimen directions</span>
+
+w = w ./ norm(w)</pre><pre class="codeoutput"> 
+w = vector3d  
+ size: 1 x 2
+         x        y        z
+  0.447214 0.894427        0
+  0.980581 0.196116        0
+</pre><p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Plotting three dimensionl vectors<a name="11"> </a></h3>
+         <p>The <a href="vector3d.plot.html">plot</a> function allows you to visualize an arbitrary number of specimen directions in a spherical projection
+         </p><pre class="codeinput">plot([zvector,xvector+yvector+zvector],<span class="string">'labeled'</span>)</pre><img src="vector3d_index_01.png"> <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>random vectors<a name="12"> </a></h2>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>equispaced grids<a name="13"> </a></h2>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>regular grids<a name="14"> </a></h2>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>alginment of the plot<a name="15"> </a></h2>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>Complete Function list<a name="16"> </a></h2>
+         <p><table width="90%"><tr><td width="200px"><a href="vector3d..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="vector3d.
+            Syntax.html"><tt>  Syntax</tt></a></td><td/></tr><tr><td width="200px"><a href="vector3d.    v = vector3d(x,y,z).html"><tt>
+            v = vector3d(x,y,z)</tt></a></td><td/></tr><tr><td width="200px"><a href="vector3d.    v = vector3d(x,y,z,'antipodal').html"><tt>
+            v = vector3d(x,y,z,'antipodal')</tt></a></td><td/></tr><tr><td width="200px"><a href="vector3d.    v = vector3d('polar',theta,rho).html"><tt>
+            v = vector3d('polar',theta,rho)</tt></a></td><td/></tr><tr><td width="200px"><a href="vector3d..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="vector3d.  Input.html"><tt>  Input</tt></a></td><td/></tr><tr><td width="200px"><a href="vector3d.
+            x,y,z.html"><tt>   x,y,z</tt></a></td><td>cart. coordinates</td></tr><tr><td width="200px"><a href="vector3d..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="vector3d.  Flags.html"><tt>  Flags</tt></a></td><td/></tr><tr><td width="200px"><a href="vector3d.
+            antipodal.html"><tt>    antipodal</tt></a></td><td>consider vector as an axis and not as an direction</td></tr><tr><td width="200px"><a
+            href="vector3d..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="vector3d.  See also.html"><tt>  See also</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="vector3d.  AxialDirectional.html"><tt>  AxialDirectional</tt></a></td><td/></tr></table>
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

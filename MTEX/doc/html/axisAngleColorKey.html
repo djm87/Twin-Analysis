@@ -1,0 +1,61 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>axisAngleColorKey (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: axisAngleColorKey -->
+      <!-- HEADSTUFF: axisAngleColorKey -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:axisAngleColorKey">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div>
+         <table class="nav" summary="Navigation aid" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline"><b>MTEX</b> - A MATLAB Toolbox for Quantitative Texture Analysis</td>
+               <td valign="baseline" align="right"><a href="matlab:edit axisAngleColorKey">
+                     View Code</a></td>
+            </tr>
+         </table>
+         <p style="font-size:1px;"></p>
+      </div>
+      <div class="content">
+         <h1 class="refname">axisAngleColorKey</h1>
+         <div class="subheading">
+            <p>Colorizes orientations according to their misorientation axis and misorientation angle in specimen coordinates with respect
+               to some refererence orientation. The angle determines the saturation of the color, i.e., a misorientation angle of 0 corresponds
+               to gray and the misorientation ange at maximum corresponds to fully saturated colors. The saturated color is determined by
+               the misorientation axis. In the X-Y plane the colors circle through the rainbow colors and goes to white and black for z to
+               +/-1.
+            </p>
+            <p>The reference orientation may be single fixed orientation or a list of orientations. A typical example is to set the reference
+               orientation as the mean orientation of the grain the pixel orientation belongs to.
+            </p>
+            <p>Reference: Thomsen et al.: Quaternion-based disorientation coloring of orientation maps, 2017</p>
+         </div>
+         <h2>Syntax<a name="2"> </a></h2>
+         <p>
+            <div class="syntax" width="100%">
+            <div>
+            <tt>oM = axisAngleColorKey('param1',val1,'param2',val2)</tt>
+            </div>
+            </div>
+            
+         </p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

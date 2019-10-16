@@ -1,0 +1,96 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title> (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: grainsAndFilling -->
+      <!-- HEADSTUFF: grainsAndFilling -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:grainsAndFilling">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div>
+         <table class="nav" summary="Navigation aid" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline"><b>MTEX</b> - A MATLAB Toolbox for Quantitative Texture Analysis</td>
+            </tr>
+         </table>
+         <p style="font-size:1px;"></p>
+      </div>
+      <div class="content">
+         <h2>1) no fill, no grains, all pixels<a name="1"> </a></h2><pre class="codeinput">mtexdata <span class="string">small</span>
+[grains,ebsd.grainId,ebsd.mis2mean] = calcGrains(ebsd);
+ebsd(grains(grains.grainSize&lt;=3)) = [];
+[grains,ebsd.grainId,ebsd.mis2mean] = calcGrains(ebsd);
+F = splineFilter;
+ebsd = smooth(ebsd,F);
+[grains,ebsd.grainId,ebsd.mis2mean] = calcGrains(ebsd);
+plot(ebsd)
+hold <span class="string">on</span>
+plot(grains.boundary,<span class="string">'lineColor'</span>,[1 0 0],<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span></pre><img src="grainsAndFilling_01.png"> <h2>2) no fill, no grains, indexed pixels<a name="2"> </a></h2><pre class="codeinput">mtexdata <span class="string">small</span>
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+ebsd(grains(grains.grainSize&lt;=3)) = [];
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+F = splineFilter;
+ebsd = smooth(ebsd(<span class="string">'indexed'</span>),F);
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+
+nextAxis
+plot(ebsd)
+hold <span class="string">on</span>
+plot(grains.boundary,<span class="string">'lineColor'</span>,[1 0 0],<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span></pre><img src="grainsAndFilling_02.png"> <h2>3) fill, no grains, all pixels<a name="3"> </a></h2><pre class="codeinput">mtexdata <span class="string">small</span>
+[grains,ebsd.grainId] = calcGrains(ebsd);
+ebsd(grains(grains.grainSize&lt;=3)) = [];
+[grains,ebsd.grainId] = calcGrains(ebsd);
+F = splineFilter;
+ebsd = smooth(ebsd,F,<span class="string">'fill'</span>);
+[grains,ebsd.grainId] = calcGrains(ebsd);
+
+nextAxis
+plot(ebsd)
+hold <span class="string">on</span>
+plot(grains.boundary,<span class="string">'lineColor'</span>,[1 0 0],<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span></pre><img src="grainsAndFilling_03.png"> <h2>4) fill, no grains, indexed pixels<a name="4"> </a></h2><pre class="codeinput">mtexdata <span class="string">small</span>
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+ebsd(grains(grains.grainSize&lt;=3)) = [];
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+F = splineFilter;
+ebsd = smooth(ebsd(<span class="string">'indexed'</span>),F,<span class="string">'fill'</span>);
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+
+nextAxis
+plot(ebsd)
+hold <span class="string">on</span>
+plot(grains.boundary,<span class="string">'lineColor'</span>,[1 0 0],<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span></pre><img src="grainsAndFilling_04.png"> <h2>5) fill, grains, indexed pixels<a name="5"> </a></h2><pre class="codeinput">mtexdata <span class="string">small</span>
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+ebsd(grains(grains.grainSize&lt;=3)) = [];
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+F = splineFilter;
+ebsd = smooth(ebsd(<span class="string">'indexed'</span>),F,<span class="string">'fill'</span>,grains);
+[grains,ebsd(<span class="string">'indexed'</span>).grainId] = calcGrains(ebsd(<span class="string">'indexed'</span>));
+
+nextAxis
+plot(ebsd)
+hold <span class="string">on</span>
+plot(grains.boundary,<span class="string">'lineColor'</span>,[1 0 0],<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span>
+drawNow(gcm)</pre><img src="grainsAndFilling_05.png"> <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

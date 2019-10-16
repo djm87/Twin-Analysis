@@ -1,0 +1,115 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title> (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: StandardOrientations -->
+      <!-- HEADSTUFF: StandardOrientations -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:StandardOrientations">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div>
+         <table class="nav" summary="Navigation aid" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline"><b>MTEX</b> - A MATLAB Toolbox for Quantitative Texture Analysis</td>
+            </tr>
+         </table>
+         <p style="font-size:1px;"></p>
+      </div>
+      <div class="content"><pre class="codeinput">CS = crystalSymmetry(<span class="string">'m-3m'</span>);
+SS = specimenSymmetry(<span class="string">'orthorhombic'</span>);
+setMTEXpref(<span class="string">'xAxisDirection'</span>,<span class="string">'north'</span>);
+setMTEXpref(<span class="string">'zAxisDirection'</span>,<span class="string">'outofPlane'</span>);</pre><h2>some stadanrd orientations<a name="2"> </a></h2><pre class="codeinput">components = [<span class="keyword">...</span>
+  orientation.goss(CS,SS),<span class="keyword">...</span>
+  orientation.brass(CS,SS),<span class="keyword">...</span>
+  orientation.cube(CS,SS),<span class="keyword">...</span>
+  orientation.cubeND22(CS,SS),<span class="keyword">...</span>
+  orientation.cubeND45(CS,SS),<span class="keyword">...</span>
+  orientation.cubeRD(CS,SS),<span class="keyword">...</span>
+  orientation.copper(CS,SS),<span class="keyword">...</span>
+  orientation.PLage(CS,SS),<span class="keyword">...</span>
+  orientation.QLage(CS,SS),<span class="keyword">...</span>
+  ];</pre><h2>3d Euler angle space<a name="3"> </a></h2><pre class="codeinput"><span class="keyword">for</span> i = 1:length(components)
+  plot(components(i),<span class="string">'bunge'</span>,<span class="string">'MarkerSize'</span>,10,<span class="string">'filled'</span>,<span class="string">'DisplayName'</span>,round2Miller(components(i),<span class="string">'LaTex'</span>))
+  hold <span class="string">on</span>
+<span class="keyword">end</span>
+legend(<span class="string">'show'</span>,<span class="string">'interpreter'</span>,<span class="string">'LaTeX'</span>,<span class="string">'location'</span>,<span class="string">'southoutside'</span>,<span class="string">'numColumns'</span>,3,<span class="string">'FontSize'</span>,1.2*getMTEXpref(<span class="string">'FontSize'</span>));
+hold <span class="string">off</span></pre><img src="StandardOrientations_01.png"> <h2>2d phi2 sections<a name="4"> </a></h2><pre class="codeinput">figure
+<span class="keyword">for</span> i = 1:length(components)
+  plotSection(components(i),<span class="string">'add2all'</span>,<span class="string">'DisplayName'</span>,round2Miller(components(i),<span class="string">'LaTex'</span>))
+<span class="keyword">end</span>
+
+legend(<span class="string">'show'</span>,<span class="string">'interpreter'</span>,<span class="string">'LaTeX'</span>,<span class="string">'location'</span>,<span class="string">'southeast'</span>,<span class="string">'FontSize'</span>,1.2*getMTEXpref(<span class="string">'FontSize'</span>));
+
+<span class="comment">% saveFigure('componentsSections.png')</span></pre><img src="StandardOrientations_02.png"> <h2>3d axis angle space<a name="5"> </a></h2><pre class="codeinput">close <span class="string">all</span>
+figure
+<span class="keyword">for</span> i = 1:length(components)
+  hold <span class="string">on</span>
+  plot(components(i),<span class="string">'axisAngle'</span>,<span class="string">'MarkerSize'</span>,10,<span class="string">'filled'</span>,<span class="string">'DisplayName'</span>,round2Miller(components(i),<span class="string">'LaTex'</span>))
+  axis <span class="string">off</span>
+<span class="keyword">end</span>
+legend(<span class="string">'show'</span>,<span class="string">'interpreter'</span>,<span class="string">'LaTeX'</span>,<span class="string">'location'</span>,<span class="string">'southoutside'</span>,<span class="string">'numColumns'</span>,3,<span class="string">'FontSize'</span>,1.2*getMTEXpref(<span class="string">'FontSize'</span>));</pre><img src="StandardOrientations_03.png"> <h2>pole figures<a name="6"> </a></h2><pre class="codeinput">h = Miller({1,0,0},{1,1,0},{1,1,1},{3,1,1},CS);
+
+<span class="keyword">for</span> i = 1:length(components)
+  plotPDF(components(i),h,<span class="string">'MarkerSize'</span>,10,<span class="string">'filled'</span>,<span class="string">'DisplayName'</span>,round2Miller(components(i),<span class="string">'LaTex'</span>))
+  hold <span class="string">on</span>
+<span class="keyword">end</span>
+
+hold <span class="string">off</span>
+
+legend(<span class="string">'show'</span>,<span class="string">'interpreter'</span>,<span class="string">'LaTeX'</span>,<span class="string">'location'</span>,<span class="string">'northeast'</span>,<span class="string">'numColumns'</span>,2,<span class="string">'FontSize'</span>,1.2*getMTEXpref(<span class="string">'FontSize'</span>));</pre><img src="StandardOrientations_04.png"> <h2>inverse pole figures<a name="7"> </a></h2><pre class="codeinput">r = [vector3d.X,vector3d.Y,vector3d.Z];
+
+<span class="keyword">for</span> i = 1:length(components)
+  plotIPDF(components(i),r,<span class="string">'MarkerSize'</span>,(12-i)^1.5,<span class="string">'filled'</span>,<span class="string">'DisplayName'</span>,round2Miller(components(i),<span class="string">'LaTex'</span>))
+  hold <span class="string">on</span>
+<span class="keyword">end</span>
+
+hold <span class="string">off</span>
+
+legend(<span class="string">'show'</span>,<span class="string">'interpreter'</span>,<span class="string">'LaTeX'</span>,<span class="string">'location'</span>,<span class="string">'northeast'</span>,<span class="string">'numColumns'</span>,2,<span class="string">'FontSize'</span>,1.2*getMTEXpref(<span class="string">'FontSize'</span>));</pre><img src="StandardOrientations_05.png"> <pre class="codeinput">odf = unimodalODF(components(3),<span class="string">'halfwidth'</span>,7.5*degree)
+
+plotPDF(odf,h)
+hold <span class="string">on</span>
+plotPDF(odf,h,<span class="string">'contour'</span>,<span class="string">'lineColor'</span>,<span class="string">'k'</span>,<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span></pre><pre class="codeoutput"> 
+odf = ODF  
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+  Radially symmetric portion:
+    kernel: de la Vallee Poussin, halfwidth 7.5&deg;
+    center: (0&deg;,0&deg;,0&deg;)
+    weight: 1
+ 
+</pre><img src="StandardOrientations_06.png"> <pre class="codeinput">plotIPDF(odf,r)
+hold <span class="string">on</span>
+plotIPDF(odf,r,<span class="string">'contour'</span>,<span class="string">'lineColor'</span>,<span class="string">'k'</span>,<span class="string">'linewidth'</span>,2)
+hold <span class="string">off</span></pre><img src="StandardOrientations_07.png"> <pre class="codeinput">plotSection(odf)
+
+hold <span class="string">on</span>
+plotSection(odf,<span class="string">'contour'</span>,<span class="string">'lineColor'</span>,<span class="string">'k'</span>,<span class="string">'linewidth'</span>,2)
+
+<span class="keyword">for</span> i = 1:length(components)
+
+  plotSection(components(i),<span class="string">'MarkerSize'</span>,10,<span class="string">'filled'</span>,<span class="string">'DisplayName'</span>,round2Miller(components(i),<span class="string">'LaTex'</span>))
+
+<span class="keyword">end</span>
+
+hold <span class="string">off</span></pre><img src="StandardOrientations_08.png"> <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

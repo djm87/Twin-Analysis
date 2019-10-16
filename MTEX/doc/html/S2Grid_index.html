@@ -1,0 +1,117 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>Discretisation of 2 - Sphere (The Class S2Grid) (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: S2Grid_index -->
+      <!-- HEADSTUFF: S2Grid_index -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:S2Grid_index">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div>
+         <table class="nav" summary="Navigation aid" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline"><b>MTEX</b> - A MATLAB Toolbox for Quantitative Texture Analysis</td>
+            </tr>
+         </table>
+         <p style="font-size:1px;"></p>
+      </div>
+      <div class="content">
+         <h1 class="refname">Discretisation of 2 - Sphere (The Class <a href="S2Grid_index.html">S2Grid</a>)
+         </h1>
+         <div class="subheading">
+            <p>represents a grid of nodes on the sphere</p>
+         </div>
+         <div>
+            <table class="content">
+               <tr>
+                  <td class="header">On this page ...</td>
+               </tr>
+               <tr>
+                  <td><a href="#2">Class Description</a></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#3"> Defining a S2Grid</a></span></td>
+               </tr>
+               <tr>
+                  <td><span class="subsection"><a href="#4"> Plots</a></span></td>
+               </tr>
+               <tr>
+                  <td><a href="#5">Complete Function list</a></td>
+               </tr>
+            </table>
+         </div>
+         <h2>Class Description<a name="2"> </a></h2>
+         <p>The class <b>S2Grid</b> is used in MTEX to store the set of specimen directions organized in a <a href="PoleFigure_index.html">pole figure</a>. Of central importance is also the plotting method of this class since it is used by almost all other plotting methods in
+            MTEX to perform spherical plots.
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Defining a S2Grid<a name="3"> </a></h3>
+         <p>There are various ways to define a S2Grid. Next, you find some examples. For a detailed description of possible specifications
+            look for the documentation of the constructor <a href="S2Grid_index.html">S2Grid</a>.
+         </p><pre class="codeinput"><span class="comment">% equidistributions</span>
+S2G = equispacedS2Grid(<span class="string">'points'</span>,100,<span class="string">'antipodal'</span>);  <span class="comment">% specified by number of points</span>
+S2G = equispacedS2Grid(<span class="string">'RESOLUTION'</span>,5*degree,<span class="string">'antipodal'</span>);  <span class="comment">% specified by resolution</span>
+
+<span class="comment">% regular grids</span>
+S2G = regularS2Grid(<span class="string">'points'</span>,[72,19]); <span class="comment">% specified by number of theta and rho steps</span>
+S2G = regularS2Grid(<span class="string">'theta'</span>,linspace(0,2*pi,72),<span class="keyword">...</span>
+             <span class="string">'rho'</span>,linspace(0,pi/2,19)); <span class="comment">% explicitly determine theta and rho values</span>
+
+<span class="comment">% restrictes grids</span>
+S2G = equispacedS2Grid(<span class="string">'points'</span>,100,<span class="string">'MAXTHETA'</span>,75*degree);  <span class="comment">% specify maximum theta angle</span></pre><p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h3> Plots<a name="4"> </a></h3><pre class="codeinput">plot(equispacedS2Grid(<span class="string">'points'</span>,100,<span class="string">'antipodal'</span>))  <span class="comment">% plot the grid of nodes</span></pre><img src="S2Grid_index_01.png"> <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <h2>Complete Function list<a name="5"> </a></h2>
+         <p><table width="90%"><tr><td width="200px"><a href="S2Grid.  Syntax.html"><tt>  Syntax</tt></a></td><td/></tr><tr><td width="200px"><a
+            href="S2Grid.    S2Grid(theta,rho)      % fills a Sphere with N.html"><tt>    S2Grid(theta,rho)      % fills a Sphere with
+            N</tt></a></td><td>odes</td></tr><tr><td width="200px"><a href="S2Grid.    regularS2Grid('resolution',5*degree)     % construct
+            regular polar and azimuthal spacing.html"><tt>    regularS2Grid('resolution',5*degree)     % construct regular polar and azimuthal
+            spacing</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.    equispacedS2Grid('resolution',5*degree)  % construct
+            equispaced nodes.html"><tt>    equispacedS2Grid('resolution',5*degree)  % construct equispaced nodes</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.  Input.html"><tt>  Input</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="S2Grid.   nodes.html"><tt>   nodes</tt></a></td><td>@vector3d</td></tr><tr><td width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="S2Grid.  Options.html"><tt>  Options</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.
+            POINTS.html"><tt>   POINTS</tt></a></td><td>[nrho,ntheta] number of points to be generated</td></tr><tr><td width="200px"><a
+            href="S2Grid.   RESOLUTION.html"><tt>   RESOLUTION</tt></a></td><td>resolution of a equispaced grid</td></tr><tr><td width="200px"><a
+            href="S2Grid.   HEMISPHERE.html"><tt>   HEMISPHERE</tt></a></td><td>'lower', 'uper', 'complete', 'sphere', 'identified'}</td></tr><tr><td
+            width="200px"><a href="S2Grid.   THETA.html"><tt>   THETA</tt></a></td><td>theta angle</td></tr><tr><td width="200px"><a href="S2Grid.
+            RHO.html"><tt>   RHO</tt></a></td><td>rho angle</td></tr><tr><td width="200px"><a href="S2Grid.   MINRHO.html"><tt>   MINRHO</tt></a></td><td>starting
+            rho angle (default 0)</td></tr><tr><td width="200px"><a href="S2Grid.   MAXRHO.html"><tt>   MAXRHO</tt></a></td><td>maximum
+            rho angle (default 2*pi)</td></tr><tr><td width="200px"><a href="S2Grid.   MINTHETA.html"><tt>   MINTHETA</tt></a></td><td>starting
+            theta angle (default 0)</td></tr><tr><td width="200px"><a href="S2Grid.   MAXTHETA.html"><tt>   MAXTHETA</tt></a></td><td>maximum
+            theta angle (default pi)</td></tr><tr><td width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a
+            href="S2Grid.  Flags.html"><tt>  Flags</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.   REGULAR.html"><tt>
+            REGULAR</tt></a></td><td>generate a regular grid</td></tr><tr><td width="200px"><a href="S2Grid.   EQUISPACED.html"><tt> 
+            EQUISPACED</tt></a></td><td>generate equidistribution</td></tr><tr><td width="200px"><a href="S2Grid.   ANTIPODAL.html"><tt>
+            ANTIPODAL</tt></a></td><td>include <a href="AxialDirectional.html">antipodal symmetry</a></td></tr><tr><td width="200px"><a href="S2Grid.   PLOT.html"><tt>   PLOT</tt></a></td><td>generate plotting grid</td></tr><tr><td
+            width="200px"><a href="S2Grid.   NO_CENTER.html"><tt>   NO_CENTER</tt></a></td><td>ommit point at center</td></tr><tr><td
+            width="200px"><a href="S2Grid.   RESTRICT2MINMAX.html"><tt>   RESTRICT2MINMAX</tt></a></td><td>restrict margins to min / max</td></tr><tr><td
+            width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.  Examples.html"><tt> 
+            Examples</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.    regularS2Grid('points',[72 19]).html"><tt>    regularS2Grid('points',[72
+            19])</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a
+            href="S2Grid.    regularS2Grid('resolution',[5*degree 2.5*degree]).html"><tt>    regularS2Grid('resolution',[5*degree 2.5*degree])</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.    equispacedS2Grid('resolution',5*degree,'maxrho',pi).html"><tt>
+            equispacedS2Grid('resolution',5*degree,'maxrho',pi)</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.    plot(ans).html"><tt>
+            plot(ans)</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid..html"><tt/></a></td><td/></tr><tr><td width="200px"><a
+            href="S2Grid.  See also.html"><tt>  See also</tt></a></td><td/></tr><tr><td width="200px"><a href="S2Grid.  vector3d/vector3d.html"><tt>
+            vector3d/vector3d</tt></a></td><td/></tr></table>
+         </p>
+         <p class="pagenavlink"><script language="Javascript">addTopOfPageButtons();</script><a href="#top_of_page">Back to Top</a></p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>

@@ -1,0 +1,262 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<html xmlns:mwsh="http://www.mathworks.com/namespace/mcode/v1/syntaxhighlight.dtd">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   
+      <title>Crystal Orientations (The Class orientation) (MTEX Toolbox)
+         
+      </title>
+      <!-- DOCNAME: MTEX Toolbox -->
+      <meta name="chunktype" content="refpage">
+      <!-- CHUNKNAME: orientation_index -->
+      <!-- HEADSTUFF: orientation_index -->
+      <!-- HEADSTUFF -->
+      <meta name="refentity" content="method:orientation_index">
+      <meta http-equiv="Content-Script-Type" content="text/javascript">
+      <meta name="toctype" content="fcn">
+      <link rel="stylesheet" href="style.css"><script language="JavaScript" src="docscripts.js"></script></head>
+   <body><a name="top_of_page"></a><div class="myheader">
+         <table border="0" width="100%" cellpadding="10" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="left" style="color:white"><a style="color:white" href="matlab:edit orientation_index">Open Matlab File in the Editor</a></td>
+               <td valign="baseline" align="right" style="color:white"><a style="color:white" href="mtex_product_page.html">MTEX</a></td>
+            </tr>
+         </table>
+      </div>
+      <div class="content">
+         <h1 class="refname">Crystal Orientations (The Class <a href="orientation_index.html">orientation</a>)
+         </h1>
+         <div class="subheading">
+            <p>This sections describes the class <b>orientation</b> and gives an overview how to work with crystal orientation in MTEX.
+            </p>
+         </div>
+         <h2>Class Description<a name="2"> </a></h2>
+         <p>In texture analysis crystal orientations are used to describe the alignment of the crystals within the specimen. A crystal
+            orientation is defined as the rotation that maps the specimen coordinate system onto the crystal coordinate system. Since
+            the crystal coordinate system and the specimen coordinate system are well defined only up to crystal symmetry and specimen
+            symmetry, an orientation is in general represented by a class of crystallographically equivalent rotations. In MTEX the class
+            <b>orientation</b> is an inheritance of the class <a href="rotation_index.html">rotation</a>. In particular, every function that is defined for a rotation is also available for an orientation.
+         </p>
+         <h3> Defining a Crystal Orientation<a name="3"> </a></h3>
+         <p>In order to define a crystal orientation one has to define crystal and specimen symmetry first.</p><pre class="codeinput">cs = crystalSymmetry(<span class="string">'cubic'</span>);
+ss = specimenSymmetry(<span class="string">'orthorhombic'</span>);</pre><p>Now a crystal orientation to a certain <a href="rotation_index.html">rotation</a></p><pre class="codeinput">rot = rotation.byEuler(30*degree,50*degree,10*degree);</pre><p>is defined by</p><pre class="codeinput">o = orientation(rot,cs,ss)</pre><pre class="codeoutput"> 
+o = orientation  
+  size: 1 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+    30   50   10    0
+ 
+</pre><p>In order to streamline the definition the arguments to define the rotation can be directly pass to define a orientation:</p><pre class="codeinput">o = orientation.byEuler(30*degree,50*degree,10*degree,cs,ss)</pre><pre class="codeoutput"> 
+o = orientation  
+  size: 1 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+    30   50   10    0
+ 
+</pre><p>Accordingly parameterisations of rotations are also available for orientations</p>
+         <div>
+            <ul type="square">
+               <li>Bunge Euler Angle Convention</li>
+               <li>Matthies Euler Angle Convention</li>
+               <li>Axis angle parametrisation</li>
+               <li>Fibre of orientations</li>
+               <li>Four vectors defining a rotation</li>
+               <li>3 times 3 matrix</li>
+               <li>quaternion</li>
+            </ul>
+         </div>
+         <p>Have a look at <a href="rotation_index.html">rotation help page</a> for more details. Besides these parameterisations for rotations there are also some parameterisations which are unique for
+            orientations
+         </p>
+         <p><b>Miller indices</b></p>
+         <p>There is also a Miller indices convention for defining crystal orientations.</p><pre class="codeinput">o = orientation.byMiller([1 0 0],[0 1 1],cs,ss)</pre><pre class="codeoutput"> 
+o = orientation  
+  size: 1 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+   135   90   90    0
+ 
+</pre><p><b>Predifined Orientations</b></p>
+         <p>In the MTEX there is a list of predefined orientations:</p>
+         <div>
+            <ul type="square">
+               <li><a href="orientation.cube.html">cube</a></li>
+               <li><a href="orientation.goss.html">goss</a></li>
+               <li><a href="orientation.brass.html">brass</a></li>
+            </ul>
+         </div><pre class="codeinput">o = orientation.goss(cs,ss)</pre><pre class="codeoutput"> 
+o = orientation  
+  size: 1 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+     0   45    0    0
+ 
+</pre><h3> Rotating Crystal Directions onto Specimen Directions<a name="9"> </a></h3>
+         <p>Let</p><pre class="codeinput">h = Miller(1,0,0,cs)</pre><pre class="codeoutput"> 
+h = Miller  
+ size: 1 x 1
+ symmetry: m-3m
+  h 1
+  k 0
+  l 0
+</pre><p>be a certain crystal direction and</p><pre class="codeinput">o = orientation.byEuler(90*degree,90*degree,0*degree,cs,ss)</pre><pre class="codeoutput"> 
+o = orientation  
+  size: 1 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+    90   90    0    0
+ 
+</pre><p>a crystal orientation. Then the alignment of this crystal direction with respect to the specimen coordinate system can be
+            computed via
+         </p><pre class="codeinput">r = o * h</pre><pre class="codeoutput"> 
+r = vector3d  
+ size: 1 x 1
+  x y z
+  0 1 0
+</pre><p>Conversely the crystal direction that is mapped onto a certain specimen direction can be computed via the <a href="orientation.mldivide.html">backslash operator</a></p><pre class="codeinput">o \ r</pre><pre class="codeoutput"> 
+ans = Miller  
+ size: 1 x 1
+ symmetry: m-3m
+  h 1
+  k 0
+  l 0
+</pre><h3> Concatenating Rotations<a name="13"> </a></h3>
+         <p>Let</p><pre class="codeinput">o = orientation.byEuler(90*degree,0,0,cs,ss);
+rot = rotation.byEuler(0,60*degree,0);</pre><p>be a crystal orientation and a rotation of the specimen coordinate system. Then the orientation of the crystal with respect
+            to the rotated specimen coordinate system calculates by
+         </p><pre class="codeinput">o1 = rot * o</pre><pre class="codeoutput"> 
+o1 = orientation  
+  size: 1 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: 1
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+     0   60   90    0
+ 
+</pre><p>Then the class of rotations crystallographically equivalent to o can be computed in two ways. Either by using the command
+            <a href="orientation.symmetrise.html">symmetrise</a></p><pre class="codeinput">symmetrise(o)</pre><pre class="codeoutput"> 
+ans = orientation  
+  size: 384 x 1
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+</pre><p>or by using multiplication</p><pre class="codeinput">ss * o * cs</pre><pre class="codeoutput"> 
+ans = orientation  
+  size: 8 x 48
+  crystal symmetry : m-3m
+  specimen symmetry: mmm
+ 
+</pre><h3> Calculating Misorientations<a name="17"> </a></h3>
+         <p>Let cs and ss be crystal and specimen symmetry and o1 and o2 two crystal orientations. Then one can ask for the misorientation
+            between both orientations. This misorientation can be calculated by the function <a href="orientation.angle.html">angle</a>.
+         </p><pre class="codeinput">angle(rot * o1,o1) / degree</pre><pre class="codeoutput">ans =
+   30.0000
+</pre><p>This misorientation angle is, in general, smaller than the misorientation without crystal symmetry which can be computed via</p><pre class="codeinput">angle(rotation(o),rotation(o1)) /degree</pre><pre class="codeoutput">ans =
+   60.0000
+</pre><h3> Calculating with Orientations and Rotations<a name="19"> </a></h3>
+         <p>Besides the standard linear algebra operations there are also the following functions available in MTEX. Then rotational angle
+            and the axis of rotation can be computed via then commands <a href="quaternion.angle.html">angle(o)</a> and <a href="quaternion.axis.html">axis(o)</a></p><pre class="codeinput">angle(o1)/degree
+
+axis(o1)</pre><pre class="codeoutput">ans =
+   30.0000
+ 
+ans = Miller  
+ size: 1 x 1
+ symmetry: 1, X||a, Y||b*, Z||c*
+  h -1
+  k  0
+  l  0
+</pre><p>The inverse orientation to o you get from the command <a href="quaternion.inv.html">inv(q)</a></p><pre class="codeinput">inv(o1)</pre><pre class="codeoutput"> 
+ans = inverse orientation  
+  size: 1 x 1
+  specimen symmetry: 1
+  crystal symmetry : m-3m
+ 
+  Bunge Euler angles in degree
+  phi1  Phi phi2 Inv.
+    90   60  180    0
+ 
+</pre><h3> Conversion into Euler Angles and Rodrigues Parametrisation<a name="21"> </a></h3>
+         <p>There are methods to transform quaternion in almost any other parameterization of rotations as they are:</p>
+         <div>
+            <ul type="square">
+               <li><a href="quaternion.Euler.html">Euler(o)</a>   in Euler angle
+               </li>
+               <li><a href="quaternion.Rodrigues.html">Rodrigues(o)</a> % in Rodrigues parameter
+               </li>
+            </ul>
+         </div><pre class="codeinput">[phi1,Phi,phi2] = Euler(o)</pre><pre class="codeoutput">phi1 =
+    1.5708
+Phi =
+     0
+phi2 =
+     0
+</pre><h3> Plotting Orientations<a name="22"> </a></h3>
+         <p>The <a href="orientation.plot.html">plot</a> function allows you to visualize an orientation in axis angle space in relation to its fundamental region.
+         </p><pre class="codeinput">oR = fundamentalRegion(o1.CS,o1.SS)
+plot(oR)
+hold <span class="string">on</span>
+<span class="comment">% plot the orientation as it is</span>
+plot(o1,<span class="string">'markercolor'</span>,<span class="string">'b'</span>,<span class="string">'markerSize'</span>,10)
+
+<span class="comment">% plot the orientation within the fundamental zone</span>
+plot(o1.project2FundamentalRegion,<span class="string">'markercolor'</span>,<span class="string">'r'</span>,<span class="string">'markerSize'</span>,10)
+hold <span class="string">off</span></pre><pre class="codeoutput"> 
+oR = orientationRegion  
+ 
+ crystal symmetry:  432
+ max angle: 62.7994&deg;
+ face normales: 14
+ vertices: 24
+ 
+</pre><img src="orientation_index_01.png"> <h2>Complete Function list<a name="23"> </a></h2>
+         <p><table width="90%"><tr><td width="200px"><a href="orientation..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="orientation.
+            This MTEX class represents orientations and misorientations..html"><tt>  This MTEX class represents orientations and misorientations.</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="orientation.  Syntax.html"><tt>
+            Syntax</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori = orientation.byEuler(phi1,Phi,phi2,cs,ss).html"><tt>
+            ori = orientation.byEuler(phi1,Phi,phi2,cs,ss)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori =
+            orientation.byEuler(alpha,beta,gamma,'ZYZ',cs,ss).html"><tt>    ori = orientation.byEuler(alpha,beta,gamma,'ZYZ',cs,ss)</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.    ori = orientation.byMiller([h k l],[u v w],cs,ss).html"><tt>    ori = orientation.byMiller([h
+            k l],[u v w],cs,ss)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori = orientation.byAxisAngle(v,omega,cs,ss).html"><tt>
+            ori = orientation.byAxisAngle(v,omega,cs,ss)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori = orientation.byMatrix(A,cs).html"><tt>
+            ori = orientation.byMatrix(A,cs)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori = orientation.map(u1,v1,u2,v2,cs).html"><tt>
+            ori = orientation.map(u1,v1,u2,v2,cs)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori = orientation.goss(cs).html"><tt>
+            ori = orientation.goss(cs)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation.    ori = orientation.cube(cs).html"><tt>
+            ori = orientation.cube(cs)</tt></a></td><td/></tr><tr><td width="200px"><a href="orientation..html"><tt/></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.  predefined orientations.html"><tt>  predefined orientations</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation..html"><tt/></a></td><td/></tr><tr><td width="200px"><a href="orientation.     * 'Cube',
+            'CubeND22', 'CubeND45', 'CubeRD'.html"><tt>     * 'Cube', 'CubeND22', 'CubeND45', 'CubeRD'</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.     * 'Goss', 'invGoss'.html"><tt>     * 'Goss', 'invGoss'</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.     * 'Copper', 'Copper2'.html"><tt>     * 'Copper', 'Copper2'</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.     * 'SR', 'SR2', 'SR3', 'SR4'.html"><tt>     * 'SR', 'SR2', 'SR3', 'SR4'</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.     * 'Brass', 'Brass2'.html"><tt>     * 'Brass', 'Brass2'</tt></a></td><td/></tr><tr><td
+            width="200px"><a href="orientation.     * 'PLage', 'PLage2', 'QLage', 'QLage2', 'QLage3', 'QLage4'.html"><tt>     * 'PLage',
+            'PLage2', 'QLage', 'QLage2', 'QLage3', 'QLage4'</tt></a></td><td/></tr></table>
+         </p>
+         <p style="font-size:1px;"></p>
+         <table class="footer" border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+               <td valign="baseline" align="right">MTEX 5.2.beta1</td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>
