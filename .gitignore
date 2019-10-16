@@ -1,7 +1,7 @@
-/Unused Functions
-/Rods Data
+/Data
 *.mat
 *.ang
 *.asv
 *.osc
 *.oim
+*.ang
