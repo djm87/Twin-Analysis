@@ -88,15 +88,10 @@ for id = 1:length(grainIds)
   % generate orientation grid
   ori = orientation.nan(nRow,nCol,CSList{phaseIds(id)});
   ori(indLocal) = rot(ind);
-  
-  % perform smoothing 
-  [~,rownum]=size(ori);
-  if ebsd.offset==-1, ori(:,rownum:(-1):1)=ori; end
-  if ~ebsd.isRowAlignment, ori=transpose(ori); end
-  ori = filter.smoothhex(ori);
-  if ~ebsd.isRowAlignment, ori=transpose(ori); end
-  if ebsd.offset==-1, ori(:,rownum:(-1):1)=ori; end
-  
+    
+  % perform smoothing
+  ori = filter.smooth(ori);
+      
   % store as rotations
   rot(ind) = ori(indLocal);
     

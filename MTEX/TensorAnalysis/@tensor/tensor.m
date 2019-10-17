@@ -43,16 +43,11 @@ classdef tensor < dynOption
         T.M = M.M;
         T.rank = M.rank;
         T.CS = M.CS;
-        if check_option(varargin,'doubleConvention')
-          T.doubleConvention = true;
-        else
-          T.doubleConvention = M.doubleConvention;
-        end
+        T.doubleConvention = M.doubleConvention;
         T.opt = M.opt;
         
         % extract additional properties
         varargin = delete_option(varargin,'doubleConvention');
-        varargin = delete_option(varargin,'rank',1);
         T = T.setOption(varargin{:});
         return
       end
@@ -95,14 +90,9 @@ classdef tensor < dynOption
   
         end
 
-        % transform from voigt or Kelvin matrix representation to ordinary
-        % rank four tensor
+        % transform from voigt matrix representation to ordinary rank four tensor
         if size(T.M,1) == 6 && size(T.M,2) == 6 && (T.rank == -1 || T.rank == 4)
-          if check_option(varargin,'Kelvin')
-            T.M = tensor24(T.M,2);
-          else
-            T.M = tensor24(T.M,T.doubleConvention);
-          end
+          T.M = tensor24(T.M,T.doubleConvention);
           T.rank = 4;
         elseif size(T.M,1) == 3 && size(T.M,2) == 6 && (T.rank == -1 || T.rank == 3)
           if T.rank == -1
@@ -167,8 +157,10 @@ classdef tensor < dynOption
   
   methods (Static = true)
 
-    T = load(fname,varargin)
-    
+    function T = load(varargin)
+      T = loadTensor(varargin{:});
+    end
+
     function T = eye(varargin)
       r = get_option(varargin,'rank',2);
       varargin = delete_option(varargin,'rank',1);

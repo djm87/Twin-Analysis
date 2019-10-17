@@ -15,7 +15,7 @@
 %
 
 plotx2east
-ebsd = EBSD.load(fullfile(mtexDataPath,'EBSD','Forsterite.ctf'),...
+ebsd = loadEBSD(fullfile(mtexDataPath,'EBSD','Forsterite.ctf'),...
   'convertEuler2SpatialReferenceFrame');
 
 plot(ebsd)

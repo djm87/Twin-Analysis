@@ -1,4 +1,4 @@
-function m = SchmidTensor(n,b)
+function m = SchmidTensor(n,b,varargin)
 % computes the Schmidt tensor
 %
 % Input
@@ -6,13 +6,35 @@ function m = SchmidTensor(n,b)
 %  b - Burgers vector (slip) or twin shear direction (twinning)
 %
 % Output
-%  m - Schmid tensor @velocityGradientTensor
+%  m - Schmid tensor
+%
+% Options
+%
+%  generalized   - 
+%  symmetric     - default
+%  antisymmetric -
 %
 
-%
-% actually we need to multiply with the slipping rates $\dot gamma(t)$ to
-% obtain the velocity gradient tensors
-m = velocityGradientTensor(dyad(b.normalize,n.normalize));
+% normalize and convert to tensor
+tn = tensor(n.normalize,'noCheck');
+tb = tensor(b.normalize,'noCheck');
+
+if check_option(varargin,'generalized')
+  
+  m = EinsteinSum(tn,1,tb,2,'name','generalized Schmid');
+  
+elseif check_option(varargin,'antisymmetric')
+  
+  m = 0.5*(EinsteinSum(tn,1,tb,2,'name','antisymmetric Schmid') - EinsteinSum(tn,2,tb,1));
+  
+else
+  
+  m = 0.5*(EinsteinSum(tn,1,tb,2,'name','symmetric Schmid') + EinsteinSum(tn,2,tb,1));
+  
+end
+
+% this should not be a crystal tensor - explain why!!
+%if isa(n,'Miller'), m.CS = n.CS; end
 
 end
 

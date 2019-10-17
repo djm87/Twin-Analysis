@@ -16,7 +16,7 @@ if ~isempty(rot1) && ~isempty(rot2)
   
   if isa(rot2,'rotation')
     i = bsxfun(@xor,rot1.i(:),rot2.i(:).');
-    d = ~i .* d;
+    d = min(~i,d);
   else
     d(rot1.i,:) = 0;
   end

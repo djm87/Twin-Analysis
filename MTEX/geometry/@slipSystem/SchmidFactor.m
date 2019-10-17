@@ -40,9 +40,6 @@ elseif isa(sigma,'vector3d')
 % Schmid factor with respect to a stress tensor
 elseif isa(sigma,'stressTensor')
   
-  % normalize the stress tensor
-  sigma = sigma.normalize;
-  
   if length(sigma) == 1
     SF = double(EinsteinSum(sigma,[-1,-2],n,-1,b,-2));
     SF = reshape(SF,size(sS));

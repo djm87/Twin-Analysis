@@ -37,11 +37,8 @@ classdef vector3d < dynOption
       if nargin == 0
       elseif nargin <= 2
         if strcmp(class(varargin{1}),'vector3d') %#ok<STISA>
-          
           v = varargin{1};
-          
         elseif isa(varargin{1},'vector3d') % copy-constructor
-          
           v.x = varargin{1}.x;
           v.y = varargin{1}.y;
           v.z = varargin{1}.z;
@@ -49,7 +46,6 @@ classdef vector3d < dynOption
           v.isNormalized = varargin{1}.isNormalized;
           v.opt = varargin{1}.opt;
           return
-          
         elseif isa(varargin{1},'double')
           xyz = varargin{1};
           if all(size(xyz) == [1,3])
@@ -127,7 +123,7 @@ classdef vector3d < dynOption
         end
       
         % normalize
-       if check_option(varargin,'normalize'), v = normalize(v); end
+       if check_option(varargin,'normalize'), v = v ./ norm(v); end
        
       end
     end
@@ -263,9 +259,20 @@ classdef vector3d < dynOption
       
     end
     
-    [v,interface,options] = load(fname,varargin)
+    function varargout = load(fname,varargin)
+      % load vectors from file
+      
+      [varargout{1:nargout}] = loadVector3d(fname,varargin{:});
+      
+    end
     
-    v = byPolar(polarAngle,azimuthAngle,varargin)
-    
+    %function v = polar(polarAngle,azimuthAngle)
+    %  % Syntax
+    %  %
+    %  x = sin(polarAngle).*cos(azimuthAngle);
+    %  y = sin(polarAngle).*sin(azimuthAngle);
+    %  z = cos(polarAngle);
+    %  v = vector3d(x,y,z);
+    %end
   end
 end

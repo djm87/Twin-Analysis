@@ -23,8 +23,7 @@
 
 % import some EBSD data, while aligning the x,y coordinates to follow the
 % Euler angle coordinate system
-ebsd = EBSD.load([mtexDataPath filesep 'EBSD' filesep 'twins.ctf'],...
-  'convertSpatial2EulerReferenceFrame' );
+ebsd = loadEBSD([mtexDataPath filesep 'EBSD' filesep 'twins.ctf'],'convertSpatial2EulerReferenceFrame' );
 
 % plot the orientations
 plot(ebsd('indexed'),ebsd('indexed').orientations)

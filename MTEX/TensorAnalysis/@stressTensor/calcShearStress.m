@@ -32,7 +32,7 @@ if check_option(varargin,'symmetrise')
   %m = symmetrise(m);
   %n = symmetrise(n);
   
-  [r,c] = find(isnull(dot_outer(m,n,'noSymmetry')));
+  [r,c] = find(isnull(dot_outer(vector3d(m),vector3d(n))));
 
   m = m(r);
   n = n(c);

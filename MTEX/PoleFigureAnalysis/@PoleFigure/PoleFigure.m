@@ -162,9 +162,4 @@ classdef PoleFigure < dynProp & dynOption
     end
     
   end
-  
-  methods (Static = true)
-    [pf,interface,options] = load(fname,varargin)
-  end
-  
 end

@@ -8,9 +8,10 @@ switch s(1).type
     v.y = subsref(v.y,s(1));
     v.z = subsref(v.z,s(1));
     
-    try v.opt = rmfield(v.opt,'resolution'); end %#ok<TRYNC>
-    try v.opt = rmfield(v.opt,'region'); end %#ok<TRYNC>
-    try v.opt = rmfield(v.opt,{'theta','rho','plot'}); end %#ok<TRYNC>
+    if v.isOption('plot')
+      v.opt = rmfield(v.opt,{'theta','rho','plot','resolution'});
+    end
+    
     
     if numel(s)>1
       [varargout{1:nargout}] = builtin('subsref',v,s(2:end));

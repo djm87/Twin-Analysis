@@ -1,9 +1,9 @@
-function varargout = polar(L,t)
+function [R,U,V] = polar(L,t)
 % polar decomposition of velocity gradient tensor
 %
 % Syntax
-%   [R,V,U] = polar(L)
-%   [R,V,U] = polar(L,t)
+%   [R,U,V] = polar(L)
+%   [R,U,V] = polar(L,t)
 %
 % Input
 %  L - @velocityGradientTensor
@@ -11,12 +11,12 @@ function varargout = polar(L,t)
 %
 % Output
 %  R - rigid boddy rotation
-%  V - left stretch tensor
 %  U - right stretch tensor
-%
+%  V - left stretch tensor
 
 if nargin == 1, t = 1; end
 
-[varargout{1:nargout}] = polar@tensor(t.*L);
+[R,U,V] = polar@tensor(t.*L);
 
 end
+

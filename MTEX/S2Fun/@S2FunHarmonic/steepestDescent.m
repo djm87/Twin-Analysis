@@ -49,6 +49,7 @@ omega = [0,omega];
 
 %base = (2*tol/res)^(1/kmax);
 
+
 % actual steepest descent
 for k = 0:kmax
 
@@ -77,7 +78,7 @@ for k = 0:kmax
   if all(id == 1), break; end
 
   % maybe we can reduce the number of points a bit
-  [~,~,I] = unique(v, 'tolerance', tol,'noSymmetry');
+  [~,~,I] = unique(v, 'tolerance', tol);
   v = normalize(accumarray(I,v));
   f = accumarray(I,f,[],@mean);
   

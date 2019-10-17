@@ -11,7 +11,7 @@ function d = dot_outer(m1,m2,varargin)
 %  d - m1 . m2
 
 if check_option(varargin,'noSymmetry')
-  d = dot_outer@vector3d(m1,m2,varargin{:});
+  d = dot_outer(vector3d(m1),vector3d(m2));
   return
 end
 
@@ -23,9 +23,12 @@ end
 m1 = symmetrise(m1,varargin{:});
 s = [size(m1),length(m2)];
 
+% normalize
+m1 = m1 ./ norm(m1);
+m2 = m2 ./ norm(m2);
+
 % dotproduct
-d = dot_outer@vector3d(m1,m2);
-d = reshape(d,s);
+d = reshape(dot_outer(vector3d(m1),vector3d(m2)),s);
 
 % find maximum
 d = squeeze(max(d,[],1));

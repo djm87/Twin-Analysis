@@ -2,7 +2,7 @@ classdef unimodalComponent < ODFComponent
 
   properties
     center
-    psi = deLaValleePoussinKernel('halfwidth',10*degree);
+    psi = deLaValeePoussinKernel('halfwidth',10*degree);
     weights = 1;
   end
 

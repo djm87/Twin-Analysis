@@ -83,10 +83,69 @@ classdef ODF < dynOption
   end
   
   methods (Static = true)
-
-    [odf,interface,options] = load(fname,varargin)
     
-    [odf,resvec] = interp(ori,values,varargin)
+    function [odf,resvec] = interp(ori,values,varargin)
+      % compute an ODF by interpolating orientations and weights
+
+      % construct the uniform portion first
+      values = values(:);
+      m = min(values);
+      values = values - m;
+      
+      odf = m * uniformODF(ori.CS,ori.SS);
+      
+      % grid for representing the ODF
+      res = get_option(varargin,'resolution',3*degree);
+      exact = get_option(varargin,'exact',false);
+      if exact
+          S3G=ori
+      else
+          S3G = equispacedSO3Grid(ori.CS,ori.SS,'resolution',res);
+      end
+%       S3G=ori
+%       S3G = regularSO3Grid(ori.CS,ori.SS,'resolution',10*degree)     % specify the resolution
+      % kernel for representing the ODF
+      psi = get_option(varargin,'kernel',deLaValeePoussinKernel('halfwidth',res));
+
+      % system matrix
+      M = psi.K_symmetrised(S3G,ori,ori.CS,ori.SS);
+      
+%       x = lsqlin(C,d,A,b,[],[],[],[],[],options)
+%       options = optimoptions('lsqlin','Algorithm','interior-point',...
+%           'Display','iter','ConstraintTolerance',1e-8,'OptimalityTolerance',1e-8);
+%       [w,resnorm,residual,exitflag,output,lambda] = lsqlin(M',values,[],[],[],[],[],[],[],options);
+      
+%       options = optimoptions('TolX',1e-3);
+%       [w,resnorm,residual,exitflag,output,lambda] = lsqnonneg(M',values,'TolX',1e-3)
+
+      use_lsqr = get_option(varargin,'lsqr',false);
+      lsqr_tol = get_option(varargin,'lsqr_tol',1e-2);
+      lsqr_iters = get_option(varargin,'lsqr_iters',50);
+      if use_lsqr
+          [w,flag,relres,iter,resvec] = lsqr(M',values,lsqr_tol,lsqr_iters);
+          while flag > 0
+             tolerance=tolerance*1.3; 
+            [w,flag,relres,iter,resvec] = lsqr(M',values,tolerance,50);  
+          end 
+      else
+          options = optimoptions('lsqlin','Algorithm','interior-point','Display','iter','TolCon',1e-10,'TolX',1e-14,'TolFun',1e-10);
+          [n1,n2] = size(M');
+          [w,resnorm,residual,exitflag,output,lambda_lsqlin] = ...
+           lsqlin(M',values,-eye(n2,n2),zeros(n2,1),[],[],[],[],[],options);
+      end
+      
+      ODF_stats = get_option(varargin,'ODFstats',false);
+      if ODF_stats
+         err = abs(M'*w - values);
+         disp(['   Minimum weight: ',xnum2str(min(w))]);
+         disp(['   Maximum weight:  : ',xnum2str(max(w))]);
+         disp(['   Maximum error during interpolating ODF: ',xnum2str(max(err))]);
+         disp(['   Mean error during interpolating ODF   : ',xnum2str(mean(err))]);
+      end
+
+      odf = odf + (1-m).*unimodalODF(S3G,psi,'weights',w./sum(w));
+          
+    end
     
     function odf = ambiguity1(varargin)
 

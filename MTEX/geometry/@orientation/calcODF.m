@@ -53,7 +53,7 @@ if check_option(varargin,'bingham')
 end
   
 % extract kernel function
-psi = deLaValleePoussinKernel('halfwidth',10*degree,varargin{:});
+psi = deLaValeePoussinKernel('halfwidth',10*degree,varargin{:});
 psi = get_option(varargin,'kernel',psi);
 
 if  ~check_option(varargin,{'exact','noFourier'}) && ...

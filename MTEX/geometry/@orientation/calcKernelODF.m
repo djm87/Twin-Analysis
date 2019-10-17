@@ -35,7 +35,7 @@ function odf = calcKernelODF(ori,varargin)
 %  exact      - no approximation to a corser grid
 %
 % See also
-% ebsd_demo EBSD2odf EBSDSimulation_demo EBSD/load ODF/calcEBSD EBSD/calcKernel kernel/kernel
+% ebsd_demo EBSD2odf EBSDSimulation_demo loadEBSD ODF/calcEBSD EBSD/calcKernel kernel/kernel
 
 % remove nan orientations
 ori = subSet(ori,~isnan(ori));
@@ -52,7 +52,7 @@ end
 weights = weights ./ sum(weights(:));
 
 % extract kernel function
-psi = deLaValleePoussinKernel('halfwidth',10*degree,varargin{:});
+psi = deLaValeePoussinKernel('halfwidth',10*degree,varargin{:});
 psi = get_option(varargin,'kernel',psi);
 hw = psi.halfwidth;
 

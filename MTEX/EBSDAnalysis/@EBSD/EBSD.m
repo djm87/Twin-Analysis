@@ -20,7 +20,7 @@ classdef EBSD < phaseList & dynProp & dynOption
   %  unitCell - for internal use
   %
   % See also
-  % ODF/calcEBSD EBSD/calcODF EBSD/load
+  % ODF/calcEBSD EBSD/calcODF loadEBSD
   
   % properties with as many rows as data
   properties
@@ -178,12 +178,6 @@ classdef EBSD < phaseList & dynProp & dynOption
 %         dy = inf;
 %       end
 %     end
-    
-  end
-  
-  methods (Static = true)
-    
-    [ebsd,interface,options] = load(fname,varargin)
     
   end
       

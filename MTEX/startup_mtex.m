@@ -73,10 +73,10 @@ p();
 
 % make help searchable
 
-% if isempty(dir(fullfile(local_path,'doc','html','helpsearch*')))
-%   disp('Creating search data base for MTEX documentation.')
-%   builddocsearchdb(fullfile(local_path,'doc','html'));
-% end
+if isempty(dir(fullfile(local_path,'doc','html','helpsearch*')))
+  disp('Creating search data base for MTEX documentation.')
+  builddocsearchdb(fullfile(local_path,'doc','html'));
+end
 
 % finish
 if isempty(lasterr) % everything fine
@@ -107,7 +107,7 @@ cellpath = [cellpath{:}]; %cellpath = regexp(path, pathsep,'split');
 if isappdata(0,'mtex')
   
   oldMTEX = getappdata(0,'mtex');
-  if ~isfield(oldMTEX,'mtexPath') || ~strcmpi(oldMTEX.mtexPath,local_path) 
+  if ~strcmpi(oldMTEX.mtexPath,local_path) 
   
     rmappdata(0,'mtex');
     disp('I found another version of MTEX and remove it from the current search path!');

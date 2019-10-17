@@ -80,11 +80,7 @@ classdef crystalSymmetry < symmetry
   methods
     
     function s = crystalSymmetry(varargin)
-
-      % this is for compatibility with using "strings" as input
-      try varargin = controllib.internal.util.hString2Char(varargin); catch, end
-
-      
+    
       s = s@symmetry(varargin{:});
                   
       if nargin > 1
@@ -170,10 +166,7 @@ classdef crystalSymmetry < symmetry
     function opt = get.plotOptions(cs)
       % rotate the aAxis or bAxis into the right direction
       
-      if ~isempty(getMTEXpref('aStarAxisDirection',[]))
-        cor = pi/2*(NWSE(getMTEXpref('aStarAxisDirection',[]))-1);
-        rho = -cs.aAxisRec.rho + cor;
-      elseif ~isempty(getMTEXpref('bAxisDirection',[]))
+      if ~isempty(getMTEXpref('bAxisDirection',[]))
         rho = -cs.bAxis.rho + pi/2*(NWSE(getMTEXpref('bAxisDirection',[]))-1);
       elseif ~isempty(getMTEXpref('aAxisDirection',[]))
         rho = -cs.aAxis.rho + pi/2*(NWSE(getMTEXpref('aAxisDirection',[]))-1);
@@ -183,10 +176,6 @@ classdef crystalSymmetry < symmetry
       opt = {'xAxisDirection',rho,'zAxisDirection','outOfPlane'};
     end
     
-  end
-  
-  methods (Static = true)
-    cs = load(fname,varargin)
   end
     
 end

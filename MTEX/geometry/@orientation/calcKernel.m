@@ -44,7 +44,7 @@ switch lower(method)
   case 'magicrule'
     
     kappa = (length(ori.CS) * length(ori.SS) * numOri)^(2/7) * 3; % magic rule
-    psi = deLaValleePoussinKernel(kappa,varargin{:});
+    psi = deLaValeePoussinKernel(kappa,varargin{:});
     return
     
   case 'ruleofthumb'
@@ -59,15 +59,15 @@ switch lower(method)
     end
 
     hw = max((res * 3)/2,2*degree);
-    psi = deLaValleePoussinKernel('halfwidth',hw);
-    psi = deLaValleePoussinKernel(fak*psi.kappa);
+    psi = deLaValeePoussinKernel('halfwidth',hw);
+    psi = deLaValeePoussinKernel(fak*psi.kappa);
 
     return 
 end
 
 % now prepare kernels for cross validation methods
 for k = 1:10
-  psi{k} = deLaValleePoussinKernel('halfwidth',30*degree/2^(k/3)); %#ok<AGROW>
+  psi{k} = deLaValeePoussinKernel('halfwidth',30*degree/2^(k/3)); %#ok<AGROW>
 end
 psi = get_option(varargin,'kernel',psi);
 
@@ -84,4 +84,4 @@ switch method
 end
 
 [~,i] = max(c);
-psi = deLaValleePoussinKernel(fak*psi{i(1)}.kappa);
+psi = deLaValeePoussinKernel(fak*psi{i(1)}.kappa);

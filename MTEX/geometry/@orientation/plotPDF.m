@@ -41,7 +41,7 @@ function plotPDF(ori,varargin)
 if nargin > 1 
   if isa(varargin{1},'Miller')
     h = varargin{1};
-  elseif iscell(varargin{1}) && isa(varargin{1}{1},'Miller')
+  elseif iscell(varargin{1}) && isa(varargin{2}{1},'Miller')
     h = varargin{1};
   end
 end
@@ -95,7 +95,7 @@ end
 
 
 % ------------------ subsample if needed --------------------------
-if ~check_option(varargin,{'all','contour','contourf','smooth','pcolor'}) && ...
+if ~check_option(varargin,{'all','contour','contourf','smooth'}) && ...
     (sum(length(ori))*length(ori.CS)*length(ori.SS) > 10000 || check_option(varargin,'points'))
 
   points = fix(get_option(varargin,'points',10000/length(ori.CS)/length(ori.SS)));

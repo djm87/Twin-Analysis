@@ -17,7 +17,6 @@ function ori = byAxisAngle(axis,angle,varargin)
 % See also
 % orientation_index orientation/byEuler orientation/byMatrix orientation/map
 
-% TODO: better implementation required, call byAxisAngle@rotattion
 
 ori = orientation(axis2quat(axis,angle),varargin{:});
 

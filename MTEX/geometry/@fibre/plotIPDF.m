@@ -47,7 +47,7 @@ for ir = 1:length(r)
   % the crystal directions
   h = f.orientation \ r(ir);
   
-  if ~check_option(varargin,{'complete','noSymmetry'})
+  if ~check_option(varargin,'complete')
     h = h.project2FundamentalRegion;
   end
  
@@ -77,6 +77,6 @@ rho = atan2(yp,xp);
 rqr = xp^2 + yp^2;
 theta = acos(1-rqr/2);
 
-m = Miller(vector3d.byPolar(theta,rho),getappdata(gcf,'CS'));
+m = Miller(vector3d('polar',theta,rho),getappdata(gcf,'CS'));
 m = round(m);
 txt = char(m,'tolerance',3*degree,'commasep');

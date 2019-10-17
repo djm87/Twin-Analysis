@@ -30,9 +30,11 @@ else
 end
 
 % rotate the spatial data
-xy = [ebsd.prop.x(:), ebsd.prop.y(:), ones(length(ebsd),1)] * T';
-ebsd.prop.x = xy(:,1);
-ebsd.prop.y = xy(:,2);
+if isfield(ebsd.prop,'x') && isfield(ebsd.prop,'y')
+  xy = [ebsd.prop.x(:), ebsd.prop.y(:), ones(length(ebsd),1)] * T';
+  ebsd.prop.x = xy(:,1);
+  ebsd.prop.y = xy(:,2);
+end
 
 % rotate the unit cells
 T(1:2,3) = 0; % no shift!

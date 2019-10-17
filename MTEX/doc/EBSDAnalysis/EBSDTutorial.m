@@ -14,7 +14,7 @@ import_wizard
 % or by the command
 
 fileName = [mtexDataPath filesep 'EBSD' filesep 'Forsterite.ctf'];
-ebsd = EBSD.load(fileName)
+ebsd = loadEBSD(fileName)
 
 %%
 % A quick overview of the phases within your data set gives the plot

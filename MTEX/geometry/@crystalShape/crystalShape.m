@@ -6,7 +6,7 @@ classdef crystalShape
   % Enderlein, J., 1997. A package for displaying crystal morphology.
   % Mathematica Journal, 7(1).
   %
-  % we need more :)
+  %
   
   properties
     N % face normals
@@ -21,7 +21,6 @@ classdef crystalShape
     diameter
     faceArea
     faceCenter
-    volume
   end
   
   methods
@@ -129,14 +128,6 @@ classdef crystalShape
       end
     end
     
-    function cSVol = get.volume(cS) 
-     % get the volume of the shape
-     cSVol = 1/3*sum( ...
-             dot(cS.faceCenter,normalize(unique(vector3d(symmetrise(cS.N)),'stable'))) ...
-             .*cS.faceArea);
-    end
-
-
   end
 
   methods (Static = true)
@@ -217,7 +208,7 @@ classdef crystalShape
       CS = crystalSymmetry('622',[3,3,4.7],'x||a','mineral','Titanium (Alpha)');
 
       fname = fullfile(mtexDataPath,'EBSD','titanium.txt');
-      ebsd = EBSD.load(fname, 'CS', CS,...
+      ebsd = loadEBSD(fname, 'interface','generic', 'CS', CS,...
         'ColumnNames', {'phi1' 'Phi' 'phi2' 'phase' 'ci' 'iq' 'sem_signal' ...
         'x' 'y' 'grainId'});
 

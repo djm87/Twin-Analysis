@@ -17,6 +17,6 @@ f = min(1,length(S3G) * (res / 0.25 / degree)^3 / reference);
 if f == 0
   v = 0;
 else
-  v = mean(eval(component,S3G)) * f;
+  v = mean(eval(component,S3G)) * f;  %#ok<EVLC>
   v = min(v,1);
 end

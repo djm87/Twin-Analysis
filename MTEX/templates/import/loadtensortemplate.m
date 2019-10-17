@@ -24,4 +24,4 @@ fname = {file names};
 %% Import the Data
 
 % create a Tensor variable containing the data
-tensor = tensor.load(fname,CS,'interface',{interface},{options});
+tensor = loadTensor(fname,CS,'interface',{interface},{options});

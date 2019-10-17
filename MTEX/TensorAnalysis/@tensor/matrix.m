@@ -3,8 +3,7 @@ function m = matrix(T,varargin)
 %
 % Syntax
 %   m = matrix(T)
-%   m = matrix(T,'Voigt')
-%   m = matrix(T,'Kelvin')
+%   m = matrix(T,'voigt')
 %
 % Input
 %  T - @tensor
@@ -13,8 +12,7 @@ function m = matrix(T,varargin)
 %  m - matrix
 %
 % Options
-%  Voigt - give a 4 rank tensor in Voigt notation, i.e. as a 6 x 6 matrix
-%  Kelvin - same as above but with Kelvin normalization
+%  voigt - give a 4 rank tensor in voigt notation, i.e. as a 6 x 6 matrix
 %
 % See also
 %
@@ -26,11 +24,8 @@ if check_option(varargin,{'compact','voigt'})
     case 3
       m = tensor32(T.M,T.doubleConvention);
   end
-elseif check_option(varargin,'Kelvin')
-  m = tensor42(T.M,2);
-else
-  m= T.M;
+  return
 end
 
-
+m= T.M;
 

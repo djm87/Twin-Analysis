@@ -14,7 +14,7 @@ function export(q,fname,varargin)
 %   S.area = grains.area;
 %   
 %   % export orientation and custom data
-%   export(grains.meanOrientation,fname,S)
+%   export(grains.meanOrientation,S)
 %
 % Input
 %  q - @quaternion

@@ -41,6 +41,7 @@ classdef slipSystem
         'Slip direction and plane normal should be orthogonal!')
       
       sS.b = b;
+      n.antipodal = true;
       sS.n = n;
       if nargin < 3, CRSS = 1; end
       if numel(CRSS) ~= length(sS.b)

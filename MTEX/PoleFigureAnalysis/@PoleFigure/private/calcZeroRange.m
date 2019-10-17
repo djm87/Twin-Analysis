@@ -15,13 +15,13 @@ function zr = calcZeroRange(pf,S2G,varargin)
 % PoleFigure/calcODF
 
 % kernel used for calculation
-psi = S2DeLaValleePoussin('halfwidth',...
+psi = deLaValeePoussinKernel('halfwidth',...
   get_option(varargin,'zr_halfwidth',2*pf.r.resolution));
 
 % normalization
 w = calcDensity(pf.r,S2G,'kernel',psi,'noNormalization');
 
-mw = psi.eval(1);
+mw = psi.RK(1);
 %w = max(RK(k,quaternion.id,xvector,xvector,1,symmetry,symmetry)*0.25,w);
 %plot(S2G,min(w,mw))
   

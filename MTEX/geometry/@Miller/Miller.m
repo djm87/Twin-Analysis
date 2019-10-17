@@ -87,9 +87,6 @@ classdef Miller < vector3d
         ['Starting with MTEX 4.0 Miller ' ...
         'indices always require to specify a crystal symmetry!']);
 
-      % extract disp style
-      dispStyle = extract_option(varargin,{'uvw','UVTW','hkl','hkil','xyz'}); %#ok<*PROP>
-      
       if nargin == 0 %empty constructor
 
         return
@@ -98,7 +95,7 @@ classdef Miller < vector3d
   
         if ~isempty(m.CSprivate), varargin{1}.CSprivate = m.CSprivate;end
         m = varargin{1};
-        
+        dispStyle = extract_option(varargin,{'uvw','UVTW','hkl','hkil','xyz'}); %#ok<*PROP>
         if ~isempty(dispStyle), m.dispStyle = dispStyle{1}; end
         
         return;
@@ -143,7 +140,7 @@ classdef Miller < vector3d
         % set coordinates
         coord = reshape([varargin{1:nparam}],[],nparam);
                 
-        if check_option(varargin,{'uvw','uvtw','direction'})
+        if check_option(varargin,{'uvw','uvtw','direction'});          
           
           if nparam == 3 && ~check_option(varargin,'uvtw')
             m.uvw = coord;
@@ -151,7 +148,7 @@ classdef Miller < vector3d
             m.UVTW = coord;
           end
           
-        elseif check_option(varargin,'xyz')
+        elseif check_option(varargin,'xyz');
           
           m.x = coord(:,1);
           m.y = coord(:,2);
@@ -167,10 +164,7 @@ classdef Miller < vector3d
       end
 
       % add antipodal symmetry ?
-      m.antipodal = m.antipodal | check_option(varargin,'antipodal');
-      
-      % set dispStyle
-      if ~isempty(dispStyle), m.dispStyle = dispStyle{1}; end
+      m.antipodal = check_option(varargin,'antipodal');
 
     end
     

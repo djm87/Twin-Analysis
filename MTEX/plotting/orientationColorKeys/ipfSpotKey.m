@@ -22,7 +22,7 @@ classdef ipfSpotKey < ipfColorKey
       oM.CS1 = oM.center.CS;
       oM.color = get_option(varargin,'color',[1 0 0]);
       oM.psi = get_option(varargin,'kernel',...
-        S2DeLaValleePoussin('halfwidth',get_option(varargin,'halfwidth',10*degree)));
+        deLaValeePoussinKernel('halfwidth',get_option(varargin,'halfwidth',10*degree)));
       
       oM.dirMap = directionColorKey(oM.CS1,'dir2color',@(varargin) oM.dir2color(varargin{:}));
             
@@ -30,25 +30,25 @@ classdef ipfSpotKey < ipfColorKey
   
     function rgb = dir2color(oM,h)
       
-      h = normalize(h);
+      s = size(h);
       rgb = ones(length(h),3);
 
       for k=1:length(oM.center)
 
-        w = oM.psi.RK(dot(h,normalize(oM.center(k)))) ./ oM.psi.RK(1);
+        w = oM.psi.RK(dot(h,oM.center(k))) ./ oM.psi.RK(1);
   
-        if ~any(oM.color(k,:))% fix in case of black
-          cdata = repmat([0 1 1],length(h),1);
-          cdata(:,2) = w(:).*cdata(:,2);
-          cdata = reshape(hsv2rgb(cdata),[],3);
-          cdata(:,1)=cdata(:,2);
-          rgb = rgb.*cdata;
+        if ~any(oM.color(k,:))% fix in case of black       
+        cdata = repmat([0 1 1],length(h),1);
+        cdata(:,2) = w(:).*cdata(:,2);
+        cdata = reshape(hsv2rgb(cdata),[],3);
+        cdata(:,1)=cdata(:,2);
+        rgb = rgb.*cdata;
         else 
-          cdata = rgb2hsv(repmat(oM.color(k,:),length(h),1));
-          cdata(:,2) = w(:).*cdata(:,2);
-          cdata(:,3) = 1;
-          cdata = reshape(hsv2rgb(cdata),[],3);
-          rgb = rgb.*cdata;
+        cdata = rgb2hsv(repmat(oM.color(k,:),length(h),1));
+        cdata(:,2) = w(:).*cdata(:,2);
+        cdata(:,3) = 1;
+        cdata = reshape(hsv2rgb(cdata),[],3);
+        rgb = rgb.*cdata;
         end
       end
     end

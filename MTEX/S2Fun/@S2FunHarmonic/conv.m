@@ -45,7 +45,6 @@ else
     A = psi(:);
   elseif isa(psi,'S2Kernel')
     A = psi.A(:);
-    A = A ./ (2*(0:length(A)-1)+1).';
   elseif isa(psi,'kernel')
     A = psi.A(:);
     A = A ./ (2*(0:length(A)-1)+1).';

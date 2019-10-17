@@ -1,35 +1,21 @@
-classdef spinTensor < velocityGradientTensor
+classdef spinTensor < tensor
 %
 % Syntax
 %
 %   Omega = spinTensor(v)
 %   Omega = spinTensor(S)
-%   Omega = spinTensor(rot)
-%   Omega = spinTensor(mori)
 %
 % Input
 %  S - skew symmetry matrix
 %  v - @vector3d
-%  rot - @rotation
-%  mori - mis@orientation
   
   
   methods
     function Omega = spinTensor(varargin)
       
+      Omega = Omega@tensor(varargin{:},'rank',2);
       
-      Omega = Omega@velocityGradientTensor(varargin{:},'rank',2);
-      
-      % ensure it is antisymmetric
-      Omega.M = 0.5*(Omega.M - permute(Omega.M,[2 1 3:ndims(Omega.M)]));
-      
-      if nargin == 0; return; end
-      
-      if isa(varargin{1},'rotation')
-        
-        Omega = logm(varargin{:});
-        
-      elseif isa(varargin{1},'vector3d')
+      if nargin>= 1 && isa(varargin{1},'vector3d')
         
         [x,y,z] = double(varargin{1});
         
@@ -46,6 +32,7 @@ classdef spinTensor < velocityGradientTensor
         if isa(varargin{1},'Miller'), Omega.CS = varargin{1}.CS; end        
       end
       
+      Omega = Omega.antiSym;
     end    
 
     function v = vector3d(Omega)

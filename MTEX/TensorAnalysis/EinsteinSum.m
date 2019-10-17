@@ -22,8 +22,6 @@ function T = EinsteinSum(varargin)
 % See also
 %
 
-% TODO: check for correct symmetries !!!
-
 M1 = 1; dimT1 = [];
 try 
   CS = {varargin{1}.CS}; 

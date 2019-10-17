@@ -2,24 +2,21 @@ function [M,b,spin] = calcTaylor(L,sS,varargin)
 % compute Taylor factor and strain dependent orientation gradient
 %
 % Syntax
-%   [M,b,W] = calcTaylor(eps,sS)
+%   [M,b,spin] = calcTaylor(eps,sS)
 %
 % Input
-%  L  - @velocityGradientTensor
-%  sS - @slipSystem
+%  eps - @strainTensor list in crystal coordinates
+%  sS  - @slipSystem list in crystal coordinates
 %
 % Output
-%  M - taylor factor
-%  b - coefficients for the acive slip systems
-%  W - @spinTensor
+%  M    - taylor factor
+%  b    - coefficients for the acive slip systems
+%  spin - @spinTensor
 %
 % Example
 %
-%   % consider uniaxial tension in (100) direction about 30 percent
-%   F = deformationGradientTensor.uniaxial(vector3d.X,1.3)
-%
-%   % the corresponding rate of deformation tensor becomes
-%   L = logm(F)
+%   % define 10 percent strain
+%   eps = 0.1 * strainTensor(diag([1 -0.75 -0.25]))
 %
 %   % define a crystal orientation
 %   cs = crystalSymmetry('cubic')
@@ -29,10 +26,8 @@ function [M,b,spin] = calcTaylor(L,sS,varargin)
 %   sS = slipSystem.fcc(cs)
 %
 %   % compute the Taylor factor
-%   [M,b,spin] = calcTaylor(inv(ori)*L,sS.symmetrise)
+%   [M,b,spin] = calcTaylor(inv(ori)*eps,sS.symmetrise)
 %
-%   % update orientation
-%   oriNew = ori .* orientation(-W)
 
 % the antisymmetry part of the strainRateTensor is directly the spin increment
 spin = L.antiSym;

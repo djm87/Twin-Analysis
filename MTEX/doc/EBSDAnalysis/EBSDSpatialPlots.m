@@ -146,7 +146,7 @@ ipfKey = ipfSpotKey(csFo);
 ipfKey.inversePoleFigureDirection = f.r;
 ipfKey.center = f.h;
 ipfKey.color = [0 0 1];
-ipfKey.psi = deLaValleePoussinKernel('halfwidth',7.5*degree);
+ipfKey.psi = deLaValeePoussinKernel('halfwidth',7.5*degree);
 
 plot(ebsd('fo'),ipfKey.orientation2color(ebsd('fo').orientations))
 
@@ -171,22 +171,17 @@ hold off
 %%
 % we can easily extend the colorcoding
 
-% the centers in the inverse pole figure
-ipfKey.center = Miller({0 0 1},{0 1 1},{1 1 1},{11 4 4},{5 0 2},{5 5 2},csFo);
+ipfKey.center = [Miller(0,0,1,csFo),Miller(0,1,1,csFo),Miller(1,1,1,csFo),...
+  Miller(11,4,4,csFo), Miller(5,0,2,csFo) , Miller(5,5,2,csFo)];
 
-% the correspnding collors
 ipfKey.color = [[1 0 0];[0 1 0];[0 0 1];[1 0 1];[1 1 0];[0 1 1]];
-
-% plot the key
-plot(ipfKey)
-hold on
-plot(ebsd('fo').orientations,'MarkerFaceColor','none','MarkerEdgeColor','k','MarkerSize',3,'points',1000)
-hold off
-
-%%
 
 close all;
 plot(ebsd('fo'),ipfKey.orientation2color(ebsd('fo').orientations))
+
+%%
+
+plot(ipfKey,'complete')
 
 %% SUB: Coloring certain orientations
 % We might be interested in locating some special orientation in our
@@ -196,7 +191,7 @@ plot(ebsd('fo'),ipfKey.orientation2color(ebsd('fo').orientations))
 ipfKey = spotColorKey(ebsd('Fo'));
 ipfKey.center = mean(ebsd('Forsterite').orientations,'robust');
 ipfKey.color = [0,0,1];
-ipfKey.psi = deLaValleePoussinKernel('halfwidth',20*degree);
+ipfKey.psi = deLaValeePoussinKernel('halfwidth',20*degree);
 
 plot(ebsd('fo'),ipfKey.orientation2color(ebsd('fo').orientations))
 
@@ -233,7 +228,7 @@ ipfKey = ipfSpotKey(csFo);
 ipfKey.inversePoleFigureDirection = zvector;
 ipfKey.center = Miller(1,1,1,csFo);
 ipfKey.color = [0 0 1];
-ipfKey.psi = deLaValleePoussinKernel('halfwidth',7.5*degree);
+ipfKey.psi = deLaValeePoussinKernel('halfwidth',7.5*degree);
 
 hold on
 plot(ebsd('fo'),ipfKey.orientation2color(ebsd('fo').orientations),'FaceAlpha',0.5)

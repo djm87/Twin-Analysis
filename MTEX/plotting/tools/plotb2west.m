@@ -3,4 +3,3 @@ function plotb2west
 
 setMTEXpref('bAxisDirection','west');
 setMTEXpref('aAxisDirection','');
-setMTEXpref('aStarAxisDirection','');

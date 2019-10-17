@@ -2,9 +2,6 @@ function varargout = mtexColorbar(varargin)
 % overide buildin Matlab colorbar function
 %
 % Syntax
-%   % add a colorbar with title
-%   mtexColorbar('title','misorientation angle')
-%
 %   % add a colorbar vertical colorbar
 %   mtexColorbar('location','eastoutside')
 %
