@@ -23,7 +23,7 @@ Y = grains.V(:,2);
 poly = grains.poly;
 % remove inclusions
 incl = grains.inclusionId;
- grains.checkInside(grains(1))
+ grains.checkInside(grains(1));
 for i = find(incl>0).'
   poly{i} = poly{i}(1:end-incl(i));
 end

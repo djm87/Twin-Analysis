@@ -64,10 +64,10 @@ end
 %Overlayer graph on grains
 if doplot==true
     figure;
-    h=plot(grains,grains.meanOrientation,'Micronbar','off')
+    h=plot(grains,grains.meanOrientation,'Micronbar','off');
     set(gca,'Units','normalized');
     hold on 
-    p=plot(G,'XData',G.Nodes.centroids(:,1),'YData',G.Nodes.centroids(:,2))
+    p=plot(G,'XData',G.Nodes.centroids(:,1),'YData',G.Nodes.centroids(:,2));
     hold off
     p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
 end

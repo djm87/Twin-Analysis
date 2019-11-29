@@ -135,7 +135,7 @@ function [G_Complete,runCleanupAgain ]= CleanFamilyTree(G_Complete,grains)
         
         
 %         assert(any(sum(FamilyMatrix,1)<3),'Circular relationship between more than two grains')
-        circularFamily=find(sum(FamilyMatrix,1)>1)
+        circularFamily=find(sum(FamilyMatrix,1)>1);
         rEdge=[];    
         if isempty(FamilyTreeParent)
            %circular relationship exists but it is in the parents column!
