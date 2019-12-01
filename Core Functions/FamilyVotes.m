@@ -1,4 +1,4 @@
-function G = FamilyVotes(G,w)
+function G = FamilyVotes(G,grains,w)
 %FamilyVotes Computes a vote for twin/parent relationships 
 %   Votes are made based on on the formula described in: 
 %   Automatic twin statistcs from EBSD data 
@@ -27,9 +27,10 @@ function G = FamilyVotes(G,w)
         ngroupId= find((i==G.Nodes.Group)==true);
         FID=G.Nodes.FamilyID(ngroupId); %Family Id
         nID=G.Nodes.Id(ngroupId); %Fragment grain Id
-        nGb=G.Nodes.Gb(ngroupId); %Fragment grain boundary
+        nGb=grains(ngroupId); %Fragment grain boundary
+%         nGb=G.Nodes.Gb(ngroupId); %Fragment grain boundary
         Area=G.Nodes.Area(ngroupId); %Fragment Area
-        pairsGb=G.Edges.Gb(egroupId); %Twin/parent pairs grain boundary
+%         pairsGb=G.Edges.Gb(egroupId); %Twin/parent pairs grain boundary
         pairs=G.Edges.pairs(egroupId,1:2); %Twin/parent pairs
         EffSF=G.Edges.EffSF(egroupId,1:2); %Twin/parent Schmid factor
         if ~isempty(pairs)
@@ -41,6 +42,7 @@ function G = FamilyVotes(G,w)
             FRArea = AreaRatio(pairs,FArea,nID);
             G.Edges.FRArea(egroupId,:) = FRArea; 
 
+            
             %Family Boundaries (returns a cell)
             FgB = FamilyGrainBoundary(nGb,FID);
             G.Nodes.FgB(ngroupId) = FgB;
@@ -79,11 +81,12 @@ function G = FamilyVotes(G,w)
     function FgB = FamilyGrainBoundary(nGb,FID)
         FgB=cell(length(FID),1);
         for j=1:max(FID)
-            nGbl=nGb(FID==j);
-            nGbF=nGbl{1};
-            for k=2:length(nGbl)
-                nGbF=[nGbF;nGbl{k}];
-            end
+%             nGbl=nGb(FID==j);
+%             nGbF=nGbl{1};
+%             for k=2:length(nGbl)
+%                 nGbF=[nGbF;nGbl{k}];
+%             end
+            nGbF=nGb(FID==j).boundary;
             FgB(FID==j)={nGbF};
         end   
     end

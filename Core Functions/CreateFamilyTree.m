@@ -30,6 +30,7 @@ function [G_Complete] = CreateFamilyTree(G_Complete,grains)
         end
         
         %Call labeling function
+        
         [nGeneration,nType] = fillGenerations(EdgeMatrix,...
                                             nGeneration,nType,[],0,8);
         G_Complete.Nodes.Type(ngroupId)=nType;

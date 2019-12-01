@@ -6,6 +6,7 @@ function G = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,...
 %(intergranular) or nodes (grains). 
 
 %Compute grain neighbors
+
 [counts,pairs] = neighbors(grains);
 
 %Initialize graph
@@ -24,12 +25,13 @@ G.Nodes.centroids=grains.centroid;
 G.Nodes.meanOrientation=grains.meanOrientation;
 G.Nodes.Properties.UserData.mineral=grains.mineral; %For single phase material
 
-% Compute grain boundary for each grain fragment (i.e. node) 
-G.Nodes.Gb=cell(length(grains),1);
-
-for i=1:length(grains)
-    G.Nodes.Gb{i}=grains(i).boundary;
-end
+% %DS COMMENT
+% % Compute grain boundary for each grain fragment (i.e. node) 
+% G.Nodes.Gb=cell(length(grains),1);
+% 
+% for i=1:length(grains)
+%     G.Nodes.Gb{i}=grains(i).boundary;
+% end
 
 % Add intergranular information
 G.Edges.pairs=pairs; %this contains the grain ids corresponding to grains.id
@@ -44,22 +46,24 @@ mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
 G.Edges.type=type; %Twin relation type (# from twin list definitions)
 G.Edges.combine=combine; %whether pairs should be grouped into grains
 
-
-% Make a list of boundaries shared between grains connected by an edge.
-% This is used in relative boundary fraction calculations
-G.Edges.Gb=cell(length(G.Edges.pairs),1);
-G.Edges.ebsdId=cell(length(G.Edges.pairs),1);
-
-grain1=grains(G.Edges.pairs(:,1));
-grain2=grains(G.Edges.pairs(:,2));
-
-for i=1:length(grain1)
-    id1=grain1(i).boundary.ebsdId;
-    id2=grain2(i).boundary.ebsdId;
-    [boundaryEbsdId,loc]=intersect(id1,id2,'rows');
-    G.Edges.Gb{i}=grain1.boundary(loc);
-    G.Edges.ebsdId{i}=boundaryEbsdId;
-end
+% %DS COMMENT
+% % Make a list of boundaries shared between grains connected by an edge.
+% % This is used in relative boundary fraction calculations
+% G.Edges.Gb=cell(length(G.Edges.pairs),1);
+% G.Edges.ebsdId=cell(length(G.Edges.pairs),1);
+% 
+% grain1=grains(G.Edges.pairs(:,1));
+% grain2=grains(G.Edges.pairs(:,2));
+% 
+% 
+% for i=1:length(grain1)
+%     id1=grain1(i).boundary.ebsdId;
+%     id2=grain2(i).boundary.ebsdId;
+%     [boundaryEbsdId,loc]=intersect(id1,id2,'rows');
+%     G.Edges.Gb{i}=grain1.boundary(loc);
+%     G.Edges.ebsdId{i}=boundaryEbsdId;
+% end
+% %DS COMMENT
 
 %Overlayer graph on grains
 if doplot==true
