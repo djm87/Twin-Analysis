@@ -58,8 +58,8 @@ function G = FamilyVotes(G,grains,w)
             %Calculate Vote
             G.Edges.Vote(egroupId,:) = CalcVote(FREffSF,FRArea,FRgB,w);
         end
-    end
-
+    end    
+    
     function FArea = FamilyArea(Area,FID)
         FArea=zeros(length(FID),1);
         for j=1:max(FID)

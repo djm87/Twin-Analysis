@@ -22,10 +22,10 @@ Y = grains.V(:,2);
 
 poly = grains.poly;
 % remove inclusions
-incl = grains.inclusionId;
-for i = find(incl>0).'
-  poly{i} = poly{i}(1:end-incl(i));
-end
+% incl = grains.inclusionId;
+% for i = find(incl>0).'
+%   poly{i} = poly{i}(1:end-incl(i));
+% end
 
 % compute convex hull perimeters
 for id = 1:length(grains)

@@ -1,5 +1,5 @@
 function [ebsd,G_Complete] = fragmentReconstruction(G_Complete,ebsd,grains)
-%fragmentReconstruction comines fragments that appear are one twin but are
+%fragmentReconstruction combines fragments that appear are one twin but are
 %broken up due to resolution issue. Helps Fix count stats.. 
     angleDiffTol=5*degree;
     [omega,a_mag,b_min] = fitEllipse(grains);

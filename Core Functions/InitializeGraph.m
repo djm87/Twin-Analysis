@@ -1,12 +1,13 @@
-function G = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,...
-    meanMistolRelaxed,doplot)
+function [G,time] = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,...
+    meanMistolRelaxed,doplot,dolabel)
 %This function initializes graph objects for grains. 
 %Initialization entails computation of all local grain properties such as
 %orientation, centroid, aspectRatio, etc.. and is stored in edge pair
 %(intergranular) or nodes (grains). 
 
-%Compute grain neighbors
+tic
 
+%Compute grain neighbors
 [counts,pairs] = neighbors(grains);
 
 %Initialize graph
@@ -40,8 +41,22 @@ G.Edges.pairs=pairs; %this contains the grain ids corresponding to grains.id
 mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
     grains(G.Edges.pairs(:,2)).meanOrientation; 
 
+
+%label internal grains as type -1 for relaxed twin Id 
+type=zeros(length(G.Edges.pairs),1,'int8');
+G.Nodes.typeUnknown=zeros(length(G.Nodes.Id),1,'logical');
+
+isInside = checkInside(grains, grains);
+[GrainIdInclusion,GrainIdWithInclusion] = find(isInside);
+G.Nodes.typeUnknown(GrainIdInclusion)=true;
+epairs=[GrainIdInclusion,GrainIdWithInclusion];
+for i=1:length(GrainIdInclusion)
+    eId=find(all(epairs(i,:)==G.Edges.pairs,2) | all(fliplr(epairs(i,:))==G.Edges.pairs,2));
+    type(eId)=length(twin);
+end
+
 %Test if mean misorientation is a twin type so we can cluster grains
-[combine,type] = TestTwinRelationship(mori,meanMistol,twin);
+[combine,type] = TestTwinRelationship(mori,meanMistol,twin,type);
 
 G.Edges.type=type; %Twin relation type (# from twin list definitions)
 G.Edges.combine=combine; %whether pairs should be grouped into grains
@@ -74,7 +89,12 @@ if doplot==true
     p=plot(G,'XData',G.Nodes.centroids(:,1),'YData',G.Nodes.centroids(:,2));
     hold off
     p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
+    labeledge(p,G.Edges.pairs(:,1),...
+                G.Edges.pairs(:,2),...
+                1:size(G.Edges.pairs,1));
 end
+
+time.InitializeGraph=toc;
 
 end
 

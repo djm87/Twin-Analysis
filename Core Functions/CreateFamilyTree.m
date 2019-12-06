@@ -1,49 +1,91 @@
-function [G_Complete] = CreateFamilyTree(G_Complete,grains)
+function [G] = CreateFamilyTree(G,grains,twin)
 %CreateFamilyTree takes a clean set of family/edge relationships
 %and assigns a twin type and generation to each fragment.
 %
 %Note: Garbage in, garbage out. There are no checks in this routine that 
-%makes sure things are clean and make sense.
+%makes sure things are clean and make sense. Clean family tree should be
+%used to remove redundant relationships and make sure things are good.
     
     %Intialize new output arrays
-    G_Complete.Nodes.Generation = zeros(length(G_Complete.Nodes.Id),1,'int8');
-    G_Complete.Nodes.Type = zeros(length(G_Complete.Nodes.Id),1,'int8');
-    G_Complete.Nodes.TypeColored = zeros(length(G_Complete.Nodes.Id),3,'int8');
-    colors=hsv(double(max(G_Complete.Edges.type))+1);
+    G.Nodes.Generation = zeros(length(G.Nodes.Id),1,'int8');
+    G.Nodes.Type = zeros(length(G.Nodes.Id),1,'int8');
+    G.Nodes.TypeColored = zeros(length(G.Nodes.Id),3,'int8');
+    G.Nodes.noParent = zeros(size(G.Nodes.Id,1),1,'logical');
+    G.Edges.noParent = zeros(size(G.Edges.pairs,1),1,'logical');
+    colors=hsv(double(max(G.Edges.type))+1);
+    
     %Loop over the groups 
-    for i=1:max(G_Complete.Edges.Group) 
-        egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
-        ngroupId = find((i==G_Complete.Nodes.Group)==true);
-        nId = G_Complete.Nodes.Id(ngroupId);
-        eType = G_Complete.Edges.type(egroupId);
-        ePairs = G_Complete.Edges.pairs(egroupId,:);
-        eParent = G_Complete.Edges.Parent(egroupId,:);
+    openType=length(twin);
+    groups=unique(G.Edges.Group);
+    for i=1:length(groups)
+        group=groups(i);
+        %load edge and node properties for clustered fragments
+        egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
+        ngroupId = find((group==G.Nodes.Group)==true);
+        typeKnown=~G.Nodes.typeUnknown(ngroupId);
+        nId = G.Nodes.Id(ngroupId(typeKnown));
         nGeneration = -ones(length(nId),1,'int8');
-        nType = -ones(length(nId),1,'int8');
-        
-        %Get the edge connectivity matrix
-        EdgeMatrix=zeros(length(nId),length(nId),'uint8');
-        for k = 1:size(ePairs,1)
-            p=find(ePairs(k,eParent(k,:))==nId);
-            c=find(ePairs(k,~eParent(k,:))==nId);
-            EdgeMatrix(p,c)=eType(k); %Type and relationship (by position)
-        end
-        
-        %Call labeling function
-        
-        [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                                            nGeneration,nType,[],0,8);
-        G_Complete.Nodes.Type(ngroupId)=nType;
-        G_Complete.Nodes.Generation(ngroupId)=nGeneration;
-        G_Complete.Nodes.TypeColored(ngroupId,:)=colors(nType+1,:);
+        nType = -ones(length(nId),1,'int8');        
+        eType = G.Edges.type(egroupId);
+        etypeKnown=eType~=openType;
+        eType=eType(etypeKnown);
+        egroupId=egroupId(etypeKnown);
+        eParent = G.Edges.Parent(egroupId,:);
+        ePairs = G.Edges.pairs(egroupId,:);
 
+        %Check to see if some of the parent relationships were not figured
+        %out
+%         noParent=all(eParent==0,2);
+%         if any(noParent)
+%             G.Edges.noParent(egroupId(noParent))=true;
+%             nId_noParent=unique(ePairs([noParent,noParent]));
+%             egroupId=egroupId(~noParent);
+%             eType = G.Edges.type(egroupId);
+%             eParent = G.Edges.Parent(egroupId,:);
+%             ePairs = G.Edges.pairs(egroupId,:);
+%             nId=unique(ePairs);
+%             for j=1:length(nId_noParent)
+%                if all(nId_noParent(j)~=nId)
+%                    G.Nodes.noParent(nId_noParent(j))=true;
+%                end
+%             end
+%         end
+        
+%         figure; plot(grains(nId),G.Nodes.FamilyID(nId))
+        if length(eType)>0        
+            %Get the edge connectivity matrix
+            EdgeMatrix=zeros(length(nId),length(nId),'uint8');
+            for k = 1:size(ePairs,1)
+                p=find(ePairs(k,eParent(k,:))==nId);
+                c=find(ePairs(k,~eParent(k,:))==nId);
+                EdgeMatrix(p,c)=eType(k); %Type and relationship (by position)
+            end
+            if(size(EdgeMatrix,1)~=size(EdgeMatrix,2))
+                error('EdgeMatrix not square')
+            end
+            %Call labeling function
+            [nGeneration,nType] = fillGenerations(EdgeMatrix,...
+                                                nGeneration,nType,[],0,8);
+            
+            %Set the twin based properties
+            G.Nodes.Type(ngroupId(typeKnown))=nType;
+            G.Nodes.Generation(ngroupId(typeKnown))=nGeneration;
+            G.Nodes.TypeColored(ngroupId(typeKnown),:)=colors(nType+1,:);
+
+            %Set the unknown grain properties 
+            if any(~typeKnown)
+                G.Nodes.Type(ngroupId(~typeKnown))=openType;
+                G.Nodes.Generation(ngroupId(~typeKnown))=-1;
+                G.Nodes.TypeColored(ngroupId(~typeKnown),:)=colors(openType+1,:);
+            end
+        end
     end
 end
 function [nGeneration,nType] = fillGenerations(EdgeMatrix,...
                                         nGeneration,nType,genId,gen,maxGen)
     %Simple recursive function to label type and generation 
     if gen==0
-        genId = find(sum(EdgeMatrix,1)==0);
+        genId = find(all(EdgeMatrix==0,1)); %Columns are children
         if ~isempty(genId)
             nType(genId)=0;
             nGeneration(genId)=0;
@@ -60,6 +102,9 @@ function [nGeneration,nType] = fillGenerations(EdgeMatrix,...
         nType(:)=0;
     else
         for i=1:length(genId)
+%             i
+%             EdgeMatrix
+%             genId
             genId1 = find(EdgeMatrix(genId(i),:)~=0);
             if ~isempty(genId1)
                 nGeneration(genId1)=gen;

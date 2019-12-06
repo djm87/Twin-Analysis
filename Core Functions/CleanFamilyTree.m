@@ -1,13 +1,64 @@
-function [G,runCleanupAgain ]= CleanFamilyTree(G,grains,tFilter)
+function [G_Clean,edgesRemoved ]= CleanFamilyTree(G,grains,mergedGrains,twin,seg_angle_grouped,viewRemovedEdges,runCleanup,maxIter,time)
+    edgesRemoved=[0];
+    edgesRemovedGroup=[0];
+    CleanupIter=0;
+    time.EdgeParents=0;
+    G_Clean=G;
+    while runCleanup && CleanupIter<maxIter
+        tic
+        [G_Clean,runCleanup] = EdgeParents(G_Clean,grains,twin)
+        time.EdgeParents=time.EdgeParents+toc;
+        if runCleanup
+            %Evaluate new clusters in case a merged grain gets seperated
+            tic
+            G_Clean = AssignFamilyIDs(G_Clean,grains,seg_angle_grouped,false,false,false);
+            time.AssignFamilyIDs=time.AssignFamilyIDs+toc;        
+        end
+
+        CleanupIter=CleanupIter+1;
+    end
+    if CleanupIter == maxIter
+        disp('More CleanupIter than expected, likely need to solve something manually or improve the code')
+    end
+%     nEdgesRemoved=length(edgesRemoved);
+%     fprintf('%d Edges were removed\n',nEdgesRemoved)
+%     if nEdgesRemoved > 0 & viewRemovedEdges;
+%         toremove=ones(length(G.Nodes.Id),1,'logical');
+%         toremove(unique(G.Edges.pairs(edgesRemoved,:)))=false;
+%         G_Removed=rmnode(G,find(toremove));
+%      
+%         figure;
+%         plot(grains,grains.meanOrientation,'Micronbar','off','silent');
+%         hold on
+%         plot(mergedGrains.boundary,'linecolor','k','linewidth',2,'linestyle','-','displayName','merged grains')
+%         %Plot original graph
+%         p=plot(G,'XData',G.Nodes.centroids(:,1),...
+%             'YData',G.Nodes.centroids(:,2),'displayName','graph');
+%         labeledge(p,G.Edges.pairs(:,1),G.Edges.pairs(:,2),G.Edges.GlobalID);
+%         p.EdgeColor='k';p.MarkerSize=5;p.Marker='s';p.NodeColor='k'; 
+%         %Plot removed edges as white
+%         p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
+%             'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
+%         pairs1=G_Removed.Edges.pairs(:,1);
+%         pairs2=G_Removed.Edges.pairs(:,2);
+%         for i=1:length(G_Removed.Nodes.Id)
+%             pairs1(pairs1==G_Removed.Nodes.Id(i))=i;
+%             pairs2(pairs2==G_Removed.Nodes.Id(i))=i;
+%         end
+%         labeledge(p,pairs1,...
+%             pairs2,G_Removed.Edges.GlobalID);   
+%         p.EdgeColor='w';p.MarkerSize=5;p.Marker='s';p.NodeColor='k'; 
+%     end
+end
+
+
+function [G,runCleanupAgain]= EdgeParents(G,grains,twin)
 %MakeFamilyTree the base parent and all twins that stem from the parent
 %
-%The parent - a child of no other families
-%=========================================================================%
-%A family in a group is a parent automatically if it has the same twin mode 
-%relationship with two or more other familes in the group. This is likely 
-%true for monotonic loading only and can be turned off with the flag ADD!!!
-% Note that this assertion could be true for a n generation case. 
-%
+%The parent (1st gen)- a child of no other families
+%The parent (2+ gen)- a child of the parent (1st gen) and parent of a
+%higher order twin
+
 %In the case of circular twin relations a child has two parents. The script 
 %compares the boundary ratio between the two parents. If one parent has 90%
 %more boundary, then it is the parent. Otherwise the parent with the
@@ -19,59 +70,190 @@ function [G,runCleanupAgain ]= CleanFamilyTree(G,grains,tFilter)
     G.Edges.Parent = zeros(size(G.Edges.pairs),'logical');
 
     runCleanupAgain=false;
+    openType=length(twin);
+    
+    %Make sure no unknown grains
     %loop over groups
-    for i=1:max(G.Edges.Group) 
+    groups=unique(G.Edges.Group);
+    i=1;
+    while i<length(groups)+1
+        group=groups(i);
         %load edge and node properties for clustered fragments
-        egroupId = find((i==G.Edges.Group)==true); %converts logical arrays to indices
-        ngroupId = find((i==G.Nodes.Group)==true);
-        nFamily = G.Nodes.FamilyID(ngroupId);
-        nId = G.Nodes.Id(ngroupId);
+        egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
+        ngroupId = find((group==G.Nodes.Group)==true);
+        typeKnown=~G.Nodes.typeUnknown(ngroupId);
+        nId = G.Nodes.Id(ngroupId(typeKnown));
+        nFamily = G.Nodes.FamilyID(ngroupId(typeKnown));
         eType = G.Edges.type(egroupId);
+        etypeKnown=eType~=openType;
+        eType=eType(etypeKnown);
+        egroupId=egroupId(etypeKnown);
         eVote = G.Edges.Vote(egroupId,:);
         ePairs = G.Edges.pairs(egroupId,:);
         eFamily = G.Edges.FamilyID(egroupId,:);
         eGlobalId = G.Edges.GlobalID(egroupId);        
-        
-        %Returns max(nFamily) x max(eType) cell array containing a logical
-        %array of size(ePairs) of the family correlated with the edge Type 
-        FamilyRelationList = FamilyRelationships(nFamily,eType,eFamily); 
-             
-        %eVotesSummed are the votes for each for a family and a type
-        [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyRelationList);
-        
-        %Determine the parent by vote
-        Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs);   
-        
-        %Make Family relation matrix 
-        FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,Parent);
-        
-        %Find child of none (i.e. the parent)
-        FamilyTreeParent=find(sum(FamilyMatrix,1)==0);
-        
-        if isempty(FamilyTreeParent)
-           [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,eId,ePairs,eFamily,nId,nFamily,Parent);
-            %Remove the edges
-            G=removeEdge(G,rEdge,egroupId);
-            
-            %Reinitialize group quantities
-            egroupId = find((i==G.Edges.Group)==true); %converts logical arrays to indices
-            eType = G.Edges.type(egroupId);
-            eVote = G.Edges.Vote(egroupId,:);
-            ePairs = G.Edges.pairs(egroupId,:);
-            eFamily = G.Edges.FamilyID(egroupId,:);
-            eGlobalId = G.Edges.GlobalID(egroupId);
-            Parent(rEdge,:)=[];   
-            G.Edges.Parent(egroupId,:)=Parent;
-            toc
-            %Remake Family matrix 
+        if ~isempty(eType)
+           
+            %Returns max(nFamily) x max(eType) cell array containing a logical
+            %array of size(ePairs) of the family correlated with the edge Type 
+            FamilyRelationList = FamilyRelationships(nFamily,eType,eFamily); 
+
+            %eVotesSummed are the votes for each for a family and a type
+            [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyRelationList);
+
+            %Determine the parent by vote
+            Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,egroupId);   
+
+            %Make Family relation matrix 
             FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,Parent);
 
-            %Determine if we need to run the cleanup a second time
-            if (~isempty(find(sum(FamilyMatrix,1)>1)));
-                runCleanupAgain=true;
+            %Find child of none (i.e. the parent)
+            FamilyTreeParent=find(sum(FamilyMatrix,1)==0);
+            
+            %Handle the various problem cases
+            if length(FamilyTreeParent) > 1
+                rEdge=[];
+                
+                %Plot the problem grain
+                h=figure; plot(grains(nId),grains(nId).meanOrientation)
+                text(grains(nId),int2str(nId))
+                hold on
+                toremove=ones(length(G.Nodes.Id),1,'logical');
+                toremove(unique(G.Edges.pairs(egroupId,:)))=false;
+                G_Removed=rmnode(G,find(toremove));
+                p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
+                    'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
+                pairs1=G_Removed.Edges.pairs(:,1);
+                pairs2=G_Removed.Edges.pairs(:,2);
+                for j=1:length(G_Removed.Nodes.Id)
+                    pairs1(pairs1==G_Removed.Nodes.Id(j))=j;
+                    pairs2(pairs2==G_Removed.Nodes.Id(j))=j;
+                end
+                labeledge(p,pairs1,...
+                    pairs2,G_Removed.Edges.GlobalID); 
+                hold off   
+                
+                %Say what the issue is and give node and edge info
+                fprintf('Two or more family are claiming to be the parent\n')
+                fprintf('This doesn''t happen alot and can mean that something\n')
+                fprintf('such as the stress state is not right or that grains\n')
+                fprintf('are clustered that shouldn''t be.\n')
+                fprintf('===================================\n')
+                fprintf('Error occured in Group %d\n',i)
+                fprintf('Node List \n')
+                for j=1:length(FamilyTreeParent)
+                    nId_family=nId(FamilyTreeParent(j)==nFamily);
+                    for k=1:length(nId_family)
+                        fprintf('Family %d, Node Id %d\n',FamilyTreeParent(j),nId_family(k))
+                    end
+                end
+                fprintf('Edge List \n')
+                for j=1:length(Parent)
+                    fprintf('Id: %5d, Node Pair: %5d %5d, Parent: %5d %5d\n',G.Edges.GlobalID(egroupId(j)),G.Edges.pairs(egroupId(j),:),Parent(j,:))
+                end
+
+                %Give options to fix issue
+                fprintf('===================================\n')
+                fprintf('To fix, conflicting relationships must be fixed and a clear parent specified\n')
+                fprintf('Press..\n')
+                fprintf('1 to specify node as twin and parent of none\n')
+                fprintf('2 to specify node as parent of none\n')
+                fprintf('3 to set an edge relationship\n')
+                fprintf('4 to remove an edge\n')
+                fprintf('5 to ignore and proceed\n')
+                fprintf('Any other input will abort\n')
+                option=input('enter number: ');
+                if option==1
+                    nodeId=input('enter list of Node Id: ');
+                    fid = fopen('notParent.txt', 'a+');
+                    for j=1:length(nodeId)
+                        fprintf(fid, '%d\n', nodeId(j));
+                    end
+                    fclose(fid);
+                elseif option == 2
+                    nodeId=input('enter list of Node Id: ');
+                    fid = fopen('notTwin.txt', 'a+');
+                    for j=1:length(nodeId)
+                        fprintf(fid, '%d\n', nodeId(j));
+                    end
+                    fclose(fid);
+                elseif option == 3  
+                    fprintf('To specify a relation enter edge id, and logical pair e.g. 124 1 0\n')
+                    promt=='y';
+                    while promt=='y'
+                        eRelation=input('specify edge relation: ');
+                        fid = fopen('eRelation.txt', 'a+');
+                        fprintf(fid, '%d %d %d\n', eRelation);
+                        fclose(fid);
+                        prompt=input('Would you like to add another relation? (y or n): ','s');
+                    end
+                elseif option == 4                    
+                    edgeId=input('enter list of edge Id: ');
+                    fid = fopen('eRemoveList.txt', 'a+');
+                    for j=1:length(edgeId)
+                        fprintf(fid, '%d\n', edgeId(j));
+                    end
+                    fclose(fid);
+                    rEdge=find(edgeId==eGlobalId);
+                    G=removeEdge(G,rEdge,egroupId);
+                    i=i+1;
+                    runCleanupAgain=true;
+                elseif option ==5
+                    %Move on to the next grain
+                    i=i+1;
+                else
+                    error('Error: unhandled grain')
+                end
+                close(h);
+                
+                %Store remove edges in case we want to look at them later 
+%                 if ~isempty(rEdge)
+%                     edgesRemoved=[edgesRemoved,egroupId(rEdge)];
+%                     edgesRemovedGroup=[edgesRemovedGroup,group];   
+%                 end
+                
+            elseif isempty(FamilyTreeParent)
+               [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent);
+                %Remove the edges
+                G=removeEdge(G,rEdge,egroupId);
+                
+                %Reinitialize group quantities
+                egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
+                eType = G.Edges.type(egroupId);
+                etypeKnown=eType~=openType;
+                eType=eType(etypeKnown);
+                egroupId=egroupId(etypeKnown);
+                eVote = G.Edges.Vote(egroupId,:);
+                ePairs = G.Edges.pairs(egroupId,:);
+                eFamily = G.Edges.FamilyID(egroupId,:);
+                eGlobalId = G.Edges.GlobalID(egroupId);   
+                Parent(rEdge,:)=[];   
+                G.Edges.Parent(egroupId,:)=Parent;
+
+                %Remake Family matrix 
+                FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,Parent);
+
+                %Determine if we need to run the cleanup another time
+                if (~isempty(find(sum(FamilyMatrix,1)>1)));
+                    runCleanupAgain=true;
+                end
+                
+                %Store remove edges in case we want to look at them later 
+                if ~isempty(rEdge)
+                    fid = fopen('eRemoveList.txt', 'a+');
+                    for j=1:length(rEdge)
+                        fprintf(fid, '%d\n', egroupId(rEdge));
+                    end
+%                     edgesRemoved=[edgesRemoved,egroupId(rEdge)];
+%                     edgesRemovedGroup=[edgesRemovedGroup,group];   
+                end
+                i=i+1;
+            else
+                G.Edges.Parent(egroupId,:)=Parent;
+                i=i+1;
             end
         else
-            G.Edges.Parent(egroupId,:)=Parent;
+            i=i+1;
         end
     end
 end
@@ -122,9 +304,24 @@ function [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyR
     end
     [~,parentID] = sort(eVotesSummed,'descend'); %sorts each column
 end
-function Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs)
+function Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,egroupId)
     %Initialize parent
     Parent = zeros(size(ePairs,1),2,'logical');
+    notTwin=load('notTwin.txt');
+    notParent=load('notParent.txt');
+    eRelation=load('eRelation.txt');
+    
+    for j=1:length(notTwin)
+        Parent(notTwin(j)==ePairs)=true;
+    end
+    for j=1:length(notParent)
+        Parent(fliplr(notParent(j)==ePairs))=true;
+    end
+    for j=1:size(eRelation,1)
+        eId=eRelation(j,1)==egroupId;
+        Parent([eId,eId])=eRelation(j,2:3);
+    end
+    
     for j = 1:size(parentID,1)
             for k = 1:max(eType)
                 toSet=FamilyRelationList{parentID(j,k),k};
@@ -140,6 +337,7 @@ function Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs)
                 break;
             end
     end
+    
 end
 function FamilyMatrix = buildFamilyMatrix(nFamily,eFamily, Parent)
     FamilyMatrix=zeros(max(nFamily),'logical');
@@ -150,8 +348,10 @@ function FamilyMatrix = buildFamilyMatrix(nFamily,eFamily, Parent)
         FamilyMatrix(p,c)=true;
     end
 end
-function [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,eId,ePairs,eFamily,nId,nFamily,Parent)
+function [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent)
     %circular relationship exists but it is in the parents column!
+    rEdge=[]; rEdgeGlobalId=[];
+    
     circularFamily=1:max(nFamily);
     for j=1:length(circularFamily)
         cF=circularFamily(j);
@@ -164,8 +364,9 @@ function [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,eId,e
 
         %Family information needs to be combined with the edge
         %information!
-        EdgeMatrix = buildEdgeMatrix(pF,cF,nId,ePairs,eFamily,Parent)
+        EdgeMatrix = buildEdgeMatrix(pF,cF,nId,ePairs,eFamily,Parent);
         circularEdge=find(sum(EdgeMatrix(:,:,5),1)>1);
+        
         for k=1:length(circularEdge)
             %In the case of circular twin relations a child has more than one parent. The script 
             %compares the boundary ratio between the two parents. If one parent has 90%
@@ -207,7 +408,7 @@ function [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,eId,e
                 %the same way
                 if pdiff>0.9 
                     rEdge=[rEdge;eId(FRgB~=FRgBls(end))];
-                    eGlobalId(eId(FRgB~=FRgBls(end)))
+                    eGlobalId(eId(FRgB~=FRgBls(end)));
 
                 else
                     [EffSF_sorted,EffSF_I]=sort(EffSF);

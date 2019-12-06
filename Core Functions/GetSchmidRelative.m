@@ -27,45 +27,48 @@ function G = GetSchmidRelative(G,twin,sigma)
     EffSFRelative = zeros(nedges,1);
     EffSF = zeros(nedges,2);
 %     sym_ops = zeros(nedges,2);
-    grainEffSF = zeros(ngrains, max(G.Edges.type));
-  
+    grainEffSF_tmp = zeros(nedges,2);
+    typeEdge = G.Edges.type; 
     %Loop over edges
-    for i = 1:nedges  
-        
-        type = G.Edges.type(i); 
-        
-        %Convert grains to s->c and apply symmetry operation
-        gA = inv(grainsA(i).symmetrise); 
-        gB = inv(grainsB(i).symmetrise);
+    parfor i = 1:nedges  
+        type=typeEdge(i)
+        if type ~= length(twin)
+            %Convert grains to s->c and apply symmetry operation
+            gA = inv(grainsA(i).symmetrise); 
+            gB = inv(grainsB(i).symmetrise);
 
-        %Compute grain misorientation                
-        mori = gA * grainsB(i).symmetrise;
-        MM = mori(:,:) * twin{type}.RMT'; 
+            %Compute grain misorientation                
+            mori = gA * grainsB(i).symmetrise;
+            MM = mori(:,:) * twin{type}.RMT'; 
 
-        %Get the smallest misorientation and its sym operation
-        angs = angle(MM, 'noSymmetry') ./ degree;
-        [~,id] = min(angs);
-        [sym_ops1,sym_ops2] = ...
-            ind2sub([sqrt(length(MM)) sqrt(length(MM))],id);
+            %Get the smallest misorientation and its sym operation
+            angs = angle(MM, 'noSymmetry') ./ degree;
+            [~,id] = min(angs);
+            [sym_ops1,sym_ops2] = ...
+                ind2sub([sqrt(length(MM)) sqrt(length(MM))],id);
 
-        %Get the stress in the twin frame i.e. s->c->t
-        sigmaA = matrix(twin{type}.Rtw * (gA(sym_ops1) * sigma));
-        sigmaB = matrix(twin{type}.Rtw * (gB(sym_ops2) * sigma));
-        
-        %Extract the stress on the k1 plane in eta1 direction
-        sigma13(i,1) = sigmaA(1,3);
-        sigma13(i,2) = sigmaB(1,3);
-                
-        %Compute the effective schmid factor
-        grainEffSF(grainIdA(i),type) = sigma13(i,1) / (2*tauMax);
-        grainEffSF(grainIdB(i),type) = sigma13(i,2) / (2*tauMax);
-        EffSF(i,1) = sigma13(i,1) / (2*tauMax);
-        EffSF(i,2) = sigma13(i,2) / (2*tauMax);
-        
-        EffSFRelative(i) = (sigma13(i,1) - sigma13(i,2)) / (2*tauMax);
+            %Get the stress in the twin frame i.e. s->c->t
+            sigmaA = matrix(twin{type}.Rtw * (gA(sym_ops1) * sigma));
+            sigmaB = matrix(twin{type}.Rtw * (gB(sym_ops2) * sigma));
 
+            %Extract the stress on the k1 plane in eta1 direction
+            sigma13(i,:) = [sigmaA(1,3),sigmaB(1,3)];
+
+            %Compute the effective schmid factor
+            grainEffSF_tmp(i,:) = [sigmaA(1,3) / (2*tauMax),sigmaB(1,3) / (2*tauMax)];
+            EffSF(i,:) = [sigmaA(1,3) / (2*tauMax),sigmaB(1,3) / (2*tauMax)];
+
+            EffSFRelative(i) = (sigmaA(1,3) - sigmaB(1,3)) / (2*tauMax);
+        end
     end %Loop over edges
     
+    grainEffSF = zeros(ngrains, max(G.Edges.type));
+    for i = 1:nedges
+        if typeEdge(i) ~= length(twin)
+            grainEffSF(grainIdA(i),typeEdge(i))=grainEffSF_tmp(i,1);
+            grainEffSF(grainIdB(i),typeEdge(i))=grainEffSF_tmp(i,2);
+        end
+    end
     %Store arrays
     G.Edges.sigma13 = sigma13;
     G.Nodes.EffSF = grainEffSF;

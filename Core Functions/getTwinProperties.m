@@ -1,9 +1,13 @@
 function [twin] = getTwinProperties(twin)
 %getTwinProperties Summary of this function goes here
+    
     ntwin=length(twin);
+    %Add twin for unidentified internal grains 
+    twin{ntwin+1}.name='unknown internal';
+    ntwin=ntwin+1;
     toRemove=zeros(ntwin,1,'logical');
     newTwinCnt=1;
-    for i=1:ntwin
+    for i=1:ntwin-1
         
         %Define the transformation types
         tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
@@ -43,7 +47,6 @@ function [twin] = getTwinProperties(twin)
             %Define the twin frame Rtw such that Rtw transforms crystal to twin
             twin{i}.Rtw=orientation.map(twin{i}.k1,twin{i}.CS.cAxis,...
                 twin{i}.eta1,twin{i}.CS.aAxis); 
-  
 
             % Create the twin misorientation
             twin{i}.RMT=twin{i}.Rtw'*tType{twin{i}.actType}*twin{i}.Rtw;

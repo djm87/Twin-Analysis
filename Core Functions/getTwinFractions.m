@@ -14,8 +14,7 @@ function [twinVF,totalArea,totalTwinVF] = getTwinFractions(G_Complete,grains,twi
         twinVF(i) = sum(area(G_Complete.Nodes.Type == i)) / totalArea;
     end
     
-    totalTwinVF =sum(twinVF) / totalArea;
-    
+    totalTwinVF =sum(twinVF);
     
 end
 
