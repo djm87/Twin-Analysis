@@ -1,9 +1,11 @@
-function G = GetSchmidRelative(G,twin,sigma)
+function [G,time] = GetSchmidRelative(G,grains,mergedGrains,twin,sigma,doPlot,time)
 %The script returns the effective schmid factor on K1 plane in the eta1
 %direction. In addition, the symmetry operators are returned. Since this is
 %called before we know the parent, we don't know the sign of the twin
 %variant rotation axis. For this reason variant extraction is done in a
 %seperate routine after the family tree is formed.
+
+    tic
 
     % extract grains 
     grainIdA = G.Edges.pairs(:,1);
@@ -32,6 +34,8 @@ function G = GetSchmidRelative(G,twin,sigma)
     %Loop over edges
     parfor i = 1:nedges  
         type=typeEdge(i)
+        %If the type is unknown then the effective schmid is zero and the
+        %contribution in vote for schmid will be zero.
         if type ~= length(twin)
             %Convert grains to s->c and apply symmetry operation
             gA = inv(grainsA(i).symmetrise); 
@@ -74,5 +78,26 @@ function G = GetSchmidRelative(G,twin,sigma)
     G.Nodes.EffSF = grainEffSF;
     G.Edges.EffSFRelative = EffSFRelative;
     G.Edges.EffSF = EffSF;
+    
+    if doPlot==true
+        
+        for i=1:length(twin)-1
+            %Plot 
+            labelNodes=false;labelEdges=false;plotG=false;legendOn=false;
+            fhandle = plotGraph(grains,mergedGrains,G,...
+                G.Nodes.EffSF(:,i),G.Nodes.Id,...
+                labelNodes,labelEdges,legendOn,plotG,[]);
+            mtexColorbar;
+            titleName=sprintf('EffSchmid, $%s$', twin{i}.name);
+            mtexTitle(titleName);
+        end
+        
+    end
+    
+    if ~isfield(time,'GetSchmidRelative')
+        time.GetSchmidRelative=0;
+    end
+    time.GetSchmidRelative=time.GetSchmidRelative+toc;
+    
 end
 

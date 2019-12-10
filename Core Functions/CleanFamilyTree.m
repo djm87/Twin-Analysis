@@ -1,12 +1,13 @@
-function [G_Clean,edgesRemoved ]= CleanFamilyTree(G,grains,mergedGrains,twin,seg_angle_grouped,viewRemovedEdges,runCleanup,maxIter,time)
-    edgesRemoved=[0];
-    edgesRemovedGroup=[0];
+function [G_Clean,time]= CleanFamilyTree(G,grains,mergedGrains,twin,seg_angle_grouped,runCleanup,maxIter,time)
+    
+    tic
+
     CleanupIter=0;
     time.EdgeParents=0;
     G_Clean=G;
     while runCleanup && CleanupIter<maxIter
         tic
-        [G_Clean,runCleanup] = EdgeParents(G_Clean,grains,twin)
+        [G_Clean,runCleanup] = EdgeParents(G_Clean,grains,mergedGrains,twin)
         time.EdgeParents=time.EdgeParents+toc;
         if runCleanup
             %Evaluate new clusters in case a merged grain gets seperated
@@ -20,39 +21,14 @@ function [G_Clean,edgesRemoved ]= CleanFamilyTree(G,grains,mergedGrains,twin,seg
     if CleanupIter == maxIter
         disp('More CleanupIter than expected, likely need to solve something manually or improve the code')
     end
-%     nEdgesRemoved=length(edgesRemoved);
-%     fprintf('%d Edges were removed\n',nEdgesRemoved)
-%     if nEdgesRemoved > 0 & viewRemovedEdges;
-%         toremove=ones(length(G.Nodes.Id),1,'logical');
-%         toremove(unique(G.Edges.pairs(edgesRemoved,:)))=false;
-%         G_Removed=rmnode(G,find(toremove));
-%      
-%         figure;
-%         plot(grains,grains.meanOrientation,'Micronbar','off','silent');
-%         hold on
-%         plot(mergedGrains.boundary,'linecolor','k','linewidth',2,'linestyle','-','displayName','merged grains')
-%         %Plot original graph
-%         p=plot(G,'XData',G.Nodes.centroids(:,1),...
-%             'YData',G.Nodes.centroids(:,2),'displayName','graph');
-%         labeledge(p,G.Edges.pairs(:,1),G.Edges.pairs(:,2),G.Edges.GlobalID);
-%         p.EdgeColor='k';p.MarkerSize=5;p.Marker='s';p.NodeColor='k'; 
-%         %Plot removed edges as white
-%         p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
-%             'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
-%         pairs1=G_Removed.Edges.pairs(:,1);
-%         pairs2=G_Removed.Edges.pairs(:,2);
-%         for i=1:length(G_Removed.Nodes.Id)
-%             pairs1(pairs1==G_Removed.Nodes.Id(i))=i;
-%             pairs2(pairs2==G_Removed.Nodes.Id(i))=i;
-%         end
-%         labeledge(p,pairs1,...
-%             pairs2,G_Removed.Edges.GlobalID);   
-%         p.EdgeColor='w';p.MarkerSize=5;p.Marker='s';p.NodeColor='k'; 
-%     end
+    
+    if ~isfield(time,'CleanFamilyTree')
+        time.CleanFamilyTree=0;
+    end
+    time.CleanFamilyTree=time.CleanFamilyTree+toc;
 end
 
-
-function [G,runCleanupAgain]= EdgeParents(G,grains,twin)
+function [G,runCleanupAgain]= EdgeParents(G,grains,mergedGrains,twin)
 %MakeFamilyTree the base parent and all twins that stem from the parent
 %
 %The parent (1st gen)- a child of no other families
@@ -93,7 +69,7 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,twin)
         eFamily = G.Edges.FamilyID(egroupId,:);
         eGlobalId = G.Edges.GlobalID(egroupId);        
         if ~isempty(eType)
-           
+            
             %Returns max(nFamily) x max(eType) cell array containing a logical
             %array of size(ePairs) of the family correlated with the edge Type 
             FamilyRelationList = FamilyRelationships(nFamily,eType,eFamily); 
@@ -108,114 +84,30 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,twin)
             FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,Parent);
 
             %Find child of none (i.e. the parent)
-            FamilyTreeParent=find(sum(FamilyMatrix,1)==0);
+            ParentOfAll=find(sum(FamilyMatrix,1)==0);
+            
+            %Find child with potentially more than one parent
+            CircularRelationshipExists=any(sum(FamilyMatrix,1)>1);
             
             %Handle the various problem cases
-            if length(FamilyTreeParent) > 1
-                rEdge=[];
+            if length(ParentOfAll) > 1
+            fprintf('More than one parent is apparent.. fix manually\n')
+            FamilyMatrix
+            [G,runCleanupAgain,i] = ClusterEditor(group,G,grains,mergedGrains,grains.meanOrientation,i,false,false)
                 
-                %Plot the problem grain
-                h=figure; plot(grains(nId),grains(nId).meanOrientation)
-                text(grains(nId),int2str(nId))
-                hold on
-                toremove=ones(length(G.Nodes.Id),1,'logical');
-                toremove(unique(G.Edges.pairs(egroupId,:)))=false;
-                G_Removed=rmnode(G,find(toremove));
-                p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
-                    'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
-                pairs1=G_Removed.Edges.pairs(:,1);
-                pairs2=G_Removed.Edges.pairs(:,2);
-                for j=1:length(G_Removed.Nodes.Id)
-                    pairs1(pairs1==G_Removed.Nodes.Id(j))=j;
-                    pairs2(pairs2==G_Removed.Nodes.Id(j))=j;
-                end
-                labeledge(p,pairs1,...
-                    pairs2,G_Removed.Edges.GlobalID); 
-                hold off   
-                
-                %Say what the issue is and give node and edge info
-                fprintf('Two or more family are claiming to be the parent\n')
-                fprintf('This doesn''t happen alot and can mean that something\n')
-                fprintf('such as the stress state is not right or that grains\n')
-                fprintf('are clustered that shouldn''t be.\n')
-                fprintf('===================================\n')
-                fprintf('Error occured in Group %d\n',i)
-                fprintf('Node List \n')
-                for j=1:length(FamilyTreeParent)
-                    nId_family=nId(FamilyTreeParent(j)==nFamily);
-                    for k=1:length(nId_family)
-                        fprintf('Family %d, Node Id %d\n',FamilyTreeParent(j),nId_family(k))
-                    end
-                end
-                fprintf('Edge List \n')
-                for j=1:length(Parent)
-                    fprintf('Id: %5d, Node Pair: %5d %5d, Parent: %5d %5d\n',G.Edges.GlobalID(egroupId(j)),G.Edges.pairs(egroupId(j),:),Parent(j,:))
-                end
-
-                %Give options to fix issue
-                fprintf('===================================\n')
-                fprintf('To fix, conflicting relationships must be fixed and a clear parent specified\n')
-                fprintf('Press..\n')
-                fprintf('1 to specify node as twin and parent of none\n')
-                fprintf('2 to specify node as parent of none\n')
-                fprintf('3 to set an edge relationship\n')
-                fprintf('4 to remove an edge\n')
-                fprintf('5 to ignore and proceed\n')
-                fprintf('Any other input will abort\n')
-                option=input('enter number: ');
-                if option==1
-                    nodeId=input('enter list of Node Id: ');
-                    fid = fopen('notParent.txt', 'a+');
-                    for j=1:length(nodeId)
-                        fprintf(fid, '%d\n', nodeId(j));
-                    end
-                    fclose(fid);
-                elseif option == 2
-                    nodeId=input('enter list of Node Id: ');
-                    fid = fopen('notTwin.txt', 'a+');
-                    for j=1:length(nodeId)
-                        fprintf(fid, '%d\n', nodeId(j));
-                    end
-                    fclose(fid);
-                elseif option == 3  
-                    fprintf('To specify a relation enter edge id, and logical pair e.g. 124 1 0\n')
-                    promt=='y';
-                    while promt=='y'
-                        eRelation=input('specify edge relation: ');
-                        fid = fopen('eRelation.txt', 'a+');
-                        fprintf(fid, '%d %d %d\n', eRelation);
-                        fclose(fid);
-                        prompt=input('Would you like to add another relation? (y or n): ','s');
-                    end
-                elseif option == 4                    
-                    edgeId=input('enter list of edge Id: ');
-                    fid = fopen('eRemoveList.txt', 'a+');
-                    for j=1:length(edgeId)
-                        fprintf(fid, '%d\n', edgeId(j));
-                    end
-                    fclose(fid);
-                    rEdge=find(edgeId==eGlobalId);
-                    G=removeEdge(G,rEdge,egroupId);
-                    i=i+1;
-                    runCleanupAgain=true;
-                elseif option ==5
-                    %Move on to the next grain
-                    i=i+1;
-                else
-                    error('Error: unhandled grain')
-                end
-                close(h);
-                
-                %Store remove edges in case we want to look at them later 
-%                 if ~isempty(rEdge)
-%                     edgesRemoved=[edgesRemoved,egroupId(rEdge)];
-%                     edgesRemovedGroup=[edgesRemovedGroup,group];   
-%                 end
-                
-            elseif isempty(FamilyTreeParent)
-               [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent);
+            elseif isempty(ParentOfAll) || CircularRelationshipExists
+               [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent,eGlobalId);
                 %Remove the edges
                 G=removeEdge(G,rEdge,egroupId);
+                
+                %Store remove edges in case we want to look at them later 
+                if ~isempty(rEdge)
+                    fid = fopen('eRemoveList.txt', 'a+');
+                    for j=1:length(rEdge)
+                        fprintf(fid, '%d\n', eGlobalId(rEdge(j)));
+                    end
+                    fclose(fid);
+                end
                 
                 %Reinitialize group quantities
                 egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
@@ -234,19 +126,15 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,twin)
                 FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,Parent);
 
                 %Determine if we need to run the cleanup another time
-                if (~isempty(find(sum(FamilyMatrix,1)>1)));
-                    runCleanupAgain=true;
+                if ~isempty(find(sum(FamilyMatrix,1)>1))
+                    if isempty(rEdge)
+                        fprintf('There may still be a circular relationship.. inspect manually\n')
+                        [G,runCleanupAgain,~] = ClusterEditor(group,G,grains,mergedGrains,grains.meanOrientation,i,false,false)
+                    else
+                        runCleanupAgain=true;
+                    end
                 end
                 
-                %Store remove edges in case we want to look at them later 
-                if ~isempty(rEdge)
-                    fid = fopen('eRemoveList.txt', 'a+');
-                    for j=1:length(rEdge)
-                        fprintf(fid, '%d\n', egroupId(rEdge));
-                    end
-%                     edgesRemoved=[edgesRemoved,egroupId(rEdge)];
-%                     edgesRemovedGroup=[edgesRemovedGroup,group];   
-                end
                 i=i+1;
             else
                 G.Edges.Parent(egroupId,:)=Parent;
@@ -348,7 +236,7 @@ function FamilyMatrix = buildFamilyMatrix(nFamily,eFamily, Parent)
         FamilyMatrix(p,c)=true;
     end
 end
-function [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent)
+function [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent,eGlobalId)
     %circular relationship exists but it is in the parents column!
     rEdge=[]; rEdgeGlobalId=[];
     

@@ -1,6 +1,7 @@
-function [ePARISChange]=RemovalPARISImprovement(G,grains,singleFragRelationship,twinModes)
+function [G,time]=eRemovalPARISChange(G,grains,singleFragRelationship,twinModes,time)
 %Filter currently just performs PARIS based edge removal
-    [mergedGrains,parentId,combinedTwinBoundary,combine] = MergeByEdge(G.Edges.pairs,G.Edges.combineCleaned,grains);
+    tic
+    [mergedGrains,parentId,~,~] = MergeByEdge(G.Edges.pairs,G.Edges.combineCleaned,grains);
     paris_orig=mergedGrains.paris;
     %     figure;
     %     plot(grains,grains.meanOrientation);hold on;
@@ -8,6 +9,7 @@ function [ePARISChange]=RemovalPARISImprovement(G,grains,singleFragRelationship,
     %         'displayName','merged grains'); hold off;
     toCombine=G.Edges.combineCleaned;
     ePARISChange=zeros(length(G.Edges.combineCleaned),1);
+    G.Nodes.ePARISChange=zeros(length(G.Nodes.Id),1);
     %loop over groups and identify edges to try removing
     isInside = checkInside(grains, grains);
     [GrainIdInclusion,~] = find(isInside);
@@ -36,18 +38,18 @@ function [ePARISChange]=RemovalPARISImprovement(G,grains,singleFragRelationship,
                 
                 %We should ignore internal grains and edge types that
                 %are excluded
-                if ~any(n1==GrainIdInclusion | n2==GrainIdInclusion) && any(eType(e2Remove)==twinModes)
+                if ~any(n1==GrainIdInclusion | n2==GrainIdInclusion) 
                     if size(toCombine,2)<j
                         toCombine(:,j)=G.Edges.combineCleaned;
                     end
                     toCombine(egroupId(e2Remove),j)=false;
                     
                 end
-            elseif ~tFilter.singleFragRelationship
+            elseif ~singleFragRelationship
                 %Find if all edges can be removed
                 canRemoveTypes=true;
                 for k=1:length(e2Remove)
-                    if ~any(eType(e2Remove(k))==tFilter.twinModes)
+                    if ~any(eType(e2Remove(k))==twinModes)
                         canRemoveTypes=false;
                     end
                 end
@@ -90,13 +92,25 @@ function [ePARISChange]=RemovalPARISImprovement(G,grains,singleFragRelationship,
                 %the paris change eval
                 if length(nId_splitu)<length(nId_split)
                     [nIdCnt,nId_split]=hist(nId_split,nId_splitu);
-                    nId_split=nId_split(nIdCnt>1);
+                    nId_split=nId_split(nIdCnt>1);              
                 end
                 area=mergedGrains2(nId_split).area;
                 mean_paris_split=dot(area,paris_split(nId_split))/sum(area);
                 ePARISChange(~toCombine_local(egroupId))=(paris_orig(nId_orig)-mean_paris_split)/paris_orig(nId_orig)
+                
+                if length(nId_splitu)<length(nId_split)
+                    G.Nodes.ePARISChange(nId(nIdCnt==1))=ePARISChange(~toCombine_local(egroupId));     
+                else
+                    G.Nodes.ePARISChange(nId(1))=ePARISChange(~toCombine_local(egroupId));               
+                end
             end
         end
     end
+    G.Edges.PARISChange=ePARISChange;
+    
+    if ~isfield(time,'eRemovalPARISChange')
+        time.eRemovalPARISChange=0;
+    end
+    time.eRemovalPARISChange=time.eRemovalPARISChange+toc;
 end
 

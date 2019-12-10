@@ -1,40 +1,65 @@
-function G_clust = AssignFamilyIDs(G_clust,grains,seg_angle,doplot,dolabel,doTwinGrainOnly)
+function [G_clust,time] = AssignFamilyIDs(G_clust,grains,mergedGrains,seg_angle,twin,doPlot,time)
 %Determines the similar orientations that a cluster of fragments share and
 %assigns a single family id to those orientations.
 
-    %remove the grains we don't want to consider in the clustering
-    Grains2Keep=unique(G_clust.Edges.pairs);
-%     G_clust=rmnode(G_clust,G_clust.Nodes.Id(~ismember(G_clust.Nodes.Id,...
-%         Grains2Keep)));
-    %Get the nodes that are connected by edges
-    %repeat values mean they are connected
-    G_clust.Nodes.Group = conncomp(G_clust)'; 
-    
-    %Asign each pair to a group of grains
-    G_clust.Edges.Group=zeros(length(G_clust.Edges.pairs),1);
-    for i=1:length(G_clust.Edges.pairs)
-          G_clust.Edges.Group(i)=G_clust.Nodes.Group(...
-              find(G_clust.Edges.pairs(i,1)==G_clust.Nodes.Id));
-    end
-    
+    tic
+
     %Assign each Node a family - assume initially that all nodes are by
     %themselves
     G_clust.Nodes.FamilyID=zeros(length(G_clust.Nodes.Id),1);
     
     %Now handle the graph groups
     FamilyID=cell(max(G_clust.Edges.Group),1);
+    typeUnknownLocal=cell(max(G_clust.Edges.Group),1);
     nodeID=cell(max(G_clust.Edges.Group),1);
     Group=G_clust.Nodes.Group;
+    typeunknown=G_clust.Nodes.typeUnknown;
     mOri=G_clust.Nodes.meanOrientation;
     parfor i=1:max(G_clust.Nodes.Group)
         %convert logical arrays to indices 
+        egroupId= find((i==Group)==true);
         ngroupId= find((i==Group)==true);
-%         FamilyID(ngroupId)=GetFamily(mOri(ngroupId),seg_angle);   
         FamilyID{i}=GetFamily(mOri(ngroupId),seg_angle); 
-        nodeID{i}=ngroupId; 
+        nodeID{i}=ngroupId;
+        typeUnknownLocal{i}=typeunknown(ngroupId);
+        %unknow types are ignored during the tree. So that we don't affect the
+        %matrix representation of families, make sure unknown types have the
+        %highest family numbers 
+        if any(typeunknown(ngroupId))
+%          %Get unknown and known familes
+         unKnownFamily=unique(FamilyID{i}(typeUnknownLocal{i}));
+         knownFamily=unique(FamilyID{i}(~typeUnknownLocal{i}));
+%          
+         for j=1:length(unKnownFamily)
+             %Check to see if some of the families have mixed unknown and known
+             if any(unKnownFamily(j)==knownFamily)
+                 %Assign the relationship of the unknown to known 
+                 %This will change how clean Families operates on the
+                 %edges
+                 typeUnknownLocal{i}(unKnownFamily(j)==FamilyID{i})=true;
+             end
+         end  
+         unKnownFamily=unique(FamilyID{i}(typeUnknownLocal{i}));
+         knownFamily=unique(FamilyID{i}(~typeUnknownLocal{i}));
+         newFamily=zeros(length(FamilyID{i}),1);
+         cnt=1;
+         for j=1:length(knownFamily)
+             newFamily(knownFamily(j)==FamilyID{i})=cnt;
+             cnt=cnt+1;
+         end
+         for j=1:length(unKnownFamily)
+             newFamily(unKnownFamily(j)==FamilyID{i})=cnt;
+             cnt=cnt+1;
+         end   
+         FamilyID{i}=newFamily;
+        end
     end
+    G_clust.Nodes.typeUnknown(vertcat(nodeID{:}))=vertcat(typeUnknownLocal{:});
     G_clust.Nodes.FamilyID(vertcat(nodeID{:}))=vertcat(FamilyID{:});
  
+
+    
+    
     %Determine what family each pair relates
     G_clust.Edges.FamilyID=zeros(length(G_clust.Edges.pairs),2);
     for i=1:max(G_clust.Edges.Group)
@@ -49,38 +74,25 @@ function G_clust = AssignFamilyIDs(G_clust,grains,seg_angle,doplot,dolabel,doTwi
             G_clust.Edges.FamilyID(egroupId(j),2)=...
                 unique(fId(G_clust.Edges.pairs(egroupId(j),2)==nId));
         end
-    end
-    if doplot
-        %Remove unused nodes so that matlab plot performance is better
-        toremove=ones(length(G_clust.Nodes.Id),1,'logical');
-        toremove(unique(G_clust.Edges.pairs))=false;
-        G_clust_small=rmnode(G_clust,find(toremove));
         
-        figure; 
-        if doTwinGrainOnly
-            
-            plot(grains(G_clust_small.Nodes.Id),...
-                G_clust_small.Nodes.FamilyID,'Micronbar','off');
-        else
-            plot(grains(G_clust.Nodes.Id),...
-                G_clust.Nodes.FamilyID,'Micronbar','off');
-        end
-        hold on 
-        p=plot(G_clust_small,'XData',G_clust_small.Nodes.centroids(:,1),...
-            'YData',G_clust_small.Nodes.centroids(:,2));
-        hold off
-
-        p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-        if dolabel
-            pairs1=G_clust_small.Edges.pairs(:,1);
-            pairs2=G_clust_small.Edges.pairs(:,2);
-            for i=1:length(G_clust_small.Nodes.Id)
-                pairs1(pairs1==G_clust_small.Nodes.Id(i))=i;
-                pairs2(pairs2==G_clust_small.Nodes.Id(i))=i;
-            end
-            labeledge(p,pairs1,...
-                pairs2,G_clust_small.Edges.GlobalID);
-        end
     end
+
+    %Plot the results
+    if doPlot==true       
+        %Plot edge labeled graph
+        labelNodes=false;labelEdges=false;plotG=false;legendOn=false;
+        options={'k',5,'s','k',8,'w',2};
+        fhandle = plotGraph(grains,mergedGrains,G_clust,...
+            G_clust.Nodes.FamilyID,G_clust.Nodes.Id,...
+            labelNodes,labelEdges,legendOn,plotG,options);
+        
+        mtexColorbar;
+        mtexTitle('FamilyId')
+    end
+    
+    if ~isfield(time,'AssignFamilyIDs')
+        time.AssignFamilyIDs=0;
+    end
+    time.AssignFamilyIDs=time.AssignFamilyIDs+toc;
 end
 

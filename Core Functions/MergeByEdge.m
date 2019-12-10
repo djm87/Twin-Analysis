@@ -1,4 +1,4 @@
-function [mergedGrains,parentId,combinedTwinBoundary,combine] = MergeByEdge(pairs,combine,grains,typeMeanMisTol,minNEdgeMistol)
+function [mergedGrains,parentId,combinedTwinBoundary,combine] = MergeByEdge(pairs,combine,grains)
 %MergeByEdge takes a logical array of edges specifying whether grains
 %should be merged. Grain boundaries are extract for those edges and grains
 %are grouped accordingly. The out mergedGrains is with respect to the
@@ -16,11 +16,11 @@ function [mergedGrains,parentId,combinedTwinBoundary,combine] = MergeByEdge(pair
             count=count+1;
             isTwinning=sum(pairs(i,:)==gB_mineral.grainId,2)==2;
             twinBoundary{count} = gB_mineral(isTwinning);
-            if size(twinBoundary{count},1)<minNEdgeMistol & typeMeanMisTol(i)==0
-               twinBoundary(count)=[];
-               count=count-1; 
-               combine(i)=false;
-            end
+%             if size(twinBoundary{count},1)<minNEdgeMistol & typeMeanMisTol(i)==0
+%                twinBoundary(count)=[];
+%                count=count-1; 
+%                combine(i)=false;
+%             end
         end
     end
 

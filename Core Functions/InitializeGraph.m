@@ -1,100 +1,67 @@
 function [G,time] = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,...
-    meanMistolRelaxed,doplot,dolabel)
-%This function initializes graph objects for grains. 
-%Initialization entails computation of all local grain properties such as
-%orientation, centroid, aspectRatio, etc.. and is stored in edge pair
-%(intergranular) or nodes (grains). 
+    meanMistolRelaxed,doPlot,doLabel,time)
+    %This function initializes graph objects for grains. 
+    %Initialization entails computation of all local grain properties such as
+    %orientation, centroid, aspectRatio, etc.. and is stored in edge pair
+    %(intergranular) or nodes (grains). 
 
-tic
+    tic
 
-%Compute grain neighbors
-[counts,pairs] = neighbors(grains);
+    %Compute grain neighbors
+    [counts,pairs] = neighbors(grains);
 
-%Initialize graph
-s=pairs(:,1);
-t=pairs(:,2);
-G=graph(s,t);
+    %Initialize graph
+    s=pairs(:,1);
+    t=pairs(:,2);
+    G=graph(s,t);
 
-% Add node labels and other grain level information 
-G.Nodes.Name=cellstr(int2str(grains.id));
-G.Nodes.Id=str2num(cell2mat(G.Nodes.Name));
-G.Nodes.Area=grains.area; 
-G.Nodes.Perimeter=grains.perimeter; 
-G.Nodes.AspectRatio=grains.aspectRatio;
-G.Nodes.Paris=grains.paris;
-G.Nodes.centroids=grains.centroid;
-G.Nodes.meanOrientation=grains.meanOrientation;
-G.Nodes.Properties.UserData.mineral=grains.mineral; %For single phase material
+    % Add node labels and other grain level information 
+    G.Nodes.Name=cellstr(int2str(grains.id));
+    G.Nodes.Id=str2num(cell2mat(G.Nodes.Name));
+    G.Nodes.Area=grains.area; 
+    G.Nodes.Perimeter=grains.perimeter; 
+    G.Nodes.AspectRatio=grains.aspectRatio;
+    G.Nodes.Paris=grains.paris;
+    G.Nodes.centroids=grains.centroid;
+    G.Nodes.meanOrientation=grains.meanOrientation;
+    G.Nodes.Properties.UserData.mineral=grains.mineral; %For single phase material
 
-% %DS COMMENT
-% % Compute grain boundary for each grain fragment (i.e. node) 
-% G.Nodes.Gb=cell(length(grains),1);
-% 
-% for i=1:length(grains)
-%     G.Nodes.Gb{i}=grains(i).boundary;
-% end
+    % Add intergranular information
+    G.Edges.pairs=pairs; %this contains the grain ids corresponding to grains.id
+    G.Edges.GlobalID=[1:size(pairs,1)]';
+    
+    %label internal grains twin type in last twin (i.e. type=length(twin))
+    type=zeros(length(G.Edges.pairs),1,'int8');
+    G.Nodes.typeUnknown=zeros(length(G.Nodes.Id),1,'logical');
 
-% Add intergranular information
-G.Edges.pairs=pairs; %this contains the grain ids corresponding to grains.id
+    isInside = checkInside(grains, grains);
+    [GrainIdInclusion,GrainIdWithInclusion] = find(isInside);
+    G.Nodes.typeUnknown(GrainIdInclusion)=true;
+    epairs=[GrainIdInclusion,GrainIdWithInclusion];
+    for i=1:length(GrainIdInclusion)
+        eId=find(all(epairs(i,:)==G.Edges.pairs,2) | all(fliplr(epairs(i,:))==G.Edges.pairs,2));
+        type(eId)=length(twin);
+    end
 
-%Compute misorientation between all pairs
-mori=inv(grains(G.Edges.pairs(:,1)).meanOrientation).*...
-    grains(G.Edges.pairs(:,2)).meanOrientation; 
+    %Test if mean misorientation is a twin type so we can cluster grains
+%     [combine,type] = TestTwinRelationship(mori,meanMistol,twin,type);
 
+    G.Edges.type=type; %Twin relation type (# from twin list definitions)
+%     G.Edges.combine=combine; %whether pairs should be grouped into grains
 
-%label internal grains as type -1 for relaxed twin Id 
-type=zeros(length(G.Edges.pairs),1,'int8');
-G.Nodes.typeUnknown=zeros(length(G.Nodes.Id),1,'logical');
+    %Overlayer graph on grains
+    if doPlot==true
+        %Plot edge labeled graph
+        labelNodes=false;labelEdges=doLabel;plotG=true;legendOn=false;
+        fhandle = plotGraph(grains,[],G,...
+            grains.meanOrientation,G.Nodes.Id,...
+            labelNodes,labelEdges,legendOn,plotG,[]);
+        mtexTitle('Initial Graph')          
+    end
 
-isInside = checkInside(grains, grains);
-[GrainIdInclusion,GrainIdWithInclusion] = find(isInside);
-G.Nodes.typeUnknown(GrainIdInclusion)=true;
-epairs=[GrainIdInclusion,GrainIdWithInclusion];
-for i=1:length(GrainIdInclusion)
-    eId=find(all(epairs(i,:)==G.Edges.pairs,2) | all(fliplr(epairs(i,:))==G.Edges.pairs,2));
-    type(eId)=length(twin);
-end
-
-%Test if mean misorientation is a twin type so we can cluster grains
-[combine,type] = TestTwinRelationship(mori,meanMistol,twin,type);
-
-G.Edges.type=type; %Twin relation type (# from twin list definitions)
-G.Edges.combine=combine; %whether pairs should be grouped into grains
-
-% %DS COMMENT
-% % Make a list of boundaries shared between grains connected by an edge.
-% % This is used in relative boundary fraction calculations
-% G.Edges.Gb=cell(length(G.Edges.pairs),1);
-% G.Edges.ebsdId=cell(length(G.Edges.pairs),1);
-% 
-% grain1=grains(G.Edges.pairs(:,1));
-% grain2=grains(G.Edges.pairs(:,2));
-% 
-% 
-% for i=1:length(grain1)
-%     id1=grain1(i).boundary.ebsdId;
-%     id2=grain2(i).boundary.ebsdId;
-%     [boundaryEbsdId,loc]=intersect(id1,id2,'rows');
-%     G.Edges.Gb{i}=grain1.boundary(loc);
-%     G.Edges.ebsdId{i}=boundaryEbsdId;
-% end
-% %DS COMMENT
-
-%Overlayer graph on grains
-if doplot==true
-    figure;
-    h=plot(grains,grains.meanOrientation,'Micronbar','off');
-    set(gca,'Units','normalized');
-    hold on 
-    p=plot(G,'XData',G.Nodes.centroids(:,1),'YData',G.Nodes.centroids(:,2));
-    hold off
-    p.Marker='s';p.NodeColor='k';p.MarkerSize=3;p.EdgeColor='k';
-    labeledge(p,G.Edges.pairs(:,1),...
-                G.Edges.pairs(:,2),...
-                1:size(G.Edges.pairs,1));
-end
-
-time.InitializeGraph=toc;
-
+    if ~isfield(time,'InitializeGraph')
+        time.InitializeGraph=0;
+    end
+    time.InitializeGraph=time.InitializeGraph+toc;
 end
 

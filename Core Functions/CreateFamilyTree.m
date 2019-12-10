@@ -52,7 +52,7 @@ function [G] = CreateFamilyTree(G,grains,twin)
 %         end
         
 %         figure; plot(grains(nId),G.Nodes.FamilyID(nId))
-        if length(eType)>0        
+        if ~isempty(eType)       
             %Get the edge connectivity matrix
             EdgeMatrix=zeros(length(nId),length(nId),'uint8');
             for k = 1:size(ePairs,1)
@@ -76,7 +76,7 @@ function [G] = CreateFamilyTree(G,grains,twin)
             if any(~typeKnown)
                 G.Nodes.Type(ngroupId(~typeKnown))=openType;
                 G.Nodes.Generation(ngroupId(~typeKnown))=-1;
-                G.Nodes.TypeColored(ngroupId(~typeKnown),:)=colors(openType+1,:);
+                G.Nodes.TypeColored(ngroupId(~typeKnown),:)=colors(G.Nodes.Type(ngroupId(~typeKnown))+1,:);
             end
         end
     end

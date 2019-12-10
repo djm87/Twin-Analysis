@@ -5,6 +5,9 @@ function G = FamilyVotes(G,grains,w)
 %   Journal ofMicroscopy , Vol. 238, Pt 3 2010, pp. 218–229 
 %   doi: 10.1111/j.1365-2818.2009.03343.x
 %
+%   One modification is performed, the effective schmid is per edge not per
+%   family.
+%
 %   Inputs: the graph of clustered grains (G) and weights (Sf, Af, and Bf)
 %   Ouputs: Values needed to recalculate Votes are stored in G along with 
 %           along with votes using the weight passed in.
@@ -51,11 +54,11 @@ function G = FamilyVotes(G,grains,w)
             FRgB = GrainBoundaryRatio(FgB,pairs,nID,mineral);
             G.Edges.FRgB(egroupId,:) = FRgB;
 
-            %Schmid factor difference 
+            %Schmid factor difference (per edge not per family!) 
             FREffSF = SchmidFactorDifference(EffSF,pairs);  
             G.Edges.FREffSF(egroupId,:) = FREffSF;
 
-            %Calculate Vote
+            %Calculate Vote (per edge)
             G.Edges.Vote(egroupId,:) = CalcVote(FREffSF,FRArea,FRgB,w);
         end
     end    
@@ -113,6 +116,8 @@ function G = FamilyVotes(G,grains,w)
     end
 
     function FREffSF= SchmidFactorDifference(EffSF,pairs)
+        %Note if unknown type then EffSF will be 0 and no contribution to
+        %the vote will occure for that edge.
         for j=1:size(pairs,1)
             FREffSF(j,2)=diff(EffSF(j,1:2)); %diff defined as second-first
             FREffSF(j,1)=-FREffSF(j,2);
