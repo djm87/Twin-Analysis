@@ -7,13 +7,12 @@ function [G_Clean,time]= CleanFamilyTree(G,grains,mergedGrains,twin,seg_angle_gr
     G_Clean=G;
     while runCleanup && CleanupIter<maxIter
         tic
-        [G_Clean,runCleanup] = EdgeParents(G_Clean,grains,mergedGrains,twin)
+        [G_Clean,runCleanup] = EdgeParents(G_Clean,grains,mergedGrains,twin);
         time.EdgeParents=time.EdgeParents+toc;
         if runCleanup
             %Evaluate new clusters in case a merged grain gets seperated
-            tic
-            G_Clean = AssignFamilyIDs(G_Clean,grains,seg_angle_grouped,false,false,false);
-            time.AssignFamilyIDs=time.AssignFamilyIDs+toc;        
+            [G_Clean,time]= AssignFamilyIDs(G_Clean,grains,mergedGrains,seg_angle_grouped,twin,false,time);
+
         end
 
         CleanupIter=CleanupIter+1;
@@ -57,18 +56,42 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,mergedGrains,twin)
         %load edge and node properties for clustered fragments
         egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
         ngroupId = find((group==G.Nodes.Group)==true);
-        typeKnown=~G.Nodes.typeUnknown(ngroupId);
-        nId = G.Nodes.Id(ngroupId(typeKnown));
-        nFamily = G.Nodes.FamilyID(ngroupId(typeKnown));
+%         typeKnown=~G.Nodes.typeUnknown(ngroupId);
+        nId = G.Nodes.Id(ngroupId);
+        nFamily = G.Nodes.FamilyID(ngroupId);
         eType = G.Edges.type(egroupId);
-        etypeKnown=eType~=openType;
-        eType=eType(etypeKnown);
-        egroupId=egroupId(etypeKnown);
         eVote = G.Edges.Vote(egroupId,:);
         ePairs = G.Edges.pairs(egroupId,:);
         eFamily = G.Edges.FamilyID(egroupId,:);
         eGlobalId = G.Edges.GlobalID(egroupId);        
         if ~isempty(eType)
+            
+            %Filter out nodes and edges that only have type 5 associated 
+            %with them. This is important since type 5 don't get a family
+            %generation associated with them
+            nId_known=unique(ePairs(eType~=openType,:));
+            nId_mixed=unique(ePairs(eType==openType,:));
+            for j=1:length(nId_mixed)
+                if ~any(nId_mixed(j)==nId_known)
+                    nInd=find(nId_mixed(j)==nId);
+                    nId(nInd)=[];
+                    nFamily(nInd)=[];
+                end
+            end
+            etypeKnown=eType~=openType;
+            egroupId=egroupId(etypeKnown);
+            eType = G.Edges.type(egroupId);
+            eVote = G.Edges.Vote(egroupId,:);
+            ePairs = G.Edges.pairs(egroupId,:);
+            eFamily = G.Edges.FamilyID(egroupId,:);
+            eGlobalId = G.Edges.GlobalID(egroupId);  
+            
+            %renumber families that are around 
+            list=unique(nFamily);
+            for j=1:length(list)
+               nFamily(nFamily==list(j))=j;
+               eFamily(eFamily==list(j))=j;
+            end
             
             %Returns max(nFamily) x max(eType) cell array containing a logical
             %array of size(ePairs) of the family correlated with the edge Type 
@@ -78,9 +101,10 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,mergedGrains,twin)
             [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyRelationList);
 
             %Determine the parent by vote
-            Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,egroupId);   
-
+            Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,eGlobalId);   
+            G.Edges.Parent(egroupId,:)=Parent;
             %Make Family relation matrix 
+       
             FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,Parent);
 
             %Find child of none (i.e. the parent)
@@ -93,8 +117,11 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,mergedGrains,twin)
             if length(ParentOfAll) > 1
             fprintf('More than one parent is apparent.. fix manually\n')
             FamilyMatrix
-            [G,runCleanupAgain,i] = ClusterEditor(group,G,grains,mergedGrains,grains.meanOrientation,i,false,false)
-                
+            [G,runCleanupAgain,i,exitCleanFamily] = ClusterEditor(group,G,grains,mergedGrains,grains.meanOrientation,i,false,false);
+            if exitCleanFamily
+                break;
+            end
+            
             elseif isempty(ParentOfAll) || CircularRelationshipExists
                [rEdge,rEdgeGlobalId] = fixCircularFamily(G,FamilyMatrix,egroupId,ePairs,eFamily,nId,nFamily,Parent,eGlobalId);
                 %Remove the edges
@@ -127,12 +154,13 @@ function [G,runCleanupAgain]= EdgeParents(G,grains,mergedGrains,twin)
 
                 %Determine if we need to run the cleanup another time
                 if ~isempty(find(sum(FamilyMatrix,1)>1))
-                    if isempty(rEdge)
-                        fprintf('There may still be a circular relationship.. inspect manually\n')
-                        [G,runCleanupAgain,~] = ClusterEditor(group,G,grains,mergedGrains,grains.meanOrientation,i,false,false)
-                    else
-                        runCleanupAgain=true;
-                    end
+%                     if isempty(rEdge)
+%                         fprintf('There may still be a circular relationship.. inspect manually\n')
+%                         FamilyMatrix
+%                         [G,runCleanupAgain,~] = ClusterEditor(group,G,grains,mergedGrains,grains.meanOrientation,i,false,false)
+%                     else
+%                         runCleanupAgain=true;
+%                     end
                 end
                 
                 i=i+1;
@@ -192,7 +220,7 @@ function [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyR
     end
     [~,parentID] = sort(eVotesSummed,'descend'); %sorts each column
 end
-function Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,egroupId)
+function Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,eGlobalId)
     %Initialize parent
     Parent = zeros(size(ePairs,1),2,'logical');
     notTwin=load('notTwin.txt');
@@ -206,8 +234,10 @@ function Parent = parentByVote(FamilyRelationList,parentID,eType,ePairs,egroupId
         Parent(fliplr(notParent(j)==ePairs))=true;
     end
     for j=1:size(eRelation,1)
-        eId=eRelation(j,1)==egroupId;
-        Parent([eId,eId])=eRelation(j,2:3);
+        eId=eRelation(j,1)==eGlobalId;
+        if any(eId)
+            Parent([eId,eId])=eRelation(j,2:3);
+        end
     end
     
     for j = 1:size(parentID,1)

@@ -1,4 +1,4 @@
-function [G] = CreateFamilyTree(G,grains,twin)
+function [G,err_group] = CreateFamilyTree(G,grains,mergedGrains,twin)
 %CreateFamilyTree takes a clean set of family/edge relationships
 %and assigns a twin type and generation to each fragment.
 %
@@ -17,6 +17,7 @@ function [G] = CreateFamilyTree(G,grains,twin)
     %Loop over the groups 
     openType=length(twin);
     groups=unique(G.Edges.Group);
+    err_group=zeros(max(groups),1,'logical');
     for i=1:length(groups)
         group=groups(i);
         %load edge and node properties for clustered fragments
@@ -24,6 +25,7 @@ function [G] = CreateFamilyTree(G,grains,twin)
         ngroupId = find((group==G.Nodes.Group)==true);
         typeKnown=~G.Nodes.typeUnknown(ngroupId);
         nId = G.Nodes.Id(ngroupId(typeKnown));
+        nFamily = G.Nodes.FamilyID(ngroupId(typeKnown));
         nGeneration = -ones(length(nId),1,'int8');
         nType = -ones(length(nId),1,'int8');        
         eType = G.Edges.type(egroupId);
@@ -31,7 +33,9 @@ function [G] = CreateFamilyTree(G,grains,twin)
         eType=eType(etypeKnown);
         egroupId=egroupId(etypeKnown);
         eParent = G.Edges.Parent(egroupId,:);
-        ePairs = G.Edges.pairs(egroupId,:);
+        ePairs = G.Edges.pairs(egroupId,:);        
+        eFamily = G.Edges.FamilyID(egroupId,:);
+
 
         %Check to see if some of the parent relationships were not figured
         %out
@@ -64,8 +68,18 @@ function [G] = CreateFamilyTree(G,grains,twin)
                 error('EdgeMatrix not square')
             end
             %Call labeling function
-            [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                                                nGeneration,nType,[],0,8);
+            [nGeneration,nType,err] = fillGenerations(EdgeMatrix,...
+                                                nGeneration,nType,[],0,8,false);
+            
+            %catch any issues and flag the group
+            if err 
+                err_group(group)=true;
+                FamilyMatrix = buildFamilyMatrix(nFamily,eFamily,eParent)
+                value=G.Nodes.meanOrientation;
+                plotNeighbors=true;
+                enforceClusterOnlyMod=false;
+                [G,~,~] = ClusterEditor(group,G,grains,mergedGrains,value,0,plotNeighbors,enforceClusterOnlyMod); 
+            end
             
             %Set the twin based properties
             G.Nodes.Type(ngroupId(typeKnown))=nType;
@@ -81,8 +95,8 @@ function [G] = CreateFamilyTree(G,grains,twin)
         end
     end
 end
-function [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                                        nGeneration,nType,genId,gen,maxGen)
+function [nGeneration,nType,err] = fillGenerations(EdgeMatrix,...
+                                        nGeneration,nType,genId,gen,maxGen,err)
     %Simple recursive function to label type and generation 
     if gen==0
         genId = find(all(EdgeMatrix==0,1)); %Columns are children
@@ -110,8 +124,8 @@ function [nGeneration,nType] = fillGenerations(EdgeMatrix,...
                 nGeneration(genId1)=gen;
                 nType(genId1)=EdgeMatrix(genId(i),genId1);
                 if any(nGeneration==-1)
-                    [nGeneration,nType] = fillGenerations(EdgeMatrix,...
-                        nGeneration,nType,genId1,gen+1,maxGen);
+                    [nGeneration,nType,err] = fillGenerations(EdgeMatrix,...
+                        nGeneration,nType,genId1,gen+1,maxGen,err);
                 end
             end
         end
@@ -119,7 +133,18 @@ function [nGeneration,nType] = fillGenerations(EdgeMatrix,...
             nGeneration(:)=-1;
             nType(:)=0;
             disp('Warning: Failure to relate all fragments')
+            err=true;
         end
     end
     
+end
+
+function FamilyMatrix = buildFamilyMatrix(nFamily,eFamily, Parent)
+    FamilyMatrix=zeros(max(nFamily),'logical');
+    %Make Family Tree 
+    for j = 1:size(eFamily,1)
+        p=eFamily(j,Parent(j,:));
+        c=eFamily(j,~Parent(j,:)); 
+        FamilyMatrix(p,c)=true;
+    end
 end

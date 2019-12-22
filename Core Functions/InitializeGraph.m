@@ -29,6 +29,7 @@ function [G,time] = InitializeGraph(ebsd,grains,twin,Mistol,meanMistol,...
     % Add intergranular information
     G.Edges.pairs=pairs; %this contains the grain ids corresponding to grains.id
     G.Edges.GlobalID=[1:size(pairs,1)]';
+    G.Edges.Parent=zeros(size(pairs,1),2);
     
     %label internal grains twin type in last twin (i.e. type=length(twin))
     type=zeros(length(G.Edges.pairs),1,'int8');

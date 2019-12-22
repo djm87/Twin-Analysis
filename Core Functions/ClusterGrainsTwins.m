@@ -34,11 +34,12 @@ function [G_clust,mergedGrains,time] = ClusterGrainsTwins(G,grains,type,typeRlx,
         [~,epairs]=grains(nAddList(i)).neighbors;
         for j=1:size(epairs,1)
             eId=find(all(epairs(j,:)==G.Edges.pairs,2) | all(fliplr(epairs(j,:))==G.Edges.pairs,2));
-            isTwin=G.Edges.type(eId)~=0 & G.Edges.type(eId)~=length(twin);
-            G.Edges.combineCleaned(eId(isTwin))=true;
+%             isTwin=typeRlx(eId)~=0 & typeRlx(eId)~=length(twin);
+            if typeRlx(eId)~=0
+              G.Edges.combineCleaned(eId)=G.Edges.combineBoundaryRlx(eId);
+            end
         end
     end
-    
     
     %Try removing nodes
     for i=1:length(nRemoveList)
@@ -51,15 +52,21 @@ function [G_clust,mergedGrains,time] = ClusterGrainsTwins(G,grains,type,typeRlx,
     end
     
     %Add edges
-    typeAdd=typeRlx(eAddList);
+    eAddId=cell(size(eAddList,1),1);
+    for i=1:size(eAddList,1)
+        eAddId{i}=find(all(eAddList(i,:)==G.Edges.pairs,2) | all(fliplr(eAddList(i,:))==G.Edges.pairs,2));
+    end
+    eAddId=cell2mat(eAddId);
+    typeAdd=typeRlx(eAddId);
     typeAdd(typeAdd==0)=length(twin); %Unknown Type
-    G.Edges.type(eAddList)=typeAdd;
-    G.Edges.combineCleaned(eAddList)=true;
+    G.Edges.type(eAddId)=typeAdd;
+    G.Edges.combineCleaned(eAddId)=true;
     
     %Update unknown types in nodes
     typeKnown=unique(G.Edges.pairs([G.Edges.type~=length(twin),G.Edges.type~=length(twin)]));
     G.Nodes.typeUnknown(:)=true;
     G.Nodes.typeUnknown(typeKnown)=false;
+  
     
     %Remove edges
     G.Edges.combineCleaned(eRemoveList)=false; %
@@ -67,6 +74,64 @@ function [G_clust,mergedGrains,time] = ClusterGrainsTwins(G,grains,type,typeRlx,
     %Merge grains based on edge combine list
     [mergedGrains,parentId,mergedTwinBoundary,G.Edges.combineCleaned] = MergeByEdge(G.Edges.pairs,G.Edges.combineCleaned,grains);    
 
+    %Add grains that are internal to a cluster
+    isInside = checkInside(mergedGrains, mergedGrains);
+    [GrainIdInclusion,GrainIdWithInclusion] = find(isInside);
+    uGrainIdInclusion=unique(GrainIdInclusion);
+    for i=1:length(uGrainIdInclusion)
+        nId=grains(uGrainIdInclusion(i)==parentId).id;
+        for j=1:length(nId)
+            nAddList=vertcat(nAddList,nId(j));
+        end
+    end
+    
+    %Try adding nodes only based on neighbors
+%     for i=1:length(nAddList)
+%         [~,epairs]=grains(nAddList(i)).neighbors;
+%         flag=false;
+%         for j=1:size(epairs,1)
+%             eId=find(all(epairs(j,:)==G.Edges.pairs,2) | all(fliplr(epairs(j,:))==G.Edges.pairs,2));
+%             if typeRlx(eId)~=0
+%               flag=true;  
+%               G.Edges.combineCleaned(eId)=G.Edges.combineBoundaryRlx(eId);
+%             end
+%         end
+%         if ~flag
+%             %Add as random unknown edge
+%             eId=find(all(epairs(1,:)==G.Edges.pairs,2) | all(fliplr(epairs(1,:))==G.Edges.pairs,2));
+%              G.Edges.combineCleaned(eId)=length(twin);
+%         end
+%     end
+
+    %Try adding nodes to nieghboring clusters if it is part of the same
+    %family in a cluster and assign a type based on Family rather than an
+    %immediate edge.
+%     for i=1:length(nAddList)
+%         [~,epairs]=grains(nAddList(i)).neighbors;
+%         for j=1:size(epairs,1)
+%             eId=find(all(epairs(j,:)==G.Edges.pairs,2) | all(fliplr(epairs(j,:))==G.Edges.pairs,2));
+%             G.Edges.combineCleaned(eId)=G.Edges.combineBoundaryRlx(eId);
+%         end
+%     end
+    
+    %Try removing nodes so no internal grains are added that we specify to
+    %remove
+    for i=1:length(nRemoveList)
+        [~,epairs]=grains(nRemoveList(i)).neighbors;
+        for j=1:size(epairs,1)
+            eId=find(all(epairs(j,:)==G.Edges.pairs,2) | all(fliplr(epairs(j,:))==G.Edges.pairs,2));
+            isTwin=G.Edges.type(eId)~=0 & G.Edges.type(eId)~=length(twin);
+            G.Edges.combineCleaned(eId(isTwin))=false;
+        end
+    end
+    
+    %Remove edges similarly to ensure nothing is added that we said not to
+    %add
+    G.Edges.combineCleaned(eRemoveList)=false; %
+    
+    %Merge grains based on edge combine list
+    [mergedGrains,parentId,mergedTwinBoundary,G.Edges.combineCleaned] = MergeByEdge(G.Edges.pairs,G.Edges.combineCleaned,grains);    
+    
     %Remove edges to make reduced graph over the clusters
     G_clust=rmedge(G,G.Edges.pairs(~G.Edges.combineCleaned,1),...
         G.Edges.pairs(~G.Edges.combineCleaned,2));
@@ -74,6 +139,10 @@ function [G_clust,mergedGrains,time] = ClusterGrainsTwins(G,grains,type,typeRlx,
     %Assign group Ids
     G_clust = GroupsFromGraph(G_clust,mergedGrains,parentId);
     
+    nId_edges=unique(G_clust.Edges.pairs);
+    G_clust.Nodes.typeUnknown(:)=true; 
+    G_clust.Nodes.typeUnknown(nId_edges)=false;
+
     %Plot the results
     if doPlot==true
         %Remove grains that haven't twinned (better plot performance)

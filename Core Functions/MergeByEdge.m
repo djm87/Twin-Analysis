@@ -3,28 +3,18 @@ function [mergedGrains,parentId,combinedTwinBoundary,combine] = MergeByEdge(pair
 %should be merged. Grain boundaries are extract for those edges and grains
 %are grouped accordingly. The out mergedGrains is with respect to the
 %original grains. 
-
     mineral=grains.mineral;
     gB=grains.boundary;
     gB_mineral = gB(mineral,mineral);
+    gB_Id=gB_mineral.grainId;
+    pairsCombine=pairs(combine,:);
 
-    twinBoundary={};
-    count=0;
-    twinBoundary=cell(sum(combine),1);
-    for i=1:length(pairs)   
-        if combine(i)
-            count=count+1;
-            isTwinning=sum(pairs(i,:)==gB_mineral.grainId,2)==2;
-            twinBoundary{count} = gB_mineral(isTwinning);
-%             if size(twinBoundary{count},1)<minNEdgeMistol & typeMeanMisTol(i)==0
-%                twinBoundary(count)=[];
-%                count=count-1; 
-%                combine(i)=false;
-%             end
-        end
+    isTwinBoundary=zeros(length(gB_Id),1,'logical');
+    for i=1:length(pairsCombine)   
+        isTwinBoundary(all(pairsCombine(i,:)==gB_Id,2)) = true;
     end
 
-    combinedTwinBoundary=[twinBoundary{:}];
+    combinedTwinBoundary=gB_mineral(isTwinBoundary);
     [mergedGrains,parentId] = merge(grains,combinedTwinBoundary);
 
 end

@@ -36,7 +36,7 @@ function [G,time] = GetSchmidRelative(G,grains,mergedGrains,twin,sigma,doPlot,ti
         type=typeEdge(i)
         %If the type is unknown then the effective schmid is zero and the
         %contribution in vote for schmid will be zero.
-        if type ~= length(twin)
+        if type < length(twin) && type > 0
             %Convert grains to s->c and apply symmetry operation
             gA = inv(grainsA(i).symmetrise); 
             gB = inv(grainsB(i).symmetrise);
@@ -68,7 +68,7 @@ function [G,time] = GetSchmidRelative(G,grains,mergedGrains,twin,sigma,doPlot,ti
     
     grainEffSF = zeros(ngrains, max(G.Edges.type));
     for i = 1:nedges
-        if typeEdge(i) ~= length(twin)
+        if typeEdge(i) < length(twin) && typeEdge(i) > 0
             grainEffSF(grainIdA(i),typeEdge(i))=grainEffSF_tmp(i,1);
             grainEffSF(grainIdB(i),typeEdge(i))=grainEffSF_tmp(i,2);
         end

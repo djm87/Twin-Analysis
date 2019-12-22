@@ -47,7 +47,7 @@ function [twin] = getTwinProperties(twin)
             %Define the twin frame Rtw such that Rtw transforms crystal to twin
             twin{i}.Rtw=orientation.map(twin{i}.k1,twin{i}.CS.cAxis,...
                 twin{i}.eta1,twin{i}.CS.aAxis); 
-
+            
             % Create the twin misorientation
             twin{i}.RMT=twin{i}.Rtw'*tType{twin{i}.actType}*twin{i}.Rtw;
 

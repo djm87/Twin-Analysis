@@ -57,8 +57,6 @@ function [G_clust,time] = AssignFamilyIDs(G_clust,grains,mergedGrains,seg_angle,
     G_clust.Nodes.typeUnknown(vertcat(nodeID{:}))=vertcat(typeUnknownLocal{:});
     G_clust.Nodes.FamilyID(vertcat(nodeID{:}))=vertcat(FamilyID{:});
  
-
-    
     
     %Determine what family each pair relates
     G_clust.Edges.FamilyID=zeros(length(G_clust.Edges.pairs),2);
@@ -76,7 +74,7 @@ function [G_clust,time] = AssignFamilyIDs(G_clust,grains,mergedGrains,seg_angle,
         end
         
     end
-
+    
     %Plot the results
     if doPlot==true       
         %Plot edge labeled graph

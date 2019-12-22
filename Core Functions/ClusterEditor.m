@@ -1,4 +1,4 @@
-function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,value,ind,plotNeighbors,enforceClusterOnlyMod)
+function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains,mergedGrains,value,ind,plotNeighbors,enforceClusterOnlyMod)
 %ClusterFilter loops through clusters in prefiltered groups, allowing a 
 %user to add/remove nodes edges and relationships
 %Inputs:  groups - list of merged grain Ids 
@@ -12,8 +12,10 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
 %         next cluster.
 
     rEdge=[];
+    exitCleanFamily=false;
     runCleanupAgain=false;
-    for i=1:length(groups) 
+    i=1;
+    while i<length(groups)+1
         group=groups(i);
         egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
         ngroupId = find((group==G.Nodes.Group)==true);
@@ -36,6 +38,7 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
         %Plot grain cluster
         set(0,'DefaultFigureWindowStyle','docked')
         h=figure; plot(grains(nId),value(nId))
+%         mtexColorMap(hsv)
         text(grains(nId),int2str(nId))
         hold on
         if ~isempty(mergedGrains)
@@ -48,6 +51,7 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
         G_Removed=rmnode(G,find(toremove));
         p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
             'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
+        p.EdgeFontSize=10;
         pairs1=G_Removed.Edges.pairs(:,1);
         pairs2=G_Removed.Edges.pairs(:,2);
         for j=1:length(G_Removed.Nodes.Id)
@@ -74,7 +78,7 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
         end
         fprintf('Edge List \n')
         for j=1:length(egroupId)
-            fprintf('Id: %5d, Node Pair: %5d %5d\n',G.Edges.GlobalID(egroupId(j)),G.Edges.pairs(egroupId(j),:))
+            fprintf('Id: %5d, type: %3d Node, Pair/Parent: %5d %5d,  %1d %1d\n',G.Edges.GlobalID(egroupId(j)),G.Edges.type(egroupId(j)),G.Edges.pairs(egroupId(j),:),G.Edges.Parent(egroupId(j),:))
         end
 
         %Give options to perform
@@ -90,6 +94,8 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
         fprintf('5 to add an edge\n')
         fprintf('6 to remove all edges connected to a node\n')
         fprintf('7 to try adding all edges connected to a node\n')
+        fprintf('8 to plot the grain a different way\n')
+        fprintf('9 to cycle ind (used in clean family tree)\n')
         %Get main operation to perform
         nextGrain=false;
         while true
@@ -99,7 +105,7 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
                     break;
                 elseif length(option)>1
                     %cycle
-                elseif isnumeric(option) && (option >= 0 && option < 5 )
+                elseif isnumeric(option) && (option >= 0 && option < 10 )
                     break;
                 end
                 fprintf('Please input a valid option\n')
@@ -107,6 +113,7 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
             if option==0
                 fprintf('exiting ClusterEditor\n')
                 close(h);
+                exitCleanFamily=true;
                 return;
             elseif option==1
                 while true
@@ -218,6 +225,8 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
                         if flagBreak
                             break;
                         end
+                    elseif isempty(edgeId)
+                        break;
                     end
                 end
 
@@ -226,13 +235,13 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
                     fprintf(fid, '%d\n', edgeId(j));
                 end
                 fclose(fid);
-                rEdge=zeros(length(edgeId),1);
-                for j=1:length(edgeId)
-                    rEdge(j)=find(edgeId(j)==eGlobalId);
-                end
-                G=removeEdge(G,rEdge,egroupId);
-                ind=ind+1;
-                runCleanupAgain=true;
+%                 rEdge=zeros(length(edgeId),1);
+%                 for j=1:length(edgeId)
+%                     rEdge(j)=find(edgeId(j)==eGlobalId);
+%                 end
+%                 G=removeEdge(G,rEdge,egroupId);
+%                 i=i+1;
+%                 runCleanupAgain=true;
             elseif option == 5                    
                 while true
                     try
@@ -309,8 +318,58 @@ function [G,runCleanupAgain,ind] = ClusterEditor(groups,G,grains,mergedGrains,va
                     fprintf(fid, '%d\n', nodeId(j));
                 end
                 fclose(fid);
+            elseif option == 8
+                fprintf('1 to plot mean orientation\n')
+                fprintf('2 to plot FamilyId\n')
+                fprintf('3 to plot EffSchmid\n')
+                while true
+                    try
+                        plotOption=input('enter plot option: ');
+                    catch Error
+                        disp(Error.message)
+                        fprintf('Must specify a number or vector e.g. 1 or [1,2]\n')
+                    end
+                    %Check the type of input
+                    if isvector(plotOption) && (plotOption==1 || plotOption==2 || plotOption==3)
+                        if plotOption==1
+                            value=grains.meanOrientation;
+                        elseif plotOption==2
+                            value=G.Nodes.FamilyID;
+                        elseif plotOption==3
+                            try
+                                fprintf('Twin Types: 1 - %d\n',size(G.Nodes.EffSF,2)-1)
+                                twinType=input('enter twin type: ');
+                            catch Error
+                                disp(Error.message)
+                                fprintf('Must specify a number or vector e.g. 1 or [1,2]\n')
+                            end
+                            value=G.Nodes.EffSF(:,twinType);
+                        end
+                        try
+                            tmp=input('Enter whether neighbors should be plotted (0 or 1): ');
+                            plotNeighbors=logical(tmp);
+                        catch Error
+                            disp(Error.message)
+                            fprintf('Must specify a number or vector e.g. 1 or [1,2]\n')
+                        end
+                        if isempty(plotNeighbors)
+                            plotNeighbors=0;
+                            break;
+                        elseif plotNeighbors || ~plotNeighbors
+                            break;
+                        end
+                    end
+                end
+                nextGrain=true;
+                
+            elseif option==9
+                fprintf('recalling ClusterEditor\n');
+                i=i+1;
+                ind=ind;
+                nextGrain=true;
             elseif isempty(option)
                 fprintf('Moving on to the next grain\n');
+                i=i+1;
                 ind=ind+1;
                 nextGrain=true;
             else

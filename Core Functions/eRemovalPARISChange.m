@@ -101,6 +101,7 @@ function [G,time]=eRemovalPARISChange(G,grains,singleFragRelationship,twinModes,
                 if length(nId_splitu)<length(nId_split)
                     G.Nodes.ePARISChange(nId(nIdCnt==1))=ePARISChange(~toCombine_local(egroupId));     
                 else
+                    
                     G.Nodes.ePARISChange(nId(1))=ePARISChange(~toCombine_local(egroupId));               
                 end
             end

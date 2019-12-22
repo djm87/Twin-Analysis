@@ -27,9 +27,9 @@ function [Family] = GetFamily(ori,seg_angle)
             cnt=cnt+1;
             FamiliesComplete(oriSame(i,:))=true;
             Family(oriSame(i,:))=cnt;
-            if cnt==9
-               fprintf('i=%d\n',i)
-            end
+%             if cnt==9
+%                fprintf('i=%d\n',i)
+%             end
         end
         if sum(FamiliesComplete)==len
             break;
