@@ -3,8 +3,11 @@
 %All scripts can then be executed from any directory in you system, allowing you to
 %avoid having to copy the scripts around for different refinement directories.
 
-P=genpath(fullfile(pwd,'Core Functions'))
-addpath(P)
-savepath
+P=genpath(fullfile(pwd,'src/Segmentation'));
+addpath(P);
+P=genpath(fullfile(pwd,'src/Statistics'));
+addpath(P);
+P=genpath(fullfile(pwd,'src/Utilities'));
+addpath(P);
 
-run(fullfile(pwd,'MTEX','install_mtex'))
+savepath;
