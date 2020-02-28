@@ -1,4 +1,4 @@
-function [G,err_group] = CreateFamilyTree(G,grains,mergedGrains,twin)
+function [G,err_group] = CreateFamilyTree(G,grains,mergedGrains,opt)
 %CreateFamilyTree takes a clean set of family/edge relationships
 %and assigns a twin type and generation to each fragment.
 %
@@ -6,6 +6,11 @@ function [G,err_group] = CreateFamilyTree(G,grains,mergedGrains,twin)
 %makes sure things are clean and make sense. Clean family tree should be
 %used to remove redundant relationships and make sure things are good.
     
+    nId_edges=unique(G.Edges.pairs([G.Edges.type~=opt.twinUnknown,G.Edges.type~=opt.twinUnknown]));
+    G.Nodes.typeUnknown(:)=true; 
+    G.Nodes.typeUnknown(nId_edges)=false;
+
+
     %Intialize new output arrays
     G.Nodes.Generation = zeros(length(G.Nodes.Id),1,'int8');
     G.Nodes.Type = zeros(length(G.Nodes.Id),1,'int8');
@@ -15,8 +20,8 @@ function [G,err_group] = CreateFamilyTree(G,grains,mergedGrains,twin)
     colors=hsv(double(max(G.Edges.type))+1);
     
     %Loop over the groups 
-    openType=length(twin);
-    groups=unique(G.Edges.Group);
+    openType=opt.twinUnknown;
+    groups=mergedGrains.id;%unique(G.Edges.Group);
     err_group=zeros(max(groups),1,'logical');
     for i=1:length(groups)
         group=groups(i);

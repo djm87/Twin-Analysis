@@ -1,4 +1,4 @@
-function []= CleanFamilyTree(G_clust,grains,mGrains,opt)   
+function [G_clust]= CleanFamilyTree(G_clust,grains,mGrains,opt)   
 %cleanFamilyTree automatically removes circular twin relationships and
 %outputs a list of groups that need user input to fix clusters with no
 %obvious parent.
@@ -17,10 +17,11 @@ function []= CleanFamilyTree(G_clust,grains,mGrains,opt)
     G_clust.Edges.Parent = zeros(size(G_clust.Edges.pairs),'logical');
     
     %loop over groups
-    groups=1270%unique(G_clust.Edges.Group);
+    groups=mGrains.id;
+    groups(groups==0)=[];
     i=1;
     while i<length(groups)+1
-        group=groups(i);
+        group=groups(i)
         %load edge and node properties for clustered fragments
         egroupId = find((group==G_clust.Edges.Group)==true); %converts logical arrays to indices
         ngroupId = find((group==G_clust.Nodes.Group)==true);
@@ -46,7 +47,7 @@ function []= CleanFamilyTree(G_clust,grains,mGrains,opt)
                     nFamily(nInd)=[];
                 end
             end
-            etypeKnown=eType~=opt.twinUnknown;
+            etypeKnown=eType~=opt.twinUnknown & eType~=0; %find out why eType can be zero!
             egroupId=egroupId(etypeKnown);
             eType = G_clust.Edges.type(egroupId);
             eVote = G_clust.Edges.Vote(egroupId,:);
@@ -89,8 +90,10 @@ function []= CleanFamilyTree(G_clust,grains,mGrains,opt)
             if length(ParentOfAll) > 1
             fprintf('More than one parent is apparent.. fix manually\n')
             FamilyMatrix
-            [G_clust,runCleanupAgain,i,exitCleanFamily] = ClusterEditor(group,G_clust,grains,mGrains,grains.meanOrientation,i,false,false);
+            [G_clust,runCleanupAgain,i,exitCleanFamily] = ClusterEditor(group,G_clust,grains,mGrains,grains.meanOrientation,i,1,1,0,1,0); 
+%             [G_clust,runCleanupAgain,i,exitCleanFamily] = ClusterEditor(group,G_clust,grains,mGrains,grains.meanOrientation,i,false,false);
             if exitCleanFamily
+                fprintf('exiting CleanFamilyTree\n')
                 break;
             end
             
@@ -111,7 +114,7 @@ function []= CleanFamilyTree(G_clust,grains,mGrains,opt)
                 %Reinitialize group quantities
                 egroupId = find((group==G_clust.Edges.Group)==true); %converts logical arrays to indices
                 eType = G_clust.Edges.type(egroupId);
-                etypeKnown=eType~=opt.twinUnknown;
+                etypeKnown=eType~=opt.twinUnknown & eType~=0;
                 eType=eType(etypeKnown);
                 egroupId=egroupId(etypeKnown);
                 eVote = G_clust.Edges.Vote(egroupId,:);

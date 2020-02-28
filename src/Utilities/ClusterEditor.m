@@ -1,4 +1,4 @@
-function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains,mergedGrains,value,ind,plotNeighbors,enforceClusterOnlyMod)
+function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains,mergedGrains,value,ind,plotNeighbors,plotEdgeLabel,plotMergedGrainId,plotGrainId,enforceClusterOnlyMod)
 %ClusterFilter loops through clusters in prefiltered groups, allowing a 
 %user to add/remove nodes edges and relationships
 %Inputs:  groups - list of merged grain Ids 
@@ -19,49 +19,94 @@ function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains
         group=groups(i);
         egroupId = find((group==G.Edges.Group)==true); %converts logical arrays to indices
         ngroupId = find((group==G.Nodes.Group)==true);
-        nId = G.Nodes.Id(ngroupId);
+        nIdgroup = G.Nodes.Id(ngroupId);
         nFamily = G.Nodes.FamilyID(ngroupId);
         eGlobalId = G.Edges.GlobalID(egroupId);  
         
         %if plot neighbors 
+        mGrainInd=find(mergedGrains.id==group);
         if plotNeighbors
-            [~,pairsTmp]=neighbors(grains(nId));
-            nId=unique(pairsTmp);
-            allGroups=unique(G.Nodes.Group(nId));
+            
+            [~,pairsTmp]=neighbors(mergedGrains(mGrainInd));
+            allGroups=unique(pairsTmp);
             nId=[];
             for j=1:length(allGroups)
                 ngroupIdAll = find((allGroups(j)==G.Nodes.Group)==true);
                 nId = vertcat(nId,G.Nodes.Id(ngroupIdAll));
             end
+            [ii,jj]=unique(mergedGrains.id,'stable');
+            n=numel(allGroups);
+            allGroupsInd = zeros(n,1);
+            for k = 1:n
+                 tmp=jj(find(ii == allGroups(k)));
+                 if ~isempty(tmp)
+                    allGroupsInd(k)=tmp;
+                 end
+            end
+            allGroupsInd(allGroupsInd==0)=[];
+        else
+           nId=nIdgroup;
+           allGroupsInd=mGrainInd;
         end
         
         %Plot grain cluster
         set(0,'DefaultFigureWindowStyle','docked')
-        h=figure; plot(grains(nId),value(nId))
+        h=figure; plot(grains(nId),value(nId),'noBoundary')
 %         mtexColorMap(hsv)
-        text(grains(nId),int2str(nId))
+        
+        if plotGrainId
+            text(grains(nId),int2str(nId));
+        end
+        
+        if plotMergedGrainId
+            grainName={};
+            for ii=1:length(allGroupsInd)
+                grainName{ii}=sprintf('M%d',mergedGrains(allGroupsInd(ii)).id);
+            end
+            text(mergedGrains(allGroupsInd),grainName(:));
+        end
+        
         hold on
         if ~isempty(mergedGrains)
-            plot(mergedGrains(group).boundary,'linecolor','k','linewidth',2,...
+            if plotNeighbors
+                plot(mergedGrains(allGroupsInd).boundary,'linecolor','k','linewidth',2,...
+                    'linestyle','-','displayName','merged grains')
+            end
+            plot(mergedGrains(mGrainInd).boundary,'linecolor','w','linewidth',3,...
                 'linestyle','-','displayName','merged grains')
         end
-        toremove=ones(length(G.Nodes.Id),1,'logical');
-        toremove(unique(G.Edges.pairs(egroupId,:)))=false;
-%         toremove(nId)=false;
-        G_Removed=rmnode(G,find(toremove));
-        p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
-            'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
-        p.EdgeFontSize=10;
-        pairs1=G_Removed.Edges.pairs(:,1);
-        pairs2=G_Removed.Edges.pairs(:,2);
-        for j=1:length(G_Removed.Nodes.Id)
-            pairs1(pairs1==G_Removed.Nodes.Id(j))=j;
-            pairs2(pairs2==G_Removed.Nodes.Id(j))=j;
+        
+        if plotEdgeLabel
+            toremove=ones(length(G.Nodes.Id),1,'logical');
+            toremove(unique(G.Edges.pairs(egroupId,:)))=false;
+    %         toremove(nId)=false;
+            G_Removed=rmnode(G,find(toremove));
+            
+            [ii,jj]=unique(G_Removed.Edges.GlobalID,'stable');
+            n=numel(eGlobalId);
+            pos = zeros(n,1);
+            for k = 1:n
+                 pos(k)=jj(find(ii == eGlobalId(k)));
+            end
+            toremove=ones(size(G_Removed.Edges.GlobalID,1),1,'logical');
+            toremove(pos)=false;
+            G_Removed=rmedge(G_Removed,find(toremove));
+
+            p=plot(G_Removed,'XData',G_Removed.Nodes.centroids(:,1),...
+                'YData',G_Removed.Nodes.centroids(:,2),'displayName','graph');
+            p.EdgeFontSize=10;
+            pairs1=G_Removed.Edges.pairs(:,1);
+            pairs2=G_Removed.Edges.pairs(:,2);
+            for j=1:length(G_Removed.Nodes.Id)
+                pairs1(pairs1==G_Removed.Nodes.Id(j))=j;
+                pairs2(pairs2==G_Removed.Nodes.Id(j))=j;
+            end
+            if ~isempty(pairs1)
+                labeledge(p,pairs1,...
+                    pairs2,G_Removed.Edges.GlobalID); 
+            end
         end
-        if ~isempty(pairs1)
-            labeledge(p,pairs1,...
-                pairs2,G_Removed.Edges.GlobalID); 
-        end
+
         hold off   
         set(0,'DefaultFigureWindowStyle','normal')
         %give node and edge info
@@ -69,7 +114,7 @@ function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains
         fprintf('Group %d\n',group)
         fprintf('Node List \n')
         for j=1:max(nFamily)
-            nId_family=nId(j==nFamily);
+            nId_family=nIdgroup(j==nFamily);
             fprintf('Family %d, Node Id ',j)
             for k=1:length(nId_family)
                 fprintf('%d ',nId_family(k))
@@ -94,8 +139,11 @@ function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains
         fprintf('5 to add an edge\n')
         fprintf('6 to remove all edges connected to a node\n')
         fprintf('7 to try adding all edges connected to a node\n')
-        fprintf('8 to plot the grain a different way\n')
-        fprintf('9 to cycle ind (used in clean family tree)\n')
+        fprintf('8 merge merged grains\n')
+        fprintf('9 to plot the grain a different way\n')
+        fprintf('10 to change labeling\n')
+        fprintf('11 to get misorientation of grains\n')
+        fprintf('12 go back to previous grain\n')
         %Get main operation to perform
         nextGrain=false;
         while true
@@ -105,7 +153,7 @@ function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains
                     break;
                 elseif length(option)>1
                     %cycle
-                elseif isnumeric(option) && (option >= 0 && option < 10 )
+                elseif isnumeric(option) && (option >= 0 && option < 13 )
                     break;
                 end
                 fprintf('Please input a valid option\n')
@@ -318,7 +366,41 @@ function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains
                     fprintf(fid, '%d\n', nodeId(j));
                 end
                 fclose(fid);
-            elseif option == 8
+            elseif option == 8  
+                while true
+                    try
+                        mgPairs=input('enter merged grain ids to merge: ');
+                    catch Error
+                        disp(Error.message)
+                        fprintf('Must specify a vector of two or more nodes e.g. [1,2]\n')
+                    end
+                    if all(~any(mgPairs==0,2)) && (isvector(mgPairs) || ismatrix(mgPairs))
+                        break;
+                    else
+                        fprintf('Specify a node id pairs e.g.[12,1] or for multiple [12,1;1,4]\n')
+                    end
+                end
+                
+                %Find the pairs and add to eAddList.txt
+                ePairs=[];
+                for j=1:size(mgPairs,1)
+                    ngroupId1 = find((mgPairs(j,1)==G.Nodes.Group)==true);
+                    ngroupId2 = find((mgPairs(j,2)==G.Nodes.Group)==true);
+                    gBId2=grains(ngroupId2).boundary.grainId;
+                    for k=1:length(ngroupId1)
+                        [row,~]=find(ngroupId1(k)==gBId2);
+                        uniqueNeighbors=unique(gBId2(row,:));
+                        uniqueNeighbors(uniqueNeighbors==ngroupId1(k))=[];
+                        ePairs=vertcat(ePairs,[uniqueNeighbors,ngroupId1(k)*ones(length(uniqueNeighbors),1)]);
+                    end
+                end     
+                fid = fopen('eAddList.txt', 'a+');
+                for j=1:size(ePairs,1)
+                    fprintf(fid, '%d %d\n', ePairs(j,1), ePairs(j,2));
+                end
+                fclose(fid);
+                
+            elseif option == 9
                 fprintf('1 to plot mean orientation\n')
                 fprintf('2 to plot FamilyId\n')
                 fprintf('3 to plot EffSchmid\n')
@@ -361,12 +443,84 @@ function [G,runCleanupAgain,ind,exitCleanFamily] = ClusterEditor(groups,G,grains
                     end
                 end
                 nextGrain=true;
-                
-            elseif option==9
-                fprintf('recalling ClusterEditor\n');
-                i=i+1;
-                ind=ind;
+            elseif option == 10
+                fprintf('1 plot Neighbors\n')
+                fprintf('2 plot EdgeLabel\n')
+                fprintf('3 plot GrainId\n')
+                fprintf('4 plot Merged GrainId\n')
+                        
+                while true
+                    try
+                        plotOption=input('enter option: ');
+                    catch Error
+                        disp(Error.message)
+                        fprintf('Must specify a number or vector e.g. 1 or [1,2]\n')
+                    end
+                    %Check the type of input
+                    if isvector(plotOption) && (plotOption==1 || plotOption==2 || plotOption==3 || plotOption==4)
+                        if plotOption==1
+                            try
+                                tmp=input('On or off (0 or 1): ');
+                            catch Error
+                                disp(Error.message)
+                                fprintf('Must specify a number 0 or 1\n')
+                            end
+                            plotNeighbors=logical(tmp);
+                        elseif plotOption==2
+                            try
+                                tmp=input('On or off (0 or 1): ');
+                            catch Error
+                                disp(Error.message)
+                                fprintf('Must specify a number 0 or 1\n')
+                            end
+                            plotEdgeLabel=logical(tmp);
+                        elseif plotOption==3
+%                             try
+%                                 tmp=input('On or off (0 or 1): ');
+%                             catch Error
+%                                 disp(Error.message)
+%                                 fprintf('Must specify a number 0 or 1\n')
+%                             end
+                            plotGrainId=true;
+                            plotMergedGrainId=false;
+                        elseif plotOption==4                        
+                            plotGrainId=false;
+                            plotMergedGrainId=true;                          
+                        end
+                        if isempty(plotOption)
+                            break;
+                        elseif any([1,2,3,4]==plotOption)
+                            break;
+                        end
+                    end
+                end
                 nextGrain=true;
+            elseif option==11   
+                while true
+                    try
+                        compList=input('enter node pair for comparing: ');
+                    catch Error
+                        disp(Error.message)
+                        fprintf('Must specify a vector of two nodes [1,2]\n')
+                    end
+                    if all(~any(compList==0,2)) && (isvector(compList) || ismatrix(compList))
+                        break;
+                    else
+                        fprintf('Specify a node id pairs e.g.[12,1] or for multiple [12,1;1,4]\n')
+                    end
+                end
+                
+                angle(grains(compList(:,1)).meanOrientation, grains(compList(:,2)).meanOrientation)./ degree
+                
+            elseif option==12
+                fprintf('going back to previous grain\n');
+                i=i-1;
+                ind=ind-1;
+                nextGrain=true;
+                if i==0
+                    fprintf('At first grain, cannot go back\n');  
+                    i=1;
+                end
             elseif isempty(option)
                 fprintf('Moving on to the next grain\n');
                 i=i+1;
