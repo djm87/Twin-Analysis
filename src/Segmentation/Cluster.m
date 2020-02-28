@@ -217,7 +217,7 @@ function [G_clust,G,mGrains] = Cluster(G,grains,opt)
     G.Nodes.Group(G_clust.Nodes.Id)=G_clust.Nodes.Group;
     G.Edges.Group(G.Edges.combineCleaned)=G_clust.Edges.Group;
     
-    %Ensure no zero types (DS: This should happen if logic is airtight.. which was done as a check.)
+    %Ensure no zero types (DS: This shouldn't happen if logic is airtight.. which means something is off somewhere.)
     G_clust.Edges.type(G_clust.Edges.type==0)=opt.twinUnknown;
     
     %Update unknown nodes
@@ -228,10 +228,123 @@ function [G_clust,G,mGrains] = Cluster(G,grains,opt)
     % Identify Families in grain clusters 
     [G_clust,G]= AssignFamilyIDs(G_clust,G,groupList,grains,mGrains,opt);
 
+
+    %Create the minimum set of pairs that should be tested for twin
+    %relationships for each family group size
+    pairIndexes=cell(max(G_clust.Nodes.FamilyID),1);
+    pairSize=zeros(max(G_clust.Nodes.FamilyID),1);
+    for numFamily=1:max(G_clust.Nodes.FamilyID)
+        [row,col]=find(triu(ones(numFamily))-eye(numFamily));
+        pairIndexes{numFamily}=[row,col];
+        pairSize(numFamily)=length(row);
+    end
+    
+    % Construct Family twin relationship graph 
+    for i=1:length(mGrains)
+        group=mGrains.id(i);
+        ngroupId = find((group==G_clust.Nodes.Group)==true);
+        numFamilypGroup(i) = max(G_clust.Nodes.FamilyID(ngroupId));
+    end
+    
+    %Initialize nodes
+    numEdges=sum(pairSize(numFamilypGroup));
+    s=zeros(numEdges,1);
+    t=zeros(numEdges,1);
+    mId=zeros(numEdges,1);
+    familyPair=zeros(numEdges,2);
+
+    %Initialize graph
+    ind=1;
+    lastPairId=0;
+    for i=1:length(mGrains)
+        if pairSize(numFamilypGroup(i))~=0
+            pInd=pairIndexes{numFamilypGroup(i)};
+            indx=ind:ind-1+size(pInd,1);
+            s(indx)=pInd(:,1)+lastPairId;
+            t(indx)=pInd(:,2)+lastPairId; %add lastPairId so no conflicts
+            mId(indx)=i;
+            familyPair(indx,:)=pInd;
+            ind=indx(end)+1;
+            lastPairId=lastPairId+numFamilypGroup(i);
+        end
+    end
+    G_Family=graph(s,t);
+    G_Family.Edges.pairs=[s,t];
+    G_Family.Edges.mId=mId;
+    G_Family.Edges.familyPair=familyPair;
+    
+    % Construct Family twin relationship graph 
+    oriAll=grains.meanOrientation ;
+    areaAll=grains.area;
+    maxNumFamilies=max(numFamilypGroup)
+    ori1 = orientation.byEuler(zeros(numEdges,1),...
+        zeros(numEdges,1),zeros(numEdges,1),...
+            'ZYZ',opt.CS{2})
+    ori2=ori1;
+    eFType=zeros(numEdges,1);
+    for i=1:length(mGrains)
+        ngroupId = find(i==G_clust.Nodes.Group);
+        egroupId = find(i==G.Edges.Group); %converts logical arrays to indices
+        egroupFId = find(i==G_Family.Edges.mId);
+        nFamily = G.Nodes.FamilyID(ngroupId);     
+        eFamily = G.Edges.FamilyID(egroupId,:);
+        eType = G.Edges.type(egroupId);
+        familyPair=G_Family.Edges.familyPair(egroupFId,:);
+
+        %transfer edge based types to family types
+        for j=1:length(egroupFId)
+            ind=all(eFamily==familyPair(j,:) | fliplr(eFamily)==familyPair(j,:),2);
+            eTypeLoc=eType(ind);
+            eFType(egroupFId(j))=mode(eTypeLoc(eTypeLoc<opt.twinUnknown & eTypeLoc>0));
+        end
+        
+        for j=1:max(nFamily)
+            
+            
+            oriloop=oriAll(ngroupId(nFamily==j));
+            arealoop=areaAll(ngroupId(nFamily==j));
+            ori1(egroupFId(familyPair(:,1)==j)) = mean(oriloop,'weights',arealoop);            
+            ori2(egroupFId(familyPair(:,2)==j)) = mean(oriloop,'weights',arealoop);
+        end 
+    end
+    
+    mori=inv(ori1).*ori2; 
+    tol=zeros(opt.nTwin,1);
+    tolRlx=zeros(opt.nTwin,1);
+    for i=1:opt.nTwin
+        tol(i)=opt.twin{i}.tol.misMean;
+        tolRlx(i)=opt.twin{i}.tol.misMeanRlx;
+    end
+    meanType=zeros(numEdges,1);
+    meanTypeRlx=zeros(numEdges,1);
+    [~,G_Family.Edges.meanType] = TestTwinRelationship(mori,tol,opt,eFType);
+    [~,G_Family.Edges.meanTypeRlx] = TestTwinRelationship(mori,tolRlx,opt,eFType);
+    
     %Compute Schmid info for twin/parents in clustered grains
-    %This computes Schmid factor for twin/parent identification
+    %This computes Schmid factor for twin/parent identification and 
+    %is stored at both edge and node level
     [G_clust,G]= GetSchmidRelative(G_clust,G,grains,mGrains,opt);
 
+    G.Edges.EffSF
+    eFType=zeros(numEdges,2);
+    for i=1:length(mGrains)
+        ngroupId = find(i==G_clust.Nodes.Group);
+        egroupId = find(i==G.Edges.Group); %converts logical arrays to indices
+        egroupFId = find(i==G_Family.Edges.mId);
+        nFamily = G.Nodes.FamilyID(ngroupId);     
+        eFamily = G.Edges.FamilyID(egroupId,:);
+        eType = G.Edges.type(egroupId);
+        familyPair=G_Family.Edges.familyPair(egroupFId,:);
+
+        %transfer edge based types to family types
+        for j=1:length(egroupFId)
+            ind=all(eFamily==familyPair(j,:) | fliplr(eFamily)==familyPair(j,:),2);
+            eTypeLoc=eType(ind);
+            eFType(egroupFId(j))=mode(eTypeLoc(eTypeLoc<opt.twinUnknown & eTypeLoc>0));
+        end
+    end
+    
+    
     %Perform family votes
     [G_clust,G] = FamilyVotes(G_clust,G,unique(G_clust.Nodes.Group),grains,mGrains,opt);    
 
