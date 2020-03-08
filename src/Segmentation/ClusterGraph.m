@@ -1,4 +1,4 @@
-function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
+function [G_clust,G,mGrains] = ClusterGraph(G,grains,opt)
     %Cluster performs the grouping based on edge definitions and user input
     %files. 
     
@@ -24,7 +24,7 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
     G.Edges.combineCleaned(G.Edges.type==0)=false;
     
     %Try adding nodes
-    pairs=G.Edges.pairs;
+    pairs=G.Edges.pairs; 
     for i=1:length(nAddList)
         toAdd=any(nAddList(i)==pairs,2);
         G.Edges.combineCleaned(toAdd)=G.Edges.combineRlx(toAdd);
@@ -77,24 +77,27 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
     ind = sub2ind(size(isGNeighbor), ePairs(:,1), ePairs(:,2));
     isGNeighbor(ind)=true;
     
-    while cnt<3    
+    while cnt<5    
         %Merge grains based on edge combine list
         [mGrains,parentId,mTwinGb,G.Edges.GbInd] = MergeByEdge(G.Edges.pairs,G.Edges.GbInd,G.Edges.combineCleaned,grains);    
+        
+        
         if ~opt.mergeInclusionCluster
             break;
         else
             %Add grains that are mostly internal to a specific cluster to that
             %cluster
             SBR = SharedBoundaryRatio(mGrains);
-
+%             find(SBR(:,541)>0.7)
             %Try adding nodes using any edge that has a twin relationship with
             %Relaxed tolerance else add one edge of unknown type
             pairs=G.Edges.pairs;
-            [~,mPairs]=neighbors(mGrains)
-            smallmGrains=mGrains.grainSize<200;
-%             ePairs=[];
+            [~,mPairs]=neighbors(mGrains);
+            smallmGrains=mGrains.grainSize<200; 
+
             for i=1:length(mGrains)
-                ind=find(SBR(i,:)>0.7);
+                ind=find(SBR(i,:)>0.7 | SBR(:,i)'>0.7);
+%                 indInternal=find(SBR(i,:)==1 | SBR(:,i)'==1);
                 if ~isempty(ind)
                     isPair=zeros(size(pairs,1),1,'logical');
 %                     nId=grains(i==parentId).id;
@@ -107,22 +110,24 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
 
                     isPairSub=zeros(size(pairsSub,1),1,'logical');
 %                     nId=grains(ind==parentId).id;
-                    nId=find(ind==parentId);
+                    nId = arrlocarr(ind,parentId);
                     for j=1:length(nId)
                         isPairSub(nId(j)==pairsSub(:,1) | nId(j)==pairsSub(:,2))=true;
                     end
 
                     toAdd=pairsInd(isPairSub);
-                    combine=G.Edges.combineRlx(toAdd);
-                    if ~isempty(combine) && ~any(combine)
-                       %Then use the first unknown twin relationship to merge into
-                       %cluster. Note this addition will go away if nAddList doesn't
-                       %contain the same node in futures calls to cluster or the 
-                       %first edge is in edge remove list.
-                       combine(1)=true; 
-                       G.Edges.type(toAdd(1))=opt.twinUnknown;
-                    end
-                    G.Edges.combineCleaned(toAdd)=combine;
+%                     combine=G.Edges.combineRlx(toAdd);
+%                     if ~isempty(combine) && ~any(combine)
+%                        %Then use the first unknown twin relationship to merge into
+%                        %cluster. Note this addition will go away if nAddList doesn't
+%                        %contain the same node in futures calls to cluster or the 
+%                        %first edge is in edge remove list.
+%                        combine(1)=true; 
+%                        G.Edges.type(toAdd(1))=opt.twinUnknown;
+%                     end
+%                     eList=arrlocarr(toAdd,eRemoveList);
+%                     eRemoveList(eList)=[];
+                    G.Edges.combineCleaned(toAdd)=true;
                 end
                 if smallmGrains(i)
                     %find neighboring merged grains
@@ -182,10 +187,14 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
         end
         cnt=cnt+1;
     end %merge inclusion cluster
+
     
    [mGrains,parentId,mTwinGb,G.Edges.GbInd] = MergeByEdge(G.Edges.pairs,G.Edges.GbInd,G.Edges.combineCleaned,grains);    
 
-    
+%     figure;plot(grains,grains.meanOrientation,'noBoundary');hold on;
+%     % figure;plot(ebsd,ebsd.orientations);hold on
+%     plot(mGrains.boundary,'lineWidth',2,'lineColor','w');hold off
+%     text(mGrains,int2str(mGrains.id));hold off;
     %Try removing nodes so no internal grains are added that we specify to
     %remove
     for i=1:length(nRemoveList)
@@ -211,7 +220,7 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
     
     %Transfer still valid Family and family vote info to G_clust.. build
     %list of groups that need to be computed
-    [groupList] = GetGroupsToCompute(G_clust,G);
+    [G_clust,G] = GetGroupsToCompute(G_clust,G);
     
     %Update G with groups in G_clust
     G.Nodes.Group(G_clust.Nodes.Id)=G_clust.Nodes.Group;
@@ -226,119 +235,8 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
     G_clust.Nodes.typeUnknown(nId_edges)=false;
 
     % Identify Families in grain clusters 
-    [G_clust,G]= AssignFamilyIDs(G_clust,G,groupList,grains,mGrains,opt);
-
-
-    %Create the minimum set of pairs that should be tested for twin
-    %relationships for each family group size
-    pairIndexes=cell(max(G_clust.Nodes.FamilyID),1);
-    pairSize=zeros(max(G_clust.Nodes.FamilyID),1);
-    for numFamily=1:max(G_clust.Nodes.FamilyID)
-        [row,col]=find(triu(ones(numFamily))-eye(numFamily));
-        pairIndexes{numFamily}=[row,col];
-        pairSize(numFamily)=length(row);
-    end
+    [G_clust,G]= AssignFamilyIDs(G_clust,G,grains,mGrains,opt);
     
-    % Construct Family twin relationship graph 
-    numFamilypGroup=zeros(length(mGrains),1)
-    for i=1:length(mGrains)
-        group=mGrains.id(i);
-        ngroupId = find((group==G_clust.Nodes.Group)==true);
-        numFamilypGroup(i) = double(max(G_clust.Nodes.FamilyID(ngroupId)));
-    end
-    
-    %Initialize nodes
-    numEdges=sum(pairSize(numFamilypGroup));
-    s=zeros(numEdges,1);
-    t=zeros(numEdges,1);
-    Group=zeros(numEdges,1);
-    familyPair=zeros(numEdges,2);
-
-    %Initialize graph
-    ind=1;
-    lastPairId=0;
-    for i=1:length(mGrains)
-        if pairSize(numFamilypGroup(i))~=0
-            pInd=pairIndexes{numFamilypGroup(i)};
-            indx=ind:ind-1+size(pInd,1);
-            s(indx)=pInd(:,1)+lastPairId;
-            t(indx)=pInd(:,2)+lastPairId; %add lastPairId so no conflicts
-            Group(indx)=i;
-            familyPair(indx,:)=pInd;
-            ind=indx(end)+1;
-            lastPairId=lastPairId+numFamilypGroup(i);
-        end
-    end
-    G_Family=graph(s,t);
-    G_Family.Edges.pairs=[s,t];
-    G_Family.Edges.Group=Group;
-    G_Family.Edges.familyPair=familyPair;
-    
-    % Construct node Family and Group
-    [~,ind]=unique(G_Family.Edges.pairs)
-    G_Family.Nodes.Family=familyPair(ind);
-    nGroup(s)=Group;
-    nGroup(t)=Group;
-    G_Family.Nodes.Group=nGroup';
-    
-    % Construct Family twin relationship graph 
-    oriAll=grains.meanOrientation ;
-    areaAll=grains.area;
-    maxNumFamilies=max(numFamilypGroup)
-    ori1 = orientation.byEuler(zeros(numEdges,1),...
-        zeros(numEdges,1),zeros(numEdges,1),...
-            'ZYZ',opt.CS{2})
-    ori2=ori1;
-    eFType=zeros(numEdges,1);
-    for i=1:length(mGrains)
-        ngroupId = find(i==G_clust.Nodes.Group);
-        egroupId = find(i==G.Edges.Group); %converts logical arrays to indices
-        egroupFId = find(i==G_Family.Edges.Group);
-        nFamily = G.Nodes.FamilyID(ngroupId);     
-        eFamily = G.Edges.FamilyID(egroupId,:);
-        eType = G.Edges.type(egroupId);
-        familyPair=G_Family.Edges.familyPair(egroupFId,:);
-
-        %transfer edge based types to family types
-        for j=1:length(egroupFId)
-            ind=all(eFamily==familyPair(j,:) | fliplr(eFamily)==familyPair(j,:),2);
-            eTypeLoc=eType(ind);
-            eTypeLoc=eTypeLoc(eTypeLoc<opt.twinUnknown & eTypeLoc>0);
-            if ~isempty(eTypeLoc)
-                eFType(egroupFId(j))=mode(eTypeLoc);
-            end
-        end
-        
-        for j=1:max(nFamily)
-            oriloop=oriAll(ngroupId(nFamily==j));
-            arealoop=areaAll(ngroupId(nFamily==j));
-            ori1(egroupFId(familyPair(:,1)==j)) = mean(oriloop,'weights',arealoop);            
-            ori2(egroupFId(familyPair(:,2)==j)) = mean(oriloop,'weights',arealoop);
-        end 
-    end
-    
-    mori=inv(ori1).*ori2; 
-    oriFamily=[ori1,ori2]
-    tol=zeros(opt.nTwin,1);
-    tolRlx=zeros(opt.nTwin,1);
-    for i=1:opt.nTwin
-        tol(i)=opt.twin{i}.tol.misMean;
-        tolRlx(i)=opt.twin{i}.tol.misMeanRlx;
-    end
-    meanType=zeros(numEdges,1);
-    meanTypeRlx=zeros(numEdges,1);
-    [~,G_Family.Edges.meanType] = TestTwinRelationship(mori,tol,opt,eFType);
-    [~,G_Family.Edges.meanTypeRlx] = TestTwinRelationship(mori,tolRlx,opt,eFType);
-    
-    %Compute Schmid info for twin/parents in clustered grains
-    %This computes Schmid factor for twin/parent identification and 
-    %is stored at both edge and node level
-    [G_Family,G_clust]=GetSchmidRelative(G_Family,G_clust,oriFamily,G_Family.Edges.meanTypeRlx,grains,mGrains,opt)
-%     [G_clust,G]= GetSchmidRelative(G_clust,G,grains,mGrains,opt);
-    
-    %Perform family votes
-    [G_Family,G_clust] = FamilyVotes(G_Family,G_clust,unique(G_clust.Nodes.Group),grains,mGrains,opt);    
-
     %Plot the results
     if opt.plot.do
         %Remove grains that haven't twinned (better plot performance)
@@ -364,21 +262,48 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
         
     end
 end
-function [groupList] = GetGroupsToCompute(G_clust,G)
-    %Get group ids - optimized 12/24/19
-    groupCompute=zeros(max(G_clust.Nodes.Group),1,'logical');
+function [G_clust,G] = GetGroupsToCompute(G_clust,G)
+    %Get group ids to process
+    %Notes: Initially G.Nodes.Group is true and all clusters will be
+    %triggered for computation. Clusters haven't been computed until
+    %G_clust comes out of the Family graph routine. Similarly computeFamily
+    %isn't complete until a cleanFamilyTree returns exflag=0 for a cluster.
+    %The point of this routine is to limit recomputation, but also allow
+    %for changes to Family graph to happen once based off some user
+    %interaction and stay as long as the clusters don't have grains added
+    %or removed. G_clust is anchored in G as long as the EBSD segmentation
+    %doesn't change, G_Family is not anchored in G_clust in general since
+    %the grain grouping ends up being an important aspect of creating the
+    %family tree. IsNewGroup and computeFamily are seperate since one ends
+    %with creating the Family graph and the other ends when a valid family
+    %tree is produced.
+%     groupCompute=zeros(max(G_clust.Nodes.Group),1,'logical');
+
     for i=1:max(G_clust.Nodes.Group)
-        %Extract group to local variables for readability
+        %For a given G_clust cluster get one grain
         eID=G_clust.Edges.GlobalID(i==G_clust.Edges.Group);
         nID = find((i==G_clust.Nodes.Group));
+        
+        %Find the stored group in G that contains that grain
         G_nID = find(G.Nodes.Group(nID(1))==G.Nodes.Group);
         G_eId = find(G.Nodes.Group(nID(1))==G.Edges.Group);
-               
+        
+        %If the store node ids match the node ids of G_clust, then the
+        %cluster has not changed
         if length(G_nID) ~= length(nID) || length(G_eId) ~= length(eID) 
-            groupCompute(i)=true;
+%             groupCompute(i)=true;
+            G_clust.Nodes.isNewGroup(nID)=true;
+            G_clust.Nodes.computeFamily(nID)=true;
         elseif ~all(nID==G_nID) || ~all(eID==G_eId) %Because sorted
-            groupCompute(i)=true;           
+%             groupCompute(i)=true; 
+            G_clust.Nodes.isNewGroup(nID)=true;
+            G_clust.Nodes.computeFamily(nID)=true;
         end
+
     end
-    groupList=find(groupCompute);
+%     groupList=find(groupCompute);
+    %Store in persistent graph
+    G.Nodes.isNewGroup(G_clust.Nodes.Id)=G_clust.Nodes.isNewGroup;
+    G.Nodes.computeFamily(G_clust.Nodes.Id)=G_clust.Nodes.computeFamily;
+
 end

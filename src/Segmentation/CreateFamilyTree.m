@@ -141,7 +141,6 @@ function [nGeneration,nType,err] = fillGenerations(EdgeMatrix,...
             err=true;
         end
     end
-    
 end
 
 function FamilyMatrix = buildFamilyMatrix(nFamily,eFamily, Parent)

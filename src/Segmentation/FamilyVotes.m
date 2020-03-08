@@ -1,4 +1,4 @@
-function [G_clust,G] = FamilyVotes(G_clust,G,groupList,grains,mGrains,opt)
+function [G_Family,G_clust] = FamilyVotes(G_Family,G_clust,groupList,grains,mGrains,opt)
 %FamilyVotes Computes a vote for twin/parent relationships 
 %   Votes are made based on on the formula described in: 
 %   Automatic twin statistcs from EBSD data 
@@ -11,15 +11,20 @@ function [G_clust,G] = FamilyVotes(G_clust,G,groupList,grains,mGrains,opt)
 %   Inputs: the graph of clustered grains (G_clust) and weights (Sf, Af, and Bf)
 %   Ouputs: Values needed to recalculate Votes are stored in G_clust along with 
 %           along with votes using the weight passed in.
+    G_Family.Edges.FRArea=zeros(length(G_Family.Edges.Group),2);
+    G_Family.Edges.FRgB=zeros(length(G_Family.Edges.Group),2);
+    G_Family.Edges.FREffSF=zeros(length(G_Family.Edges.Group),2);
     if ~isempty(groupList)
         mineral=grains.mineral; %For defining phase boundary in the case there is unindexed data
         nArea=grains.area;
         %Loop over eachgroup of families
         for i=1:length(groupList)
+            
             group=groupList(i);
             %Extract group to local variables for readability
-            egroupId= find((group==G_clust.Edges.Group)); %converts logical arrays to indices
-            if ~isempty(egroupId)
+%             egroupId= find((group==G_clust.Edges.Group)); %converts logical arrays to indices
+            egroupFId= find((group==G_Family.Edges.Group));
+            if ~isempty(egroupFId)
                 ngroupId= find((group==G_clust.Nodes.Group));
                 FID=G_clust.Nodes.FamilyID(ngroupId); %Family Id
                 nID=G_clust.Nodes.Id(ngroupId); %Fragment grain Id
@@ -27,61 +32,64 @@ function [G_clust,G] = FamilyVotes(G_clust,G,groupList,grains,mGrains,opt)
         %         nGb=G_clust.Nodes.Gb(ngroupId); %Fragment grain boundary
                 Area=nArea(ngroupId); %Fragment Area
         %         pairsGb=G_clust.Edges.Gb(egroupId); %Twin/parent pairs grain boundary
-                pairs=G_clust.Edges.pairs(egroupId,1:2); %Twin/parent pairs
-                eFamily=G_clust.Edges.FamilyID(egroupId,1:2);
-                EffSF=G_clust.Edges.EffSF(egroupId,1:2); %Twin/parent Schmid factor
-                type=G_clust.Edges.type(egroupId);
-            
+%                 pairs=G_clust.Edges.pairs(egroupId,1:2); %Twin/parent pairs
+%                 eFamily=G_clust.Edges.FamilyID(egroupId,1:2);
+                EffSF=G_Family.Edges.EffSF(egroupFId,1:2); %Twin/parent Schmid factor
+                type=G_Family.Edges.meanTypeRlx(egroupFId);
+                familyPairs=G_Family.Edges.familyPair(egroupFId,:);
+                
                 %Family Areas to be stored in nodes 
-                FArea= FamilyArea(Area,FID);
-                G_clust.Nodes.FArea(ngroupId) = FArea;
+                [FArea,nFArea]= FamilyArea(Area,FID,nID);
+                G_clust.Nodes.FArea(ngroupId) = nFArea;
 
                 %Relative Family Areas to be stored in edges
-                FRArea = AreaRatio(pairs,FArea,nID);
-                G_clust.Edges.FRArea(egroupId,:) = FRArea; 
+                FRArea = AreaRatio(familyPairs,FArea);
+                G_Family.Edges.FRArea(egroupFId,:) = FRArea; 
 
                 %Family Boundaries (returns a cell)
                 FgB = FamilyGrainBoundary(nGb,FID,nID,mineral);
     %             G_clust.Nodes.FgB(ngroupId) = FgB; %This is too large to store!
 
                 %Boundary length ratio between connected families
-                FRgB = GrainBoundaryRatio(pairs,FgB,eFamily,nID,mineral);
-                G_clust.Edges.FRgB(egroupId,:) = FRgB;
+                FRgB = GrainBoundaryRatio(FgB,familyPairs);
+                G_Family.Edges.FRgB(egroupFId,:) = FRgB;
 
                 %Schmid factor difference (per edge not per family!) 
-                FREffSF = SchmidFactorDifference(EffSF,pairs);  
-                G_clust.Edges.FREffSF(egroupId,:) = FREffSF;
+                FREffSF = SchmidFactorDifference(EffSF,familyPairs);  
+                G_Family.Edges.FREffSF(egroupFId,:) = FREffSF;
 
                 %Calculate Vote (per edge)
-                G_clust.Edges.Vote(egroupId,:) = CalcVote(FREffSF,FRArea,FRgB,type,opt);
+                G_Family.Edges.Vote(egroupFId,:) = CalcVote(FREffSF,FRArea,FRgB,type,opt);
             end
         end 
 
         %Transfer results to full graph
-        G.Edges.FREffSF(:,:)=0;
-        G.Edges.FREffSF(G.Edges.combineCleaned,:)=G_clust.Edges.FREffSF;
-        G.Edges.FRgB(:,:)=0;
-        G.Edges.FRgB(G.Edges.combineCleaned,:)=G_clust.Edges.FRgB;
-        G.Edges.FRArea(:,:)=0;
-        G.Edges.FRArea(G.Edges.combineCleaned,:)=G_clust.Edges.FRArea;
-        G.Nodes.FArea(:)=0; %reset
-        G.Nodes.FArea(G_clust.Nodes.Id)=G_clust.Nodes.FArea;
+%         G.Edges.FREffSF(:,:)=0;
+%         G.Edges.FREffSF(G.Edges.combineCleaned,:)=G_clust.Edges.FREffSF;
+%         G.Edges.FRgB(:,:)=0;
+%         G.Edges.FRgB(G.Edges.combineCleaned,:)=G_clust.Edges.FRgB;
+%         G.Edges.FRArea(:,:)=0;
+%         G.Edges.FRArea(G.Edges.combineCleaned,:)=G_clust.Edges.FRArea;
+%         G.Nodes.FArea(:)=0; %reset
+%         G.Nodes.FArea(G_clust.Nodes.Id)=G_clust.Nodes.FArea;
     end
 end
 
-function FArea = FamilyArea(Area,FID)
-    FArea=zeros(length(FID),1);
+function [FArea,nFArea] = FamilyArea(Area,FID,nID)
+    FArea=zeros(max(FID),1);
+    nFArea=zeros(length(nID),1);
     for j=1:max(FID)
-        FArea(FID==j)=sum(Area(FID==j));
+        FArea(j)=sum(Area(FID==j));
+        nFArea(FID==j)=FArea(j);
     end 
 end
 
-function RFArea = AreaRatio(pairs,FArea,nID)
-    for j=1:size(pairs,1)
-        n1=pairs(j,1);
-        n2=pairs(j,2);
-        n1FArea=FArea(n1==nID);
-        n2FArea=FArea(n2==nID);
+function RFArea = AreaRatio(familyPairs,FArea)
+    nFamilyPairs=size(familyPairs,1);
+    RFArea=zeros(nFamilyPairs,2);
+    for j=1:nFamilyPairs
+        n1FArea=FArea(familyPairs(j,1));
+        n2FArea=FArea(familyPairs(j,2));
         RFArea(j,1)=(n1FArea-n2FArea)/(n1FArea+n2FArea);
         RFArea(j,2)=(n2FArea-n1FArea)/(n1FArea+n2FArea);
     end 
@@ -108,14 +116,16 @@ function [FgB] = FamilyGrainBoundary(nGb,FID,nID,mineral)
 
 end
 
-function FRgB = GrainBoundaryRatio(pairs,FgB,eFamily,nID,mineral)
+function FRgB = GrainBoundaryRatio(FgB,familyPairs)
 %     figure; plot(grains(nodeID),grains.meanOrientation(nodeID)); hold on;
 %     gBColor=['k';'r';'g';'b';'y';'c'];
-    for j=1:size(pairs,1)
+    nFamilyPairs=size(familyPairs,1);
+    FRgB=zeros(nFamilyPairs,2);
+    for j=1:nFamilyPairs
 %             n1=pairs(j,1);
 %             n2=pairs(j,2);
-        hasn1=any(eFamily(j,1)==FgB,2);
-        hasn2=any(eFamily(j,2)==FgB,2);
+        hasn1=any(familyPairs(j,1)==FgB,2);
+        hasn2=any(familyPairs(j,2)==FgB,2);
         has0=any(0==FgB,2);
         n1gBLength=sum(hasn1);
         n2gBLength=sum(hasn2);
@@ -135,10 +145,12 @@ function FRgB = GrainBoundaryRatio(pairs,FgB,eFamily,nID,mineral)
 %     hold off
 end
 
-function FREffSF= SchmidFactorDifference(EffSF,pairs)
+function FREffSF= SchmidFactorDifference(EffSF,familyPairs)
     %Note if unknown type then EffSF will be 0 and no contribution to
     %the vote will occure for that edge.
-    for j=1:size(pairs,1)
+    nFamilyPairs=size(familyPairs,1);
+    FREffSF=zeros(nFamilyPairs,2);
+    for j=1:nFamilyPairs
         FREffSF(j,2)=diff(EffSF(j,1:2)); %diff defined as second-first
         FREffSF(j,1)=-FREffSF(j,2);
     end     

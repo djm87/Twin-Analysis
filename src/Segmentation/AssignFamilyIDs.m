@@ -1,6 +1,7 @@
-function [G_clust,G] = AssignFamilyIDs(G_clust,G,groupList,grains,mGrains,opt)
+function [G_clust,G] = AssignFamilyIDs(G_clust,G,grains,mGrains,opt)
 %Determines the similar orientations that a cluster of fragments share and
 %assigns a single family id to those orientations.
+    groupList=unique(G_clust.Nodes.Group(G_clust.Nodes.isNewGroup));
     if ~isempty(groupList)
         %Now handle the graph groups
         FamilyID=cell(length(groupList),1);
