@@ -299,7 +299,6 @@ function [G_clust,G] = GetGroupsToCompute(G_clust,G)
             G_clust.Nodes.isNewGroup(nID)=true;
             G_clust.Nodes.computeFamily(nID)=true;
         end
-
     end
 %     groupList=find(groupCompute);
     %Store in persistent graph

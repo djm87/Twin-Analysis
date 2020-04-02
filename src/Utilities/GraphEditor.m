@@ -1,4 +1,4 @@
-function [G_Family,iouterGroup,exitExternal] = ClusterEditor(groups,G_Family,G_clust,grains,mergedGrains,value,ind,plotNeighbors,plotEdgeLabel,plotMergedGrainId,plotGrainId,enforceClusterOnlyMod,mode)
+function [G_Family,iouterGroup,exitExternal] = GraphEditor(groups,iouterGroup,G_Family,G_clust,grains,mergedGrains,value,plotNeighbors,plotEdgeLabel,plotMergedGrainId,plotGrainId,mode)
 %ClusterFilter loops through clusters in prefiltered groups, allowing a 
 %user to add/remove nodes edges and relationships
 %Inputs:  groups - list of merged grain Ids 
@@ -16,19 +16,27 @@ function [G_Family,iouterGroup,exitExternal] = ClusterEditor(groups,G_Family,G_c
     while igroup<length(groups)+1
         group=groups(igroup);
         G_clust_sub = subgraph(G_clust,find(group==G_clust.Nodes.Group));
+        G_Family.Edges.eGlobalID=[1:numedges(G_Family)]';
         G_Family_sub = subgraph(G_Family,find(group==G_Family.Nodes.Group));
-
+        C = centrality(G_Family_sub,'hubs')
         % Mode 1 is the family graph editor
         if mode==1
             %Plot cluster
-            h1 = plotFamilyGraph(FamilyMatrix);
+            h1 = plotFamilyGraph(full(adjacency(G_Family_sub)));
+
+            %Plot cluster
+            h2 = plotClusterGraph(group,G_clust_sub,G_clust,...
+                grains,value,mergedGrains,plotGrainId,plotNeighbors,...
+                plotMergedGrainId,plotEdgeLabel);
             
             %Call the Family editor
-            [igroup,iouterGroup] = familyEditorInterface(G_Family_sub);
+            [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
+                mode,value,plotNeighbors]=familyEditorInterface(group,igroup,iouterGroup,...
+                G_Family,G_Family_sub,G_clust,grains,exitExternal,mode,value); 
             
             %Cleanup the figure
             close(h1);
-            
+            close(h2);
         %Mode 2 is the clust graph editor
         elseif mode ==2
             %Plot cluster
@@ -37,30 +45,44 @@ function [G_Family,iouterGroup,exitExternal] = ClusterEditor(groups,G_Family,G_c
                 plotMergedGrainId,plotEdgeLabel);
             
             %Call the cluster editor
-            [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,...
-                igroup,iouterGroup,G_clust_sub,G_clust,grains) 
+            [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel,...
+                plotGrainId,plotMergedGrainId] = clusterEditorInterface(group,...
+                igroup,iouterGroup,G_clust_sub,G_clust,grains,exitExternal,...
+                plotNeighbors,value,mode,plotEdgeLabel,plotGrainId,plotMergedGrainId); 
             
             %Cleanup the figure
             close(h2);
+            
         end
+        if exitExternal
+           return;
+        end
+        
     end
+    fprintf('Finished in GraphEditor\n')
 end
-function plotFamilyGraph(FamilyMatrix)
+function h = plotFamilyGraph(FamilyMatrix)
     G_Family_clust=digraph(FamilyMatrix);
     set(0,'DefaultFigureWindowStyle','docked')
-    figure; p=plot(G_Family_clust,'Layout','force');
+    set(0,'DefaultFigureWindowStyle','docked');
+    warning('off', 'MATLAB:Figure:SetPosition');
+    h=figure;p=plot(G_Family_clust,'Layout','force');
+    p.EdgeFontSize=13;p.NodeFontSize=14;p.ArrowSize=15;p.EdgeColor=[0,0,0];
+    p.NodeColor=[1,0,0],p.MarkerSize=8;
     pair1=G_Family_clust.Edges.EndNodes(:,1);
     pair2=G_Family_clust.Edges.EndNodes(:,2);
     npairs=length(pair1);
     labeledge(p,pair1,pair2,1:npairs); 
     set(0,'DefaultFigureWindowStyle','normal');
     warning('off', 'MATLAB:uitools:uimode:callbackerror');
-    
+    warning('on', 'MATLAB:Figure:SetPosition');
 %     G_Family_clust=flipedge(G_Family_clust,3)
 %     G_Family_clust = rmedge(G_Family_clust,3)
 %     FamilyMatrix = full(adjacency(G_Family_clust))
 end
-function [igroup,iouterGroup,exitExternal]=familyEditorInterface(group,igroup,iouterGroup,G_Family_sub) 
+function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
+                mode,value,plotNeighbors]=familyEditorInterface(group,igroup,iouterGroup,...
+                G_Family,G_Family_sub,G_clust,grains,exitExternal,mode,value) 
 
     fprintf('Edge List \n')
     for j=1:numedges(G_Family_sub)
@@ -77,9 +99,10 @@ function [igroup,iouterGroup,exitExternal]=familyEditorInterface(group,igroup,io
     fprintf('1 to remove an edge\n')
     fprintf('2 to remove edges connected to Family\n')
     fprintf('3 to flip parent relationship\n')
-    fprintf('4 to switch editor mode to cluster\n')
-    fprintf('5 go back to previous grain\n')
-    fprintf('6 cycle\n')
+    fprintf('4 to plot the grain a different way\n')
+    fprintf('5 to switch editor mode to cluster\n')
+    fprintf('6 go back to previous grain\n')
+    fprintf('7 cycle\n')
     
     %Get main operation to perform
     while true
@@ -87,20 +110,21 @@ function [igroup,iouterGroup,exitExternal]=familyEditorInterface(group,igroup,io
         errorMsg='Please input a valid option or hit enter to go to the next grain';
         option = getUserInput(inputMsg,errorMsg,'scalar',true);
         
-        if option >7 | option < 0
+        if option >8 | option < 0
             fprintf('Enter a valid option\n')
         elseif option==0
-            fprintf('exiting ClusterEditor\n')
+            fprintf('Exiting GraphEditor\n')
             exitExternal=true;
             return
         elseif option==1 
             while true
-                inputMsg='Enter list edges to remove';
+                inputMsg='Enter edges to remove: ';
                 errorMsg='Must specify a scalar 1 or a vector [1,2] or hit enter to return to menu';
                 eID_sub = getUserInput(inputMsg,errorMsg,'vector',true);
-                if ~any(nodeId==0)
-                    eID=G_Family_sub.Edges.GlobalID(eID_sub)
+                if ~any(eID_sub<1)
+                    eID=G_Family_sub.Edges.eGlobalID(eID_sub)
                     G_Family=rmedge(G_Family,eID);
+                    return;
                 elseif isempty(nodeId)
                     break;
                 else
@@ -109,12 +133,17 @@ function [igroup,iouterGroup,exitExternal]=familyEditorInterface(group,igroup,io
             end
         elseif option==2 
             while true
-                inputMsg='Enter of list of families to remove';
+                inputMsg='Enter families to remove edges from: ';
                 errorMsg='Must specify a scalar 1 or a vector [1,2] or hit enter to return to menu';
                 nID_sub = getUserInput(inputMsg,errorMsg,'vector',true);
-                if ~any(nodeId==0)
-                    eID=G_Family_sub.Nodes.GlobalID(nID_sub)
+                if ~any(nID_sub<1)
+                    toRemove=zeros(numedges(G_Family_sub),1,'logical');
+                    for i=1:nID_sub
+                        toRemove(any(G_Family_sub.Edges.pairs==nID_sub(i),2))=true;
+                    end
+                    eID=G_Family_sub.Edges.eGlobalID(toRemove)
                     G_Family=rmedge(G_Family,eID);
+                    return;
                 elseif isempty(nodeId)
                     break;
                 else
@@ -123,22 +152,69 @@ function [igroup,iouterGroup,exitExternal]=familyEditorInterface(group,igroup,io
             end
         elseif option==3 
             while true
-                inputMsg='Enter of edges to flip parent-twin';
+                inputMsg='Enter edges to flip: ';
                 errorMsg='Must specify a scalar 1 or a vector [1,2] or hit enter to return to menu';
-                nID_sub = getUserInput(inputMsg,errorMsg,'vector',true);
-                if ~any(nodeId==0)
-                    eID=G_Family_sub.Nodes.GlobalID(nID_sub)
-                    G_Family=rmedge(G_Family,eID);
+                eID_sub = getUserInput(inputMsg,errorMsg,'vector',true);
+                if ~any(eID_sub<1)
+                    eID=G_Family_sub.Edges.eGlobalID(eID_sub)
+                    G_Family=flipedge(G_Family,eID);
+                    return;
                 elseif isempty(nodeId)
                     break;
                 else
                     fprintf('%s\n',errorMsg)
                 end
             end
+%         elseif option==4
+%             while true
+%                 inputMsg='Enter edge to add: ';
+%                 errorMsg='Must specify a scalar 1 or a vector [1,2] or hit enter to return to menu';
+%                 ePairs = getUserInput(inputMsg,errorMsg,'vector',true);
+%                 if ~any(eID_sub<1) && all(size(ePairs)==[1,2])
+%                     G_Family=addedge(G_Family,ePairs(1),ePairs(2));
+%                     return;
+%                 elseif isempty(nodeId)
+%                     break;
+%                 else
+%                     fprintf('%s\n',errorMsg)
+%                 end
+%             end
         elseif option==4
+            fprintf('1 to plot mean orientation\n')
+            fprintf('2 to plot FamilyId\n')
+            fprintf('3 to plot EffSchmid\n')
+            while true
+                inputMsg='Enter plot option number: ';
+                errorMsg='Please input a valid option or hit enter to go back to menu';
+                plotOption = getUserInput(inputMsg,errorMsg,'scalar',true);
+                %Check the type of input
+                if isempty(plotOption)
+                    break;
+                elseif (plotOption==1 || plotOption==2 || plotOption==3)
+                    if plotOption==1
+                        value=grains.meanOrientation;
+                    elseif plotOption==2
+                        value=G_clust.Nodes.FamilyID;
+                    elseif plotOption==3
+                        inputMsg='Enter twin type id: ';
+                        errorMsg='Please input a valid twin type id';
+                        twinType = getUserInput(inputMsg,errorMsg,'scalar',false);
+                        value=G_clust.Nodes.EffSF(:,twinType);
+                    end
+                    inputMsg='Enter if neighbor should be plotted (0 or 1): ';
+                    errorMsg='Please input a valid option';
+                    plotNeighbors= getUserInput(inputMsg,errorMsg,'logical',false);
+                    break;
+                else 
+                    fprintf('Please enter a valid plot option\n')
+                end
+            end
+            exitExternal=false;
+            return
+        elseif option==5
             mode=2;
             return;
-        elseif option==5
+        elseif option==6
             fprintf('going back to previous grain\n');
             igroup=igroup-1;
             iouterGroup=iouterGroup-1;
@@ -148,8 +224,8 @@ function [igroup,iouterGroup,exitExternal]=familyEditorInterface(group,igroup,io
             else
                 return
             end
-        elseif option==6
-            fprintf('cycling external loop\n');
+        elseif option==7
+            fprintf('Cycle GraphEditor\n');
             return
         elseif isempty(option)
             fprintf('Moving on to the next grain\n');
@@ -176,7 +252,7 @@ function h=plotClusterGraph(group,G_clust_sub,G_clust,...
         allGroupsInd=unique(pairsTmp);
         nId=intersect_wrepeat(allGroupsInd,G_clust.Nodes.Group);
     else
-       nId=nIdgroup;
+       nId=nId_sub;
        allGroupsInd=mGrainInd;
     end
 
@@ -246,7 +322,10 @@ function h=plotClusterGraph(group,G_clust_sub,G_clust,...
     warning('off', 'MATLAB:uitools:uimode:callbackerror');
     warning('on', 'MATLAB:Figure:SetPosition');
 end
-function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,iouterGroup,G_clust_sub,G_clust,grains) 
+function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel,...
+    plotGrainId,plotMergedGrainId] = clusterEditorInterface(group,...
+    igroup,iouterGroup,G_clust_sub,G_clust,grains,exitExternal,...
+    plotNeighbors,value,mode,plotEdgeLabel,plotGrainId,plotMergedGrainId) 
     nFamily=G_clust_sub.Nodes.FamilyID;
     nId_sub=G_clust_sub.Nodes.Id;
     
@@ -285,7 +364,7 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
     fprintf('8 to get misorientation of grains\n')
     fprintf('9 go back to previous grain\n')
     fprintf('10 cycle\n')
-    fprintf('11 switch to Family editor\n'
+    fprintf('11 switch to Family editor\n')
     
     %Get main operation to perform
 
@@ -297,7 +376,7 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
         if option >11 | option < 0
             fprintf('Enter a valid option\n')
         elseif option==0
-            fprintf('exiting ClusterEditor\n')
+            fprintf('exiting GraphEditor\n')
             exitExternal=true;
             return
         elseif option == 1
@@ -417,7 +496,9 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
                 errorMsg='Please input a valid option or hit enter to go back to menu';
                 plotOption = getUserInput(inputMsg,errorMsg,'scalar',true);
                 %Check the type of input
-                if (plotOption==1 || plotOption==2 || plotOption==3)
+                if isempty(plotOption)
+                    break;
+                elseif (plotOption==1 || plotOption==2 || plotOption==3)
                     if plotOption==1
                         value=grains.meanOrientation;
                     elseif plotOption==2
@@ -432,12 +513,11 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
                     errorMsg='Please input a valid option';
                     plotNeighbors= getUserInput(inputMsg,errorMsg,'logical',false);
                     break;
-                elseif isempty(plotOption)
-                    break;
                 else 
                     fprintf('Please enter a valid plot option\n')
                 end
             end
+            exitExternal=false;
             return
         elseif option == 7
             fprintf('1 plot Neighbors\n')
@@ -450,7 +530,9 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
                 errorMsg='Please input a valid option or hit enter to return to menu';
                 plotOption = getUserInput(inputMsg,errorMsg,'scalar',true);
                 %Check the type of input
-                if (plotOption==1 || plotOption==2 || plotOption==3 || plotOption==4)
+                if isempty(plotOption)
+                    break;
+                elseif (plotOption==1 || plotOption==2 || plotOption==3 || plotOption==4)
                     if plotOption==1
                         inputMsg='On or off (0 or 1): ';
                         errorMsg='Please input a valid option';
@@ -466,9 +548,6 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
                         plotGrainId=false;
                         plotMergedGrainId=true;                          
                     end
-                    
-                elseif isempty(plotOption)
-                    break;
                 end
             end
             return
@@ -499,7 +578,7 @@ function [igroup,iouterGroup,exitExternal] =clusterEditorInterface(group,igroup,
                 return
             end
         elseif option==10
-            fprintf('cycling external loop\n');
+            fprintf('Cycle GraphEditor\n');
             return
         elseif option==11
             mode=1;
@@ -525,7 +604,7 @@ function val=getUserInput(inputMsg,errorMsg,type,canBeEmpty)
                     disp(Error.message)
                     fprintf('%s\n',errorMsg)
                 end
-                if isnumeric(val) && ~isvector(val) && ~ismatrix(ePair)
+                if isnumeric(val)
                     break;
                 elseif isempty(val)
                     if canBeEmpty
@@ -544,7 +623,7 @@ function val=getUserInput(inputMsg,errorMsg,type,canBeEmpty)
                     disp(Error.message)
                     fprintf('%s\n',errorMsg)
                 end
-                if isvector(val) || ismatrix(ePair)
+                if isvector(val) || ismatrix(val)
                     break
                 elseif isempty(val)
                     if canBeEmpty
@@ -563,7 +642,7 @@ function val=getUserInput(inputMsg,errorMsg,type,canBeEmpty)
                     disp(Error.message)
                     fprintf('%s\n',errorMsg)
                 end
-                if islogical(val) && ~isvector(val) && ~ismatrix(ePair)
+                if islogical(val)
                     break;
                 elseif isempty(val)
                     if canBeEmpty
