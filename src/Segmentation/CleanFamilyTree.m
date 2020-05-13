@@ -20,7 +20,7 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
 %    580
 %    582
 %    585
-    groups=181
+%     groups=187
     for i=1:length(groups)
         group=groups(i);
         
@@ -69,7 +69,11 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
                 G_clust.Nodes.K1NAng(nClustgroupId)=0;
                 break
             else
-
+                group
+                ismg = ismultigraph(G_Family_sub);
+                if ~ismg
+                    [G_Family_sub] = reduceGraph(G_Family_sub)
+                end
                 %Make Family relation matrix 
                 FamilyMatrix = logical(full(adjacency(G_Family_sub)));
 
@@ -79,62 +83,12 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
 
                 %Find child with more than one parent (circular relationship)
                 CircularRelationshipExists=any(sum(FamilyMatrix,1)>1);
-
-                %Find the potential parents 
-                indegree=centrality(G_Family_sub,'indegree');
-                outdegree=centrality(G_Family_sub,'outdegree');
-                rootFamily=find(indegree==0 & outdegree>0);
                 
-                len=length(rootFamily);
-                if len~=1
-                    dist=G_Family_sub.Edges.FSgB
-                    dist(dist==0)=1;
-                    outCloseness=centrality(G_Family_sub,'outcloseness','cost',dist.^-1)  ;
-                    [~,ind]=max(outCloseness(rootFamily));
-                    rootFamily=rootFamily(ind);
-                end
                 
-                weights=G_Family_sub.Edges.FSgB
-                G_Family_sub.Edges.Weight=weights.^-1;
-                G_Family_sub.Edges.Id=[1:G_Family_sub.numedges]';
-                G_undir=graph(G_Family_sub.Edges)
-                G_undir.Nodes.FgBL=G_Family_sub.Nodes.FgBL;
-                for kk=1:20
-                    %Start loop
-                    [T,pred] = minspantree(G_undir,'Type','forest','Root',findnode(G_undir,rootFamily));
-
-                    if kk~=1;
-                        isisomorphic(T,Told)
-                    end
-
-                    %Compute the new weights
-                    pairs=T.Edges.EndNodes;
-                    EFFSF=T.Edges.EffSF;
-                    FSgB=T.Edges.FSgB;
-                    FgBL=T.Nodes.FgBL;
-                    eId=T.Edges.Id;
-                    for k=1:T.numedges
-                       p1=pred(pairs(k,1));
-                       p2=pred(pairs(k,2));
-
-                       isOut=p2==pairs(k,:)|p1==pairs(k,:);
-                       if EFFSF(k,isOut)>0
-                           weights(eId(k))=(FSgB(k)/FgBL(pairs(k,~isOut))+abs(EFFSF(k,isOut))/0.5);
-                       else
-                           weights(eId(k))=(FSgB(k)/FgBL(pairs(k,~isOut)))
-                       end
-                    end
-                    Told=T;
-                    G_Family_sub.Edges.Weight=weights.^-1;
-                    G_undir=graph(G_Family_sub.Edges)
-                    G_undir.Nodes.FgBL=G_Family_sub.Nodes.FgBL;
-                end
-                
-                figure;
-                p = plot(G_undir);
-                highlight(p,T)
-                              
-                if TooManyParentsExist
+                if ismg
+                   exflagGroup(i)=8;
+                   break
+                elseif TooManyParentsExist
                    exflagGroup(i)=2;
                    break
                 elseif CircularRelationshipExists
@@ -208,6 +162,104 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
     G.Nodes.K1NAng=G_clust.Nodes.K1NAng;
     G.Nodes.computeFamily = G_clust.Nodes.computeFamily;
 
+end
+function [G_Family_sub] = reduceGraph(G_Family_sub)
+    %Find the potential parents 
+    indegreeg=centrality(G_Family_sub,'indegree');
+    outdegreeg=centrality(G_Family_sub,'outdegree');
+    rootFamily=find(indegreeg==0 & outdegreeg>0);
+    
+%     figure;
+%     p = plot(G_Family_sub);
+
+    len=length(rootFamily);
+    if len~=1
+        dist=G_Family_sub.Edges.FSgB;
+        dist(dist==0)=1;
+        outCloseness=centrality(G_Family_sub,'outcloseness','cost',dist.^-1)  ;
+        if isempty(rootFamily)
+            [~,rootFamily]=max(outCloseness);
+        else
+            [~,ind]=max(outCloseness(rootFamily));
+            rootFamily=rootFamily(ind);
+        end
+    end
+    tmp=sort(outCloseness);
+    rootFamily=find(outCloseness==tmp(end-2));
+    weights=G_Family_sub.Edges.FSgB;
+    G_Family_sub.Edges.Weight=weights.^-1;
+    G_Family_sub.Edges.Id=[1:G_Family_sub.numedges]';
+    G_undir=graph(G_Family_sub.Edges,G_Family_sub.Nodes);
+    G_undir.Nodes.FgBL=G_Family_sub.Nodes.FgBL;
+    toFlip=zeros(G_Family_sub.numedges,1,'logical');
+    allPairs=G_Family_sub.Edges.EndNodes;
+    cnt=1;
+    while cnt<40
+        %Start loop
+        [T,pred] = minspantree(G_undir,'Type','tree','Root',findnode(G_undir,rootFamily));
+
+        %Compute the new weights
+        pairs=T.Edges.EndNodes;
+        EFFSF=T.Edges.EffSF;
+        FSgB=T.Edges.FSgB;
+        FgBL=T.Nodes.FgBL;
+        eId=T.Edges.Id;
+
+        for k=1:T.numedges
+           p1=pred(pairs(k,1));
+           p2=pred(pairs(k,2));
+
+           isOut=p2==pairs(k,:)|p1==pairs(k,:);
+           if EFFSF(k,isOut)>0
+               weights(eId(k))=(FSgB(k)/FgBL(pairs(k,~isOut))+abs(EFFSF(k,isOut))/0.5);
+           else
+               weights(eId(k))=(FSgB(k)/FgBL(pairs(k,~isOut)));
+           end
+           toFlip(eId(k)) = pairs(k,isOut)==allPairs(eId(k),2);
+        end
+        
+        if cnt~=1
+            if isomorphism(T,Told)
+                break;
+            end
+        end
+
+        Told=T;
+        G_Family_sub.Edges.Weight=weights.^-1;
+        G_undir=graph(G_Family_sub.Edges,G_Family_sub.Nodes);
+        G_undir.Nodes.FgBL=G_Family_sub.Nodes.FgBL;
+        cnt=cnt+1;
+    end
+    
+    sum(weights(eId))
+% 
+%     figure;
+%     p = plot(G_Family_sub);
+%     highlight(p,T);
+
+    eMask=ones(G_Family_sub.numedges,1,'logical');
+    eMask(eId)=false;
+    G_Family_sub=rmedge(G_Family_sub,find(eMask)); 
+
+    toFlip=zeros(G_Family_sub.numedges,1,'logical');
+    allPairs=G_Family_sub.Edges.EndNodes; 
+    root=find(pred'==0 & (indegree(G_Family_sub)>0 | outdegree(G_Family_sub)>0));
+    for k=1:T.numedges
+       p1=pred(pairs(k,1));
+       p2=pred(pairs(k,2));
+       if p2==0 || p1==0
+           isOut=root==pairs(k,:);
+       else
+           isOut=p2==pairs(k,:)|p1==pairs(k,:);
+       end
+       
+       allId=find(all(pairs(k,:)==allPairs,2)| all(fliplr(pairs(k,:))==allPairs,2));
+       toFlip(allId) = pairs(k,isOut)==allPairs(allId,2);
+    end
+
+    G_Family_sub=flipedge(G_Family_sub,find(toFlip));
+%     figure;
+%     p = plot(G_Family_sub);
 end
 function [nGeneration,nType,nParentFamilyId,exflag] = fillGenerations(FamilyMatrix,...
                                         nGeneration,nType,nParentFamilyId,genId,gen,exflag,opt)
