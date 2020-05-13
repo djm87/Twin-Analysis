@@ -1,14 +1,13 @@
-function [twin] = getTwinProperties(twin)
-%getTwinProperties Summary of this function goes here
-    
-    ntwin=length(twin);
+function [twinOut] = getTwinProperties(twin)  
+
+    %Structure the twin output
+    ntwin=length(twin);    
+
     %Add twin for unidentified internal grains 
-    twin{ntwin+1}.name='unknown internal';
-    ntwin=ntwin+1;
     toRemove=zeros(ntwin,1,'logical');
-    newTwinCnt=1;
-    for i=1:ntwin-1
-        
+    cnt=1;
+    for i=1:ntwin
+                
         %Define the transformation types
         tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
         tType{2}=orientation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS);   
@@ -26,23 +25,24 @@ function [twin] = getTwinProperties(twin)
                 twin{i}.Rtw(2)'*tType{twin{i}.actType}*twin{i}.Rtw(2);
             
             %Extract
-            [uAngle,IA,IC]=unique(round(twin{i}.RMT.angle,2));
+            [uAngle,IA,IC]=unique(round(angle(twin{i}.RMT,'unique'),2));
             twin{i}.RMT=twin{i}.RMT(IA(twin{i}.variantsToUse));
             
             % Compute misorientation axis and angle
             twin{i}.axis=round(twin{i}.RMT.axis);
             twin{i}.angle=angle(twin{i}.RMT)/degree;
             
-            twin{ntwin+newTwinCnt}=twin{i};
-            twin{ntwin+newTwinCnt}.RMT=twin{i}.RMT;
-            twin{ntwin+newTwinCnt}.angle=twin{i}.angle;
-            twin{ntwin+newTwinCnt}.axis=twin{i}.axis;
-            twin{ntwin+newTwinCnt}.sS=slipSystem(twin{i}.eta1(1),twin{i}.k1(1));
-            twin{ntwin+newTwinCnt}.axisVariants=twin{ntwin+1}.axis.symmetrise;
-            twin{ntwin+newTwinCnt}.name=twin{i}.name;
-            twin{ntwin+newTwinCnt}.variantsToUse=1;
-            newTwinCnt=newTwinCnt+1;
-            toRemove(i)=true;
+            for k=1:length(twin{i}.variantsToUse)
+                twinOut{cnt}=twin{i}
+                twinOut{cnt}.RMT=twin{i}.RMT(k);
+                twinOut{cnt}.angle=twin{i}.angle(k);
+                twinOut{cnt}.axis=twin{i}.axis(k);
+                twinOut{cnt}.sS=slipSystem(twin{i}.eta1(1),twin{i}.k1(1));
+                twinOut{cnt}.axisVariants=[twin{i}.axis(k).symmetrise('unique');-twin{i}.axis(k).symmetrise('unique')]; 
+                twinOut{cnt}.name=twin{i}.name{k};
+                twinOut{cnt}.variantsToUse=1;
+                cnt=cnt+1;
+            end
         else
             %Define the twin frame Rtw such that Rtw transforms crystal to twin
             twin{i}.Rtw=orientation.map(twin{i}.k1,twin{i}.CS.cAxis,...
@@ -56,14 +56,19 @@ function [twin] = getTwinProperties(twin)
             twin{i}.angle=angle(twin{i}.RMT)/degree;
             
             % Compute twin axis variants 
-            twin{i}.axisVariants=twin{i}.axis.symmetrise;
+            twin{i}.axisVariants=[twin{i}.axis.symmetrise('unique');-twin{i}.axis.symmetrise('unique')];
             
             % Compute the slip systems for schmid calculations
             twin{i}.sS=slipSystem(twin{i}.eta1,twin{i}.k1);
 
+            %Transfer to twinOut
+            twinOut{cnt}=twin{i};
+            cnt=cnt+1;
         end
     end
-    twin(find(toRemove))=[];
+%     twin(find(toRemove))=[];
+    twinOut{cnt}.name='unknown internal';
+    
 end
 
 % function [Rtw] = getRtw(k1in,eta1in,CS)

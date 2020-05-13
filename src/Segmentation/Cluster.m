@@ -226,7 +226,7 @@ function [G_Family,G_clust,G,mGrains] = Cluster(G,grains,opt)
     G_clust.Nodes.typeUnknown(nId_edges)=false;
 
     % Identify Families in grain clusters 
-    [G_clust,G]= AssignFamilyIDs(G_clust,G,groupList,grains,mGrains,opt);
+    [G_clust,G]= AssignFamilyIDs(G_clust,G,grains,mGrains,opt);
 
 
     %Create the minimum set of pairs that should be tested for twin

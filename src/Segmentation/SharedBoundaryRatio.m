@@ -19,8 +19,9 @@ nGrains=length(grains);
 SBR = zeros(nGrains,nGrains);
 
 % Extract grainboundary grain ids
-mineral=grains.mineral; %For defining phase boundary in the case there is unindexed data
-gBId=grains.boundary(mineral,mineral).grainId;
+% mineral=grains.mineral; %For defining phase boundary in the case there is unindexed data
+% gBId=grains.boundary(mineral,mineral).grainId;
+gBId=grains.boundary.grainId;
 
 % Get the grain Ids
 gId = grains.id;
@@ -34,12 +35,20 @@ for i = 1:nGrains
    gBPairs(ind(:,2),:)=fliplr(gBPairs(ind(:,2),:));
    [ugBPairs, ~, igBPairs] = unique(gBPairs, 'rows');
    
-
+   %Remove the boundary phase from the indexing
+   if any(any(ugBPairs==0,2))
+       ugBPairs(any(ugBPairs==0,2),:)=[];
+       igBPairs(any(gBPairs==0,2))=[];
+       igBPairs=igBPairs-1;
+   end
    
-   % Get linear index for ratio in SharedBoundaryRatio
-   ind=sub2ind([nGrains nGrains],ugBPairs(:,1),ugBPairs(:,2));
-   
-   % Compute ratios and store
-   SBR(ind) = accumarray(igBPairs, 1)./length(gBPairs);
-%    [accumarray(igBPairs, 1)./length(gBPairs),ugBPairs(:,2)]
+   if ~isempty(ugBPairs)
+       % Get linear index for ratio in SharedBoundaryRatio
+       ind=sub2ind([nGrains nGrains],ugBPairs(:,1),ugBPairs(:,2));
+    
+       % Compute ratios and store
+        
+       SBR(ind) = accumarray(igBPairs, 1)./size(gBPairs,1);
+       %    [accumarray(igBPairs, 1)./length(gBPairs),ugBPairs(:,2)]
+   end
 end

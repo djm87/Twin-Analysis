@@ -1,21 +1,22 @@
-function [twinCount,G_Complete] = CountTwins(G_Complete)
+function [mGrains] = CountTwins(G,grains,mGrains,opt)
 %CountTwins produces twin count statistics 
-    twinCount = zeros(max(G_Complete.Edges.Group) ,1);
-    G_Complete.Nodes.twinCount=zeros(length(G_Complete.Nodes.FamilyID) ,1);
-    for i=1:max(G_Complete.Edges.Group) 
-        egroupId = find((i==G_Complete.Edges.Group)==true); %converts logical arrays to indices
-        ngroupId = find((i==G_Complete.Nodes.Group)==true);
-        nMergeTwin = G_Complete.Nodes.MergeTwin(ngroupId);
-        nType = G_Complete.Nodes.Type(ngroupId); 
-        nId = G_Complete.Nodes.Id(ngroupId);
+    nGroups=max(G.Nodes.Group);
+    twinCount = zeros(nGroups ,1);
+    twinFamilyCount = zeros(nGroups ,1);
+    for i=1:nGroups 
+        ngroupId = find(i==G.Nodes.Group);
+        nFamilyID=G.Nodes.FamilyID(ngroupId);
+        nType = G.Nodes.type(ngroupId); 
 
-        %Find the unique twins to merge
-        twins = unique(nMergeTwin);
+        %Find the twins
+        isTwin=nType>0& nType~=opt.twinUnknown;
         
-        %If nMergeTwin>0 only count the merged twins once + only count twin
-        %type fragments.
-        twinCount(i)=length(twins)-1+sum(nMergeTwin==0 & nType>0);
-        G_Complete.Nodes.twinCount(nId)=twinCount(i);
+        %If count the instances
+        twinCount(i)=numel(nType(isTwin));
+        twinFamilyCount(i)=numel(unique(nFamilyID(isTwin)));
     end
+
+    mGrains.prop.twinCount=twinCount;
+    mGrains.prop.twinFamilyCount=twinFamilyCount;
 end
 

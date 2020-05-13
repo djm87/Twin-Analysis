@@ -19,7 +19,7 @@ function [G_clust,G] = AssignFamilyIDs(G_clust,G,grains,mGrains,opt)
         egroupId= find((group==groups));
         ngroupId= find((group==groups));
 
-        FamilyID{i}=GetFamily(mOri(ngroupId),opt.grain_recon.seg_angle_grouped); 
+        FamilyID{i}=GetFamily(mOri(ngroupId),opt.grain_recon.FamilyMisTol); 
         nodeID{i}=ngroupId;
         typeUnknownLocal{i}=typeunknown(ngroupId);
         %unknow types are ignored during the tree. So that we don't affect the
@@ -65,16 +65,16 @@ function [G_clust,G] = AssignFamilyIDs(G_clust,G,grains,mGrains,opt)
     G.Edges.FamilyID(G.Edges.combineCleaned,:)=G_clust.Edges.FamilyID;
 
     %Plot the results
-    if opt.plot.do    
-        %Plot edge labeled graph
-        labelNodes=false;labelEdges=opt.plot.labelEdges;plotG=false;legendOn=opt.plot.legendOn;
-        options={'k',5,'s','k',8,'w',2};
-        fhandle = plotGraph(grains,mGrains,G_clust,...
-            G_clust.Nodes.FamilyID,G_clust.Nodes.Id,...
-            labelNodes,labelEdges,legendOn,plotG,options);
-        mtexColorbar;
-        mtexTitle('FamilyId')
-    end
+%     if opt.plot.do    
+%         %Plot edge labeled graph
+%         labelNodes=false;labelEdges=opt.plot.labelEdges;plotG=false;legendOn=opt.plot.legendOn;
+%         options={'k',5,'s','k',8,'w',2};
+%         fhandle = plotGraph(grains,mGrains,G_clust,...
+%             G_clust.Nodes.FamilyID,G_clust.Nodes.Id,...
+%             labelNodes,labelEdges,legendOn,plotG,options);
+%         mtexColorbar;
+%         mtexTitle('FamilyId')
+%     end
     
 end
 

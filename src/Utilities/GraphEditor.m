@@ -1,4 +1,4 @@
-function [G_Family,iouterGroup,exitExternal] = GraphEditor(groups,iouterGroup,G_Family,G_clust,grains,mergedGrains,value,plotNeighbors,plotEdgeLabel,plotMergedGrainId,plotGrainId,mode)
+function [G_Family,iouterGroup,exitExternal] = GraphEditor(groups,iouterGroup,G_Family,G_clust,G,grains,mergedGrains,value,plotNeighbors,plotEdgeLabel,plotMergedGrainId,plotGrainId,mode)
 %ClusterFilter loops through clusters in prefiltered groups, allowing a 
 %user to add/remove nodes edges and relationships
 %Inputs:  groups - list of merged grain Ids 
@@ -12,46 +12,61 @@ function [G_Family,iouterGroup,exitExternal] = GraphEditor(groups,iouterGroup,G_
 %         next cluster.
 
     exitExternal=false;
-    igroup=1;
+    igroup=1
     while igroup<length(groups)+1
         group=groups(igroup);
         G_clust_sub = subgraph(G_clust,find(group==G_clust.Nodes.Group));
-        G_Family.Edges.eGlobalID=[1:numedges(G_Family)]';
-        G_Family_sub = subgraph(G_Family,find(group==G_Family.Nodes.Group));
-        C = centrality(G_Family_sub,'hubs')
+
         % Mode 1 is the family graph editor
         if mode==1
-            %Plot cluster
-            h1 = plotFamilyGraph(full(adjacency(G_Family_sub)));
-
-            %Plot cluster
-            h2 = plotClusterGraph(group,G_clust_sub,G_clust,...
-                grains,value,mergedGrains,plotGrainId,plotNeighbors,...
-                plotMergedGrainId,plotEdgeLabel);
+            G_Family.Edges.eGlobalID=[1:numedges(G_Family)]';
+            G_Family_sub = subgraph(G_Family,find(group==G_Family.Nodes.Group));
+            C = centrality(G_Family_sub,'hubs');
             
+            %Plot cluster
+            h=newMtexFigure;
+            plotFamilyId=true;
+            plotGrainId=false;
+            plotEdgeLabel=false;
+            plotClusterGraph(group,G_clust_sub,G_clust,...
+                grains,value,mergedGrains,plotGrainId,plotNeighbors,...
+                plotMergedGrainId,plotEdgeLabel,plotFamilyId);            
+
+            nextAxis;
+            plotFamilyGraph(full(adjacency(G_Family_sub)));
+%             mtexColorbar('Location','eastoutside','Ticks',1:3)
+            colorbar(h.children(1),'Location','eastoutside')  
+            set(h.parent,'WindowStyle','docked')
+              
             %Call the Family editor
             [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
                 mode,value,plotNeighbors]=familyEditorInterface(group,igroup,iouterGroup,...
                 G_Family,G_Family_sub,G_clust,grains,exitExternal,mode,value); 
             
             %Cleanup the figure
-            close(h1);
-            close(h2);
+            close(h.parent);
+            
+            plotFamilyId=false;
+            plotGrainId=true;
+            plotEdgeLabel=true;
         %Mode 2 is the clust graph editor
         elseif mode ==2
             %Plot cluster
-            h2 = plotClusterGraph(group,G_clust_sub,G_clust,...
+            h=figure;
+            plotFamilyId=false;
+            plotClusterGraph(group,G_clust_sub,G_clust,...
                 grains,value,mergedGrains,plotGrainId,plotNeighbors,...
-                plotMergedGrainId,plotEdgeLabel);
+                plotMergedGrainId,plotEdgeLabel,plotFamilyId);
+            set(h,'WindowStyle','docked')
             
             %Call the cluster editor
             [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel,...
                 plotGrainId,plotMergedGrainId] = clusterEditorInterface(group,...
-                igroup,iouterGroup,G_clust_sub,G_clust,grains,exitExternal,...
+                igroup,iouterGroup,G_clust_sub,G_clust,G,grains,exitExternal,...
                 plotNeighbors,value,mode,plotEdgeLabel,plotGrainId,plotMergedGrainId); 
             
             %Cleanup the figure
-            close(h2);
+            close(h);
             
         end
         if exitExternal
@@ -61,21 +76,22 @@ function [G_Family,iouterGroup,exitExternal] = GraphEditor(groups,iouterGroup,G_
     end
     fprintf('Finished in GraphEditor\n')
 end
-function h = plotFamilyGraph(FamilyMatrix)
+function plotFamilyGraph(FamilyMatrix)
     G_Family_clust=digraph(FamilyMatrix);
-    set(0,'DefaultFigureWindowStyle','docked')
-    set(0,'DefaultFigureWindowStyle','docked');
-    warning('off', 'MATLAB:Figure:SetPosition');
-    h=figure;p=plot(G_Family_clust,'Layout','force');
+%     set(0,'DefaultFigureWindowStyle','docked')
+%     set(0,'DefaultFigureWindowStyle','docked');
+%     warning('off', 'MATLAB:Figure:SetPosition');
+    p=plot(G_Family_clust);
+%     layout(p,'force','Iterations',30)
     p.EdgeFontSize=13;p.NodeFontSize=14;p.ArrowSize=15;p.EdgeColor=[0,0,0];
-    p.NodeColor=[1,0,0],p.MarkerSize=8;
+    p.NodeColor=[1,0,0];p.MarkerSize=8;
     pair1=G_Family_clust.Edges.EndNodes(:,1);
     pair2=G_Family_clust.Edges.EndNodes(:,2);
     npairs=length(pair1);
     labeledge(p,pair1,pair2,1:npairs); 
-    set(0,'DefaultFigureWindowStyle','normal');
-    warning('off', 'MATLAB:uitools:uimode:callbackerror');
-    warning('on', 'MATLAB:Figure:SetPosition');
+%     set(0,'DefaultFigureWindowStyle','normal');
+%     warning('off', 'MATLAB:uitools:uimode:callbackerror');
+%     warning('on', 'MATLAB:Figure:SetPosition');
 %     G_Family_clust=flipedge(G_Family_clust,3)
 %     G_Family_clust = rmedge(G_Family_clust,3)
 %     FamilyMatrix = full(adjacency(G_Family_clust))
@@ -83,11 +99,11 @@ end
 function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
                 mode,value,plotNeighbors]=familyEditorInterface(group,igroup,iouterGroup,...
                 G_Family,G_Family_sub,G_clust,grains,exitExternal,mode,value) 
-
+    try
     fprintf('Edge List \n')
     for j=1:numedges(G_Family_sub)
         fprintf('Id: %5d, type: %3d, Pair/Parent: %5d %5d,  %1d %1d\n',j,...
-            G_Family_sub.Edges.meanTypeRlx(j),G_Family_sub.Edges.pairs(j,:),G_Family_sub.Edges.Parent(j,:))
+            G_Family_sub.Edges.meanType(j),G_Family_sub.Edges.pairs(j,:),G_Family_sub.Edges.Parent(j,:))
     end
     
     %Give options to perform
@@ -103,6 +119,9 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
     fprintf('5 to switch editor mode to cluster\n')
     fprintf('6 go back to previous grain\n')
     fprintf('7 cycle\n')
+    
+    %Initialize
+    plotNeighbors=false;
     
     %Get main operation to perform
     while true
@@ -138,8 +157,8 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
                 nID_sub = getUserInput(inputMsg,errorMsg,'vector',true);
                 if ~any(nID_sub<1)
                     toRemove=zeros(numedges(G_Family_sub),1,'logical');
-                    for i=1:nID_sub
-                        toRemove(any(G_Family_sub.Edges.pairs==nID_sub(i),2))=true;
+                    for i=1:length(nID_sub)
+                        toRemove(any(G_Family_sub.Edges.FamilyID==nID_sub(i),2))=true;
                     end
                     eID=G_Family_sub.Edges.eGlobalID(toRemove)
                     G_Family=rmedge(G_Family,eID);
@@ -183,6 +202,7 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
             fprintf('1 to plot mean orientation\n')
             fprintf('2 to plot FamilyId\n')
             fprintf('3 to plot EffSchmid\n')
+            fprintf('4 to plot Initial ODF VF\n')
             while true
                 inputMsg='Enter plot option number: ';
                 errorMsg='Please input a valid option or hit enter to go back to menu';
@@ -190,7 +210,7 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
                 %Check the type of input
                 if isempty(plotOption)
                     break;
-                elseif (plotOption==1 || plotOption==2 || plotOption==3)
+                elseif (plotOption==1 || plotOption==2 || plotOption==3 || plotOption==4)
                     if plotOption==1
                         value=grains.meanOrientation;
                     elseif plotOption==2
@@ -200,6 +220,12 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
                         errorMsg='Please input a valid twin type id';
                         twinType = getUserInput(inputMsg,errorMsg,'scalar',false);
                         value=G_clust.Nodes.EffSF(:,twinType);
+                    elseif plotOption==4
+                        try
+                            value=grains.prop.volInitialODF;
+                        catch
+                            fprintf('It seems the volume fraction from the initial ODF is not available\n') 
+                        end
                     end
                     inputMsg='Enter if neighbor should be plotted (0 or 1): ';
                     errorMsg='Please input a valid option';
@@ -237,19 +263,23 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
             error('Error: unhandled grain')
         end
     end
+    catch
+       fprintf('Your intput caused an error.. no worries your changes are safe') 
+    end
 end
-function h=plotClusterGraph(group,G_clust_sub,G_clust,...
+function plotClusterGraph(group,G_clust_sub,G_clust,...
     grains,value,mergedGrains,plotGrainId,plotNeighbors,...
-    plotMergedGrainId,plotEdgeLabel)
+    plotMergedGrainId,plotEdgeLabel,plotFamilyId)
     
     nId_sub = G_clust_sub.Nodes.Id;
     eGlobalId_sub = G_clust_sub.Edges.GlobalID;
     
     %if plot neighbors 
-    mGrainInd=find(mergedGrains.id==G_clust_sub.Nodes.Group(1));
+    mGrainInd=group;
     if plotNeighbors
-        [~,pairsTmp]=neighbors(mergedGrains(mGrainInd));
-        allGroupsInd=unique(pairsTmp);
+        [~,pairsTmp]=neighbors(mergedGrains);
+        isPair=pairsTmp(:,1)==group | pairsTmp(:,2)==group;
+        allGroupsInd=unique(pairsTmp([isPair,isPair]));
         nId=intersect_wrepeat(allGroupsInd,G_clust.Nodes.Group);
     else
        nId=nId_sub;
@@ -257,12 +287,15 @@ function h=plotClusterGraph(group,G_clust_sub,G_clust,...
     end
 
     %Plot grain cluster
-    set(0,'DefaultFigureWindowStyle','docked');
-    warning('off', 'MATLAB:Figure:SetPosition');
-    h=figure; plot(grains(nId),value(nId),'noBoundary')
+%     set(0,'DefaultFigureWindowStyle','docked');
+%     warning('off', 'MATLAB:Figure:SetPosition');
+    plot(grains(nId),value(nId),'noBoundary')
 %         mtexColorMap(hsv)
     
-    
+    if plotFamilyId
+        text(grains(nId),int2str(G_clust.Nodes.FamilyID(nId)));
+    end
+
     if plotGrainId
         text(grains(nId),int2str(nId));
     end
@@ -272,7 +305,7 @@ function h=plotClusterGraph(group,G_clust_sub,G_clust,...
         for ii=1:length(allGroupsInd)
             grainName{ii}=sprintf('M%d',mergedGrains(allGroupsInd(ii)).id);
         end
-        text(mergedGrains(allGroupsInd),grainName(:));
+        text(mergedGrains(allGroupsInd),grainName(:));        
     end
 
     hold on
@@ -304,6 +337,8 @@ function h=plotClusterGraph(group,G_clust_sub,G_clust,...
         p=plot(G_clust_sub,'XData',G_clust_sub.Nodes.centroids(:,1),...
             'YData',G_clust_sub.Nodes.centroids(:,2),'displayName','graph');
         p.EdgeFontSize=13;
+        p.EdgeColor=[0,0,0];
+        p.LineWidth=1;
         pairs1=G_clust_sub.Edges.EndNodes(:,1);
         pairs2=G_clust_sub.Edges.EndNodes(:,2);
 %         for j=1:length(G_Removed.Nodes.Id)
@@ -315,17 +350,20 @@ function h=plotClusterGraph(group,G_clust_sub,G_clust,...
                 pairs2,G_clust_sub.Edges.GlobalID); 
         end
         nNodes=length(unique(G_clust_sub.Nodes.Id));
-        labelnode(p,1:nNodes,strings(nNodes,1))
+        labelnode(p,1:nNodes,strings(nNodes,1));
     end
     hold off   
-    set(0,'DefaultFigureWindowStyle','normal');
-    warning('off', 'MATLAB:uitools:uimode:callbackerror');
-    warning('on', 'MATLAB:Figure:SetPosition');
+    
+%     set(0,'DefaultFigureWindowStyle','normal');
+%     warning('off', 'MATLAB:uitools:uimode:callbackerror');
+%     warning('on', 'MATLAB:Figure:SetPosition');
 end
 function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel,...
     plotGrainId,plotMergedGrainId] = clusterEditorInterface(group,...
-    igroup,iouterGroup,G_clust_sub,G_clust,grains,exitExternal,...
+    igroup,iouterGroup,G_clust_sub,G_clust,G,grains,exitExternal,...
     plotNeighbors,value,mode,plotEdgeLabel,plotGrainId,plotMergedGrainId) 
+    
+    try
     nFamily=G_clust_sub.Nodes.FamilyID;
     nId_sub=G_clust_sub.Nodes.Id;
     
@@ -362,9 +400,10 @@ function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel
     fprintf('6 to plot the grain a different way\n')
     fprintf('7 to change labeling\n')
     fprintf('8 to get misorientation of grains\n')
-    fprintf('9 go back to previous grain\n')
-    fprintf('10 cycle\n')
-    fprintf('11 switch to Family editor\n')
+    fprintf('9 to get all edge relationships with node\n')
+    fprintf('10 go back to previous grain\n')
+    fprintf('11 cycle\n')
+    fprintf('12 switch to Family editor\n')
     
     %Get main operation to perform
 
@@ -373,7 +412,7 @@ function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel
         errorMsg='Please input a valid option or hit enter to go to the next grain';
         option = getUserInput(inputMsg,errorMsg,'scalar',true);
         
-        if option >11 | option < 0
+        if option >12 | option < 0
             fprintf('Enter a valid option\n')
         elseif option==0
             fprintf('exiting GraphEditor\n')
@@ -507,7 +546,12 @@ function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel
                         inputMsg='Enter twin type id: ';
                         errorMsg='Please input a valid twin type id';
                         twinType = getUserInput(inputMsg,errorMsg,'scalar',false);
-                        value=G_clust.Nodes.EffSF(:,twinType);
+                        try
+                            value=G_clust.Nodes.EffSF(:,twinType);
+                        catch
+                            fprintf('Invalid twin type specified\n')
+                            break;
+                        end
                     end
                     inputMsg='Enter if neighbor should be plotted (0 or 1): ';
                     errorMsg='Please input a valid option';
@@ -566,8 +610,33 @@ function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel
             end
 
             angle(grains(compList(:,1)).meanOrientation, grains(compList(:,2)).meanOrientation)./ degree
+        elseif option==9 
+            while true
+                inputMsg='Enter nodes to get edge relationships for: ';
+                errorMsg='Must specify a sclar 1 or a vector [1,2] or hit enter to return to menu';
+                nodeId = getUserInput(inputMsg,errorMsg,'vector',true);
+                if ~any(nodeId==0)
+                    break;
+                elseif isempty(nodeId)
+                    break;
+                else
+                    fprintf('%s\n',errorMsg)
+                end
+            end
 
-        elseif option==9
+            for i=1:length(nodeId)
+               edgeId=find(G.Edges.pairs(:,1)==nodeId(i) | G.Edges.pairs(:,2)==nodeId(i)); 
+               mori=angle(grains(G.Edges.pairs(edgeId,1)).meanOrientation,...
+                   grains(G.Edges.pairs(edgeId,2)).meanOrientation)./ degree;
+               fprintf('Relationships for Node %d\n',nodeId(i))
+               for j=1:length(edgeId)
+                fprintf('EdgeID: %6d, NodeIds: (%5d,%5d), Gb Rlx Twin Type: %d, Misorientation: %6.2f\n',...
+                    edgeId(j),G.Edges.pairs(edgeId(j),1),G.Edges.pairs(edgeId(j),2),G.Edges.GBTypeRlx(edgeId(j)),mori(j)) 
+               end
+               fprintf('\n')
+            end
+            
+        elseif option==10
             fprintf('going back to previous grain\n');
             igroup=igroup-1;
             iouterGroup=iouterGroup-1;
@@ -577,10 +646,10 @@ function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel
             else
                 return
             end
-        elseif option==10
+        elseif option==11
             fprintf('Cycle GraphEditor\n');
             return
-        elseif option==11
+        elseif option==12
             mode=1;
             return
         elseif isempty(option)
@@ -593,8 +662,12 @@ function [igroup,iouterGroup,exitExternal,plotNeighbors,value,mode,plotEdgeLabel
             error('Error: unhandled grain')
         end
     end
+    catch
+       fprintf('Your intput caused an error.. no worries your changes are safe') 
+    end
 end
 function val=getUserInput(inputMsg,errorMsg,type,canBeEmpty)
+    try
     switch type
         case {'scalar','Scalar'}   
             while true
@@ -653,5 +726,8 @@ function val=getUserInput(inputMsg,errorMsg,type,canBeEmpty)
                 end
                 fprintf('%s\n',errorMsg)
             end
+    end
+    catch
+       fprintf('Your intput caused an error.. no worries your changes are safe') 
     end
 end

@@ -1,4 +1,4 @@
-function [combineBoundary,mergedGrains,twinBoundary] = MergeByBoundary(G,grains,mistol,plotTitle,opt)
+function [combine,mergedGrains,twinBoundary,GBType] = MergeByBoundary(G,grains,mistol,opt)
 %Applies standard mtex grain merging from boundaries and translates this
 %merging to edges where all edges in a merged grain are passed back, not
 %just the edges associated with the twin. This is a type of prefilter for
@@ -7,35 +7,26 @@ function [combineBoundary,mergedGrains,twinBoundary] = MergeByBoundary(G,grains,
         
 
     %Get the ebsd based twin boundary for all twin types in twin
-    [twinBoundary] = EBSDTwinBoundary(grains,mistol,opt.nTwin,opt.twin,opt.mergeTripplePoints);
+    [twinBoundary] = EBSDTwinBoundary(grains,mistol,opt.nTwin,opt.twin, opt.mergeByGeometry.mergeTP);
 
-    %Combine the twin boundary types together and merge
+    %Construct the merge matrix
     combinedTwinBoundary=vertcat(twinBoundary{:});
-    [mergedGrains,parentId] = merge(grains,combinedTwinBoundary);
+    maxId = max(grains.id)+1;
+    mergeId=combinedTwinBoundary.grainId;
+    M = sparse(mergeId(:,1),mergeId(:,2),1,maxId,maxId);
+    [mergedGrains,parentId] = merge(grains,M);
 
-    
-    %Transfer the merged boundaries to edges that were merged
-    [combineBoundaryTmp] = EdgesFromMergedGrains(mergedGrains,parentId,G.Edges.pairs);
-    
-    %Create a logical array, where the edge should be kept if true
-    combineBoundary=zeros(length(G.Edges.pairs),1,'logical');
-    combineBoundary(G.Edges.type==opt.twinUnknown)=true; %Keep the grain inclusions
-    combineBoundary(vertcat(combineBoundaryTmp{:}))=true;
-
-    if opt.plot.do
-        figure;plot(grains,grains.meanOrientation,'Micronbar','off','silent');    
-        hold on 
-        plot(mergedGrains.boundary,'linecolor','k','linewidth',2.5,'linestyle','-',...
-        'displayName','merged grains')
-        colors=hsv(opt.nTwin);
-        for i=1:opt.nTwin
-            plot(twinBoundary{i},'linecolor',colors(i,:),'linewidth',0.5,'displayName',opt.twin{i}.name);
+    %Set the grain boundary type and combine flag
+    GBType=zeros(size(G.Edges.pairs,1),1,'int8'); 
+    combine=zeros(size(G.Edges.pairs,1),1,'logical'); 
+    for i=1:opt.nTwin
+        GBpairs=unique(twinBoundary{i}.grainId,'rows');
+        for j=1:size(GBpairs,1)
+            eId=find(all(GBpairs(j,:)==G.Edges.pairs,2) | all(fliplr(GBpairs(j,:))==G.Edges.pairs,2));
+            GBType(eId)=i;
+            combine(eId)=true;
         end
-        hold off
-        mtexTitle(plotTitle)
-        legend off
-
     end
-
+    
 end
 

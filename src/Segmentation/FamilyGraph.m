@@ -1,6 +1,6 @@
 function [G_Family,G_clust,G] = FamilyGraph(G_clust,G,grains,computemGrainId,opt)
     %FamilyGraph creates a graph for each merged grain in ClusterGraph
-    %The considers the various combinations of relationships between
+    %and considers the various combinations of relationships between
     %familes
 
     %Get groups to compute from G_clust 
@@ -8,6 +8,12 @@ function [G_Family,G_clust,G] = FamilyGraph(G_clust,G,grains,computemGrainId,opt
     ind=intersect_wrepeat(computemGrainId,G_clust.Nodes.Group);
     toCompute(ind)=true;
     groupList=unique(G_clust.Nodes.Group(toCompute));
+    if isempty(groupList)
+        fprintf('There is no cluster to compute family graph for!\n')
+        G_Family=[];
+        return
+    end
+    
     groups=G_clust.Nodes.Group;
     nGroups=length(groupList);
     
@@ -29,39 +35,40 @@ function [G_Family,G_clust,G] = FamilyGraph(G_clust,G,grains,computemGrainId,opt
     
     % Initialize graph
     [G_Family,nEdges] = InitializeFamilyGraph(pairSize,pairIndexes,nFamilyGroup,groupList,nGroups);
+    if nEdges==0
+       fprintf('No cluster needs family graph computed!\n')
+       return 
+    end
+    
     
     % Construct Family twin relationship graph 
-    [oriFamily,mori,eFType] = getOriFamily(G_Family,G_clust,grains,groupList,nGroups,nEdges,opt);
+    [G_Family,oriFamily,mori,eFType] = getOriFamily(G_Family,G_clust,grains,groupList,nGroups,nEdges,opt);
 
     % Test Family pairs for twin relationship
     tol=zeros(opt.nTwin,1);
-    tolRlx=zeros(opt.nTwin,1);
     for i=1:opt.nTwin
         tol(i)=opt.twin{i}.tol.misMean;
-        tolRlx(i)=opt.twin{i}.tol.misMeanRlx;
     end
     [~,G_Family.Edges.meanType] = TestTwinRelationship(mori,tol,opt,eFType);
-    [~,G_Family.Edges.meanTypeRlx] = TestTwinRelationship(mori,tolRlx,opt,eFType); 
     
     %Compute Schmid info for twin/parents in families
-    [G_Family,edgeList] = GetSchmidRelative(G_Family,groupList,oriFamily,G_Family.Edges.meanTypeRlx,opt);
+    [G_Family,edgeList] = GetSchmidRelative(G_Family,groupList,oriFamily,G_Family.Edges.meanType,opt);
     
     %Perform family votes
     [G_Family] = FamilyVotes(G_Family,G_clust,groupList,grains,opt);    
 
     %Get the parent relationships based on votes
-    [G_Family] = getParent(groupList,G_Family) 
+    [G_Family,G_clust] = getParent(groupList,G_Family,G_clust) 
     
     %Store the schmid factor in graphs G and G_clust for plotting
     [G_clust,G] = StoreSchmid(G_Family,G_clust,G,groupList,opt);
-    
     
     %Update isNewGroup so computation doesn't happen again.
     G_clust.Nodes.isNewGroup(:)=false;
     G.Nodes.isNewGroup=G_clust.Nodes.isNewGroup;
 
 end
-function [G_Family] = getParent(groupList,G_Family) 
+function [G_Family,G_clust] = getParent(groupList,G_Family,G_clust) 
     G_Family.Edges.Parent = zeros(size(G_Family.Edges.pairs),'logical');    
     
     for i=1:length(groupList)
@@ -69,38 +76,46 @@ function [G_Family] = getParent(groupList,G_Family)
         %load edge and node properties for Family graph
         G_Family_sub = subgraph(G_Family,find(group==G_Family.Nodes.Group));
         nFamily = G_Family_sub.Nodes.Family;
-        eType = G_Family_sub.Edges.meanTypeRlx;
-        eVote = G_Family_sub.Edges.Vote;
-        eFamily = G_Family_sub.Edges.FamilyID;
-        eGlobalID = G_Family_sub.Edges.eGlobalID;
+        eType = G_Family_sub.Edges.meanType;
+        if ~isempty(eType)
+            eVote = G_Family_sub.Edges.Vote;
+            eFamily = G_Family_sub.Edges.FamilyID;
+            eGlobalID = G_Family_sub.Edges.eGlobalID;
 
-        %array of size(ePairs) of the family correlated with the edge Type 
-        FamilyRelationList = FamilyRelationships(nFamily,eType,eFamily); 
+            %array of size(ePairs) of the family correlated with the edge Type 
+            FamilyRelationList = FamilyRelationships(nFamily,eType,eFamily); 
 
-        %eVotesSummed are the votes for each for a family and a type
-        [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyRelationList);
+            %eVotesSummed are the votes for each for a family and a type
+            [eVotesSummed,parentID] = buildeVotesSummed(nFamily,eType,eVote,FamilyRelationList);
 
-        %Determine the parent by vote
-        Parent = parentByVote(eVotesSummed,eType,eFamily);
+            %Determine the parent by vote
+            Parent = parentByVote(eVotesSummed,eType,eFamily);
 
-        %Store the parent
-        G_Family.Edges.Parent(eGlobalID,:)=Parent; %Need to add back in
+            %Store the parent
+            G_Family.Edges.Parent(eGlobalID,:)=Parent; %Need to add back in
+        else
+            G_clust.Nodes.computeFamily(group==G_clust.Nodes.Group)=false;
+        end
     end
+    
     %update the directions of the graph and remove non-twin edges
-    toRemove=find(all(G_Family.Edges.Parent==0,2));
-    G_Family=rmedge(G_Family,toRemove);
-    G_Family.Edges.eGlobalID=[1:numedges(G_Family)]';
-    toFlip=G_Family.Edges.Parent(:,2);
-    G_Family.Edges.pairs(toFlip,:)=fliplr(G_Family.Edges.pairs(toFlip,:));
-    G_Family.Edges.FamilyID(toFlip,:)=fliplr(G_Family.Edges.FamilyID(toFlip,:));
-    G_Family.Edges.eRelationship(toFlip,:)=fliplr(G_Family.Edges.eRelationship(toFlip,:));
-    G_Family.Edges.sigma13(toFlip,:)=fliplr(G_Family.Edges.sigma13(toFlip,:));
-    G_Family.Edges.FRArea(toFlip,:)=fliplr(G_Family.Edges.FRArea(toFlip,:));
-    G_Family.Edges.FRgB(toFlip,:)=fliplr(G_Family.Edges.FRgB(toFlip,:));
-    G_Family.Edges.FREffSF(toFlip,:)=fliplr(G_Family.Edges.FREffSF(toFlip,:));
-    G_Family.Edges.Vote(toFlip,:)=fliplr(G_Family.Edges.Vote(toFlip,:));
-    G_Family.Edges.Parent(toFlip,:)=fliplr(G_Family.Edges.Parent(toFlip,:));
-    G_Family=flipedge(G_Family,find(toFlip));
+    try
+        toRemove=find(all(G_Family.Edges.Parent==0,2));
+        G_Family=rmedge(G_Family,toRemove);
+        G_Family.Edges.eGlobalID=[1:numedges(G_Family)]';
+        toFlip=G_Family.Edges.Parent(:,2);
+        G_Family.Edges.pairs(toFlip,:)=fliplr(G_Family.Edges.pairs(toFlip,:));
+        G_Family.Edges.FamilyID(toFlip,:)=fliplr(G_Family.Edges.FamilyID(toFlip,:));
+        G_Family.Edges.eRelationship(toFlip,:)=fliplr(G_Family.Edges.eRelationship(toFlip,:));
+        G_Family.Edges.sigma13(toFlip,:)=fliplr(G_Family.Edges.sigma13(toFlip,:));
+        G_Family.Edges.FRArea(toFlip,:)=fliplr(G_Family.Edges.FRArea(toFlip,:));
+        G_Family.Edges.FRgB(toFlip,:)=fliplr(G_Family.Edges.FRgB(toFlip,:));
+        G_Family.Edges.FREffSF(toFlip,:)=fliplr(G_Family.Edges.FREffSF(toFlip,:));
+        G_Family.Edges.Vote(toFlip,:)=fliplr(G_Family.Edges.Vote(toFlip,:));
+        G_Family.Edges.Parent(toFlip,:)=fliplr(G_Family.Edges.Parent(toFlip,:));
+        G_Family=flipedge(G_Family,find(toFlip));
+    catch
+    end
 end
 function FamilyRelationList = FamilyRelationships(nFamily,eType,eFamily) 
     %Returns max(nFamily) x max(eType) cell array containing a logical
@@ -180,25 +195,29 @@ function [G_Family,nEdges] = InitializeFamilyGraph(pairSize,pairIndexes,nFamilyG
             lastPairId=lastPairId+nFamilyGroup(i);
         end
     end
-    G_Family=digraph(s,t);
-    G_Family.Edges.pairs=[s,t];
-    G_Family.Edges.Group=Group;
-    G_Family.Edges.FamilyID=FamilyID;
-    G_Family.Edges.eRemove=zeros(nEdges,1,'logical');
-    G_Family.Edges.eIsParentAll=zeros(nEdges,1,'logical');
-    G_Family.Edges.eNotParentAll=zeros(nEdges,1,'logical');
-    G_Family.Edges.eNotParent=zeros(nEdges,1,'logical');
-    G_Family.Edges.eRelationship=zeros(nEdges,2,'int8');
-    G_Family.Edges.eGlobalID=[1:nEdges]';
-    G_Family.Nodes.GlobalID=[1:numnodes(G_Family)]';
-    % Construct node Family and Group
-    [~,ind]=unique(G_Family.Edges.pairs);
-    G_Family.Nodes.Family=FamilyID(ind);
-    nGroup(s)=Group;
-    nGroup(t)=Group;
-    G_Family.Nodes.Group=nGroup';
+    if isempty(s)
+        G_Family=[];
+    else
+        G_Family=digraph(s,t);
+        G_Family.Edges.pairs=[s,t];
+        G_Family.Edges.Group=Group;
+        G_Family.Edges.FamilyID=FamilyID;
+        G_Family.Edges.eRemove=zeros(nEdges,1,'logical');
+        G_Family.Edges.eIsParentAll=zeros(nEdges,1,'logical');
+        G_Family.Edges.eNotParentAll=zeros(nEdges,1,'logical');
+        G_Family.Edges.eNotParent=zeros(nEdges,1,'logical');
+        G_Family.Edges.eRelationship=zeros(nEdges,2,'int8');
+        G_Family.Edges.eGlobalID=[1:nEdges]';
+        G_Family.Nodes.GlobalID=[1:numnodes(G_Family)]';
+        % Construct node Family and Group
+        [~,ind]=unique(G_Family.Edges.pairs);
+        G_Family.Nodes.Family=FamilyID(ind);
+        nGroup(s)=Group;
+        nGroup(t)=Group;
+        G_Family.Nodes.Group=nGroup';
+    end
 end
-function [oriFamily,mori,eFType] = getOriFamily(G_Family,G_clust,grains,groupList,nGroups,nEdges,opt)
+function [G_Family,oriFamily,mori,eFType] = getOriFamily(G_Family,G_clust,grains,groupList,nGroups,nEdges,opt)
     oriAll=grains.meanOrientation ;
     areaAll=grains.area;
     ori1 = orientation.byEuler(zeros(nEdges,1),...
@@ -233,6 +252,10 @@ function [oriFamily,mori,eFType] = getOriFamily(G_Family,G_clust,grains,groupLis
             ori2(egroupFId(FamilyID(:,2)==j)) = mean(oriloop,'weights',arealoop);
         end 
     end
+    %Put the mean orientations in the graph for schmid computation
+    [~,ind]=unique(reshape(G_Family.Edges.pairs,[numel(G_Family.Edges.pairs),1]));
+    oriList=[ori1;ori2];
+    G_Family.Nodes.meanOri=oriList(ind);
     
     mori=inv(ori1).*ori2; 
     oriFamily=[ori1,ori2];
@@ -251,7 +274,7 @@ function [G_clust,G] = StoreSchmid(G_Family,G_clust,G,groupList,opt)
             nID = find(group==G.Nodes.Group);
 
             eFEffSF = G_Family.Edges.EffSF(eFID,:);
-            eFType = G_Family.Edges.meanTypeRlx(eFID);
+            eFType = G_Family.Edges.meanType(eFID);
             eFFamilyID=G_Family.Edges.FamilyID(eFID,:);
             nCFamilyID = G_clust.Nodes.FamilyID(nCID);
             nFamilyID = G.Nodes.FamilyID(nID);

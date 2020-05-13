@@ -1,6 +1,6 @@
 function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clust,G,grains,mGrains,opt)   
-%cleanFamilyTree automatically removes circular twin relationships and
-%outputs a list of groups that need user input to resolve.
+%cleanFamilyTree automatically removes circular twin relationships and outputs a group list for
+%cases that require user input
 
 %exflagGroup=-1 single frag
 %exflagGroup=0 clean family
@@ -9,13 +9,19 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
 %exflagGroup=3 no parent but twin relationships exist
 %exflagGroup=4 max number of generations hit while assigning generation
 %exflagGroup=5 not all fragments were related... something is wrong
-
+%exflagGroup=6 entered fix circular relationship fnc too many times
+%exflagGroup=7 circular relationship isn't obvious enough... manually solve
 %==========================================================================
    
     %loop over groups
     exflagGroup=zeros(length(groups),1);
-    i=1;
-    while i<=length(groups)
+%    576
+%    577
+%    580
+%    582
+%    585
+    groups=181
+    for i=1:length(groups)
         group=groups(i);
         
         %load edge and node properties for Family graph
@@ -28,13 +34,15 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
         eClustFamily = G_clust_sub.Edges.FamilyID;
         eClustType = G_clust_sub.Edges.type;
         nClustGeneration = -ones(numnodes(G_clust_sub),1,'int8');
-        nClustType = -ones(numnodes(G_clust_sub),1,'int8');      
+        nClustType = -ones(numnodes(G_clust_sub),1,'int8');     
+        nClustParentFamilyId = zeros(numnodes(G_clust_sub),1,'int8'); 
+        nClustSchmidVariant = zeros(numnodes(G_clust_sub),1,'int8'); 
+        nClustK1NAng = zeros(numnodes(G_clust_sub),1);
         
-        
-        contInnerWhile=true;
-        while contInnerWhile
+        loopcnt=1;maxloopcnt=3;
+        while loopcnt<maxloopcnt
             nFamily = G_Family_sub.Nodes.Family;
-            eType = G_Family_sub.Edges.meanTypeRlx;
+            eType = G_Family_sub.Edges.meanType;
             Parent = G_Family_sub.Edges.Parent;
             eFamily = G_Family_sub.Edges.FamilyID;
             nGeneration = -ones(numnodes(G_Family_sub),1,'int8');
@@ -42,15 +50,24 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
 
             if isempty(eType)
                 %Single fragment
+                G_clust.Nodes.type(nClustgroupId)=0;
+                G_clust.Nodes.Generation(nClustgroupId)=0;
                 G_clust.Nodes.computeFamily(nClustgroupId)=false;
+                G_clust.Nodes.ParentFamilyId(nClustgroupId)=0;
+                G_clust.Nodes.SchmidVariant(nClustgroupId)=0;
+                G_clust.Nodes.K1NAng(nClustgroupId)=0;
                 exflagGroup(i)=-1;
-                i=i+1;
-                contInnerWhile=false;
+                break
             elseif all(eType==0)
                 %Multiple fragments but no relationships
                 exflagGroup(i)=1;
-                i=i+1;
-                contInnerWhile=false;
+                G_clust.Nodes.type(nClustgroupId)=0;
+                G_clust.Nodes.Generation(nClustgroupId)=0;
+                G_clust.Nodes.computeFamily(nClustgroupId)=false;
+                G_clust.Nodes.ParentFamilyId(nClustgroupId)=0;
+                G_clust.Nodes.SchmidVariant(nClustgroupId)=0;
+                G_clust.Nodes.K1NAng(nClustgroupId)=0;
+                break
             else
 
                 %Make Family relation matrix 
@@ -63,26 +80,76 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
                 %Find child with more than one parent (circular relationship)
                 CircularRelationshipExists=any(sum(FamilyMatrix,1)>1);
 
-                if TooManyParentsExist
-                    exflagGroup(i)=2;
+                %Find the potential parents 
+                indegree=centrality(G_Family_sub,'indegree');
+                outdegree=centrality(G_Family_sub,'outdegree');
+                rootFamily=find(indegree==0 & outdegree>0);
+                
+                len=length(rootFamily);
+                if len~=1
+                    dist=G_Family_sub.Edges.FSgB
+                    dist(dist==0)=1;
+                    outCloseness=centrality(G_Family_sub,'outcloseness','cost',dist.^-1)  ;
+                    [~,ind]=max(outCloseness(rootFamily));
+                    rootFamily=rootFamily(ind);
+                end
+                
+                weights=G_Family_sub.Edges.FSgB
+                G_Family_sub.Edges.Weight=weights.^-1;
+                G_Family_sub.Edges.Id=[1:G_Family_sub.numedges]';
+                G_undir=graph(G_Family_sub.Edges)
+                G_undir.Nodes.FgBL=G_Family_sub.Nodes.FgBL;
+                for kk=1:20
+                    %Start loop
+                    [T,pred] = minspantree(G_undir,'Type','forest','Root',findnode(G_undir,rootFamily));
 
-                    if opt.debugFamilyTree
-                        fprintf('More than one parent is apparent.. fix manually\n')
-
-                        [G_clust,runCleanupAgain,i,exitCleanFamily] = ClusterEditor(group,G_clust,grains,mGrains,grains.meanOrientation,i,1,1,0,1,0); 
-                        if exitCleanFamily
-                            fprintf('exiting CleanFamilyTree\n')
-                            break;
-                        end
-                    else
-                       contInnerWhile=false;
-                       i=i+1;
+                    if kk~=1;
+                        isisomorphic(T,Told)
                     end
 
-                elseif CircularRelationshipExists
-                   [G_Family_sub] = fixCircularFamily(G_Family_sub,...
-                       FamilyMatrix,eFamily,eClustFamily,eClustType,Parent,opt)
+                    %Compute the new weights
+                    pairs=T.Edges.EndNodes;
+                    EFFSF=T.Edges.EffSF;
+                    FSgB=T.Edges.FSgB;
+                    FgBL=T.Nodes.FgBL;
+                    eId=T.Edges.Id;
+                    for k=1:T.numedges
+                       p1=pred(pairs(k,1));
+                       p2=pred(pairs(k,2));
 
+                       isOut=p2==pairs(k,:)|p1==pairs(k,:);
+                       if EFFSF(k,isOut)>0
+                           weights(eId(k))=(FSgB(k)/FgBL(pairs(k,~isOut))+abs(EFFSF(k,isOut))/0.5);
+                       else
+                           weights(eId(k))=(FSgB(k)/FgBL(pairs(k,~isOut)))
+                       end
+                    end
+                    Told=T;
+                    G_Family_sub.Edges.Weight=weights.^-1;
+                    G_undir=graph(G_Family_sub.Edges)
+                    G_undir.Nodes.FgBL=G_Family_sub.Nodes.FgBL;
+                end
+                
+                figure;
+                p = plot(G_undir);
+                highlight(p,T)
+                              
+                if TooManyParentsExist
+                   exflagGroup(i)=2;
+                   break
+                elseif CircularRelationshipExists
+                   [G_Family_sub,flagMSolv] = fixCircularFamily(G_Family_sub,...
+                       FamilyMatrix,eFamily,eClustFamily,eClustType,Parent,opt);
+                   
+                   if flagMSolv
+                        exflagGroup(i)=7;
+                        break;
+                   end
+                   
+                   loopcnt=loopcnt+1;
+                   if loopcnt==maxloopcnt
+                       exflagGroup(i)=6;
+                   end
                 else %Everything looks good to process!
 
                     %Add Type to the family matrix
@@ -95,31 +162,40 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
 
                     %Call labeling function
                     exflag=0;
-                    [nGeneration,nType,exflag] = fillGenerations(...
-                        FamilyMatrixType,nGeneration,nType,[],0,8,exflag,opt);
+                    nGeneration=-ones(max(nFamily),1,'int8');
+                    nType=zeros(max(nFamily),1,'int8');
+                    nParentFamilyId=zeros(max(nFamily),1,'int8');
+                    [nGeneration,nType,nParentFamilyId,exflag] = fillGenerations(...
+                        FamilyMatrixType,nGeneration,nType,nParentFamilyId,[],0,exflag,opt);
 
                     exflagGroup(i)=exflag;
 
                     %Store the generation and type data in G_clust for further
                     %processing and plotting
                     if exflag==0
+                        
+                        [nSchmidVariant,nK1NAng]=GetSchmidVariants(G_Family_sub,nParentFamilyId,nType,opt);
+                        
                         for j=1:max(nFamily)
                             lInd=nClustFamily==j;
                             nClustType(lInd)=nType(j);
+                            nClustParentFamilyId(lInd)=nParentFamilyId(j);
                             nClustGeneration(lInd)=nGeneration(j);
+                            nClustSchmidVariant(lInd)=nSchmidVariant(j);
+                            nClustK1NAng(lInd)=nK1NAng(j);
                         end
 
                         G_clust.Nodes.type(nClustgroupId)=nClustType;
                         G_clust.Nodes.Generation(nClustgroupId)=nClustGeneration;
+                        G_clust.Nodes.ParentFamilyId(nClustgroupId)=nClustParentFamilyId;
+                        G_clust.Nodes.SchmidVariant(nClustgroupId)=nClustSchmidVariant;
+                        G_clust.Nodes.K1NAng(nClustgroupId)=nClustK1NAng;
                         G_clust.Nodes.computeFamily(nClustgroupId)=false;
                     end
 
-                    contInnerWhile=false;
-                    i=i+1;
-                    
+                    break;                    
                 end
             end
-%         G_clust.Nodes.nClustgroupId
         end
     end
     
@@ -127,11 +203,14 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
     %kept. Note, G_clust has all the nodes of G but only a subset of edges.
     G.Nodes.type = G_clust.Nodes.type;
     G.Nodes.Generation = G_clust.Nodes.Generation;
+    G.Nodes.ParentFamilyId =G_clust.Nodes.ParentFamilyId;
+    G.Nodes.SchmidVariant=G_clust.Nodes.SchmidVariant;
+    G.Nodes.K1NAng=G_clust.Nodes.K1NAng;
     G.Nodes.computeFamily = G_clust.Nodes.computeFamily;
 
 end
-function [nGeneration,nType,exflag] = fillGenerations(FamilyMatrix,...
-                                        nGeneration,nType,genId,gen,maxGen,exflag,opt)
+function [nGeneration,nType,nParentFamilyId,exflag] = fillGenerations(FamilyMatrix,...
+                                        nGeneration,nType,nParentFamilyId,genId,gen,exflag,opt)
     %Simple recursive function to label type and generation 
     %exflag=1 no twin relationships
     %exflag=2 too many parents
@@ -150,6 +229,7 @@ function [nGeneration,nType,exflag] = fillGenerations(FamilyMatrix,...
         if numel(genId)==1
             nType(genId)=0;
             nGeneration(genId)=0;
+            nParentFamilyId(genId)=0;
             gen=1;
             
             %Assign unknown relationships a type so they don't get flagged
@@ -165,16 +245,18 @@ function [nGeneration,nType,exflag] = fillGenerations(FamilyMatrix,...
             end
             nType(:)=0;
             nGeneration(:)=-1;
+            nParentFamilyId(:)=0;
             return
         end
     end
-    if gen==maxGen
+    if gen>opt.maxGen
         %max number of generations hit
         exflag=4;
         
         %Reset nGeneration so we know to debug.
         nGeneration(:)=-1;
         nType(:)=0;
+        nParentFamilyId(:)=0;
         return
     else
         for i=1:length(genId)
@@ -182,9 +264,10 @@ function [nGeneration,nType,exflag] = fillGenerations(FamilyMatrix,...
             if ~isempty(genId1)
                 nGeneration(genId1)=gen;
                 nType(genId1)=FamilyMatrix(genId(i),genId1);
+                nParentFamilyId(genId1)=genId(i);
                 if any(nGeneration==-1)
-                    [nGeneration,nType,exflag] = fillGenerations(FamilyMatrix,...
-                        nGeneration,nType,genId1,gen+1,maxGen,exflag,opt);
+                    [nGeneration,nType,nParentFamilyId,exflag] = fillGenerations(FamilyMatrix,...
+                        nGeneration,nType,nParentFamilyId,genId1,gen+1,exflag,opt);
                 end
             end
         end
@@ -194,27 +277,29 @@ function [nGeneration,nType,exflag] = fillGenerations(FamilyMatrix,...
             end
             nGeneration(:)=-1;
             nType(:)=0;
+            nParentFamilyId(:)=0;
         end
     end
 end
-function [G_Family_sub] = fixCircularFamily(G_Family_sub,FamilyMatrix,eFamily,eClustFamily,eClustType,Parent,opt)
+function [G_Family_sub,flagMSolv] = fixCircularFamily(G_Family_sub,FamilyMatrix,eFamily,eClustFamily,eClustType,Parent,opt)
     %In the case of circular twin relations a child has more than 
     %one parent and a choice between edge relationships must be made
     
     %Initialize edges
     rEdge=[]; 
-
+    
     %For each child look for multiple parents
     cFList=find(sum(FamilyMatrix,1)>1);
     
     %Loop over children with too many parents
+    flagMSolv=false;
     for cF=cFList
         %For some child find all the parents
         pF=find(FamilyMatrix(:,cF));
 
         %Find the right edge for the parent/child relationships
         eId=zeros(length(pF),1);
-        FRgB=zeros(length(pF),1);
+        FSgB=zeros(length(pF),1);
         EffSF=zeros(length(pF),1);
         localEdges=zeros(length(pF),1);
         
@@ -223,30 +308,49 @@ function [G_Family_sub] = fixCircularFamily(G_Family_sub,FamilyMatrix,eFamily,eC
             PotentialEdges(eClustType==opt.twinUnknown)=false;     
             localEdges(kk)=sum(PotentialEdges);
             eId(kk)=find(sum(or(pF(kk)==eFamily,cF==eFamily),2)==2);
-            FRgB(kk)=G_Family_sub.Edges.FRgB(eId(kk),Parent(eId(kk),:));
+            FSgB(kk)=G_Family_sub.Edges.FSgB(eId(kk));
             G_Family_sub.Edges.Vote(eId(kk),Parent(eId(kk),:));
             EffSF(kk)=G_Family_sub.Edges.EffSF(eId(kk),Parent(eId(kk),:));    
         end
         
         %Prefer first grains that are touching, then vote based on schmid
-        if all(localEdges==0)
-            %No edges between touching grains. Then use the effective 
-            %schmid
-                        
-            %sort schmid and calculation difference
-            [EffSF_sorted,EffSF_I]=sort(EffSF);
-            rEdge=[rEdge;eId(EffSF~=EffSF_sorted(end))];
-        else
-            rEdge=[rEdge;eId(localEdges==0)];
-            eId(localEdges==0)=[];
-            EffSF(localEdges==0)=[];
-            %Check to see if there are still some circular relationships
-            if numel(localEdges~=0)>1
-                %sort schmid
+        if sum(localEdges~=0)>1 & opt.CircularRelationships.UseBoundary
+            %Then all families share boundary decide based on boundary
+            [FSgB_sorted,FSgB_I]=sort(FSgB);
+            
+            pgBdiff=abs(FSgB_sorted(end)-FSgB_sorted(end-1))/FSgB_sorted(end);
+            
+            if pgBdiff > opt.CircularRelationships.mingBpdiff
+                rEdge=[rEdge;eId(FSgB~=FSgB_sorted(end))];
+            else
                 [EffSF_sorted,EffSF_I]=sort(EffSF);
-                rEdge=[rEdge;eId(EffSF~=EffSF_sorted(end))];
+                
+                pEFFSFdiff=abs(EffSF_sorted(end)-EffSF_sorted(end-1))/EffSF_sorted(end);
+                
+                if pEFFSFdiff > opt.CircularRelationships.minEFFSFpdiff
+                    rEdge=[rEdge;eId(EffSF~=EffSF_sorted(end))]; 
+                else
+                    flagMSolv=true;
+                end
             end
-        end  
+            
+        elseif sum(localEdges~=0)==1 & opt.CircularRelationships.UseBoundary
+            %Assign the grain that shares boundary
+            rEdge=[rEdge;eId(localEdges==0)];
+        elseif opt.CircularRelationships.UseEFFSF
+            %Use the schmid factor to figure it out
+            [EffSF_sorted,EffSF_I]=sort(EffSF);
+
+            pEFFSFdiff=abs(EffSF_sorted(end)-EffSF_sorted(end-1))/EffSF_sorted(end);
+
+            if pEFFSFdiff > opt.CircularRelationships.minEFFSFpdiff
+                rEdge=[rEdge;eId(EffSF~=EffSF_sorted(end))]; 
+            else
+                flagMSolv=true;
+            end
+        else
+            flagMSolv=true;
+        end
     end 
     if ~isempty(rEdge)
         %Remove edge and retry 
