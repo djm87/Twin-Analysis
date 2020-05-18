@@ -165,11 +165,11 @@ function [G_Family_sub] = reduceGraph(G_Family_sub,opt)
     G_Family_sub=rmedge(G_Family_sub,find(eMask)); 
     
     %Find the candidate parents 
-    w=[1,1,1,0];
+    w=[1,1,0,0];
     gen=zeros(G_Family_sub.numnodes,1);
     eLen = edgeLength(G_Family_sub,G_Family_sub.Edges.EndNodes,gen,w,opt);
     outCloseness=centrality(G_Family_sub,'outcloseness','cost',eLen);
-    
+    outCloseness=outCloseness.*G_Family_sub.Nodes.FVol;
     isCandidate=outCloseness>0;
     numCandidates=sum(isCandidate);
     if numCandidates==1
@@ -188,7 +188,7 @@ function [G_Family_sub] = reduceGraph(G_Family_sub,opt)
     outCloseness(rootCandidates);
     root=rootCandidates(end);
     %Get the shortest path directed tree
-    w=[1,1,1,0];
+    w=[1,0,0,0];
     gen=zeros(G_Family_sub.numnodes,1);
     eLen = edgeLength(G_Family_sub,G_Family_sub.Edges.EndNodes,gen,w,opt);
     G_Family_sub.Edges.Weight=eLen;
@@ -253,7 +253,7 @@ function eLen = edgeLength(G,pairs,gen,w,opt)
     FSgB(FSgB==0)=1;
     FgBL=G.Nodes.FgBL;
     EFFSF=G.Edges.EffSF(:,1);
-    EFFSF(EFFSF>0)=0;%Parent is negative so if not a parent by SF maximum distance
+    EFFSF(EFFSF>0)=0;%Parent is positive so if not a parent by SF set the maximum distance
     FArea=G.Nodes.FArea;
     if G.numedges==1
         FPArea=sum(FArea(pairs));
@@ -301,7 +301,7 @@ function [T,pred,score,exflag,G_undir,gen] = minspangraph(G_Family_sub,root,opt)
              pairs(k,:)=fliplr(pairs(k,:));  
            end
         end
-        w=[1,1,1,0];
+        w=[1,0,0,0];
         eId=T.Edges.Id;
         Weights(eId)=edgeLength(T,pairs,gen,w,opt);
 %         [pairs,Weights(eId)]

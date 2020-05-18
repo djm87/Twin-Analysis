@@ -1,4 +1,4 @@
-function [twinOut] = getTwinProperties(twin)  
+function [twinOut,nTwin,twinUnknown] = getTwinProperties(twin)  
 
     %Structure the twin output
     ntwin=length(twin);    
@@ -68,6 +68,10 @@ function [twinOut] = getTwinProperties(twin)
     end
 %     twin(find(toRemove))=[];
     twinOut{cnt}.name='unknown internal';
+    
+     %store nTwin and twinUnknown index
+     nTwin=cnt-1;
+     twinUnknown=cnt;
     
 end
 

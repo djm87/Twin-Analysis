@@ -187,23 +187,49 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
     while cnt<=opt.mergeByGeometry.itter    
         %Merge grains based on edge combineCleaned list
         [mGrains,parentId,mTwinGb,G.Edges.GbInd] = MergeByEdge(G.Edges.pairs,G.Edges.GbInd,G.Edges.combineCleaned,grains);    
+
+        %Plot full graph
+%         labelNodes=true;labelEdges=false;plotG=false;legendOn=false;
+%         fhandle = plotGraph(grains,mGrains,G,...
+%          grains.meanOrientation,1:length(grains),...
+%          labelNodes,labelEdges,legendOn,plotG,[]);
         
         %Get the ratios of boundary shared by merged grains
         SBR = SharedBoundaryRatio(mGrains);
 
-        %Get small grains for merging
+        %Create merged graph to handle cluster merging
         [~,mPairs]=neighbors(mGrains);
-        smallmGrains=mGrains.grainSize< opt.mergeByGeometry.SGT; 
+        s=mPairs(:,1);
+        t=mPairs(:,2);
+        G_geo=graph(s,t);
+        G_geo.Edges.GlobalID=[1:G_geo.numedges]';
+        
+        %To simplify edge id extraction from a node pair
+        mPairs=G_geo.Edges.EndNodes; 
+        maxEdgeId=size(mPairs,1);
+        AllmPairs=vertcat(mPairs,fliplr(mPairs));
+        AllmPairId=double(vertcat(G_geo.Edges.GlobalID,G_geo.Edges.GlobalID));
+        meEdgeId=sparse(AllmPairs(:,1),AllmPairs(:,2),AllmPairId,maxEdgeId,maxEdgeId);
+        
+        %Get small grains for merging
+        G_geo.Nodes.small=mGrains.grainSize< opt.mergeByGeometry.SGT; 
         
         %Get high aspect ratio grains for merging 
-        largeARmGrains=mGrains.aspectRatio > opt.mergeByGeometry.ART &...
+        G_geo.Nodes.largeAR=mGrains.aspectRatio > opt.mergeByGeometry.ART &...
             mGrains.grainSize < opt.mergeByGeometry.MARGST ; 
         
 %         figure;plot(grains([nId_clust;nId]),grains([nId_clust;nId]).meanOrientation)
-%         figure;plot(grains([nId_clust]),grains([nId_clust]).meanOrientation)
+% %         figure;plot(grains([nId_clust]),grains([nId_clust]).meanOrientation)
 %         figure;plot(mGrains([510,9]),mGrains([510,9]).area)
+
+        %To prevent
+        meGID=zeros(G_geo.numedges,1);
+        mnType=zeros(G_geo.numnodes,1);
+        mnSBR=zeros(G_geo.numnodes,1,'logical');
+        
         combineMergeByGeometry=zeros(size(ePairs,1),1,'logical');
         GBTypeRlx=G.Edges.GBTypeRlx;
+        pairs=G.Edges.pairs;
         for i=1:length(mGrains)
             %Try merging based on boundary ratios. i.e. if cluster/fragment
             %is mostly internal to another cluster/fragment
@@ -228,16 +254,24 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
                     
                     %If the a twin type boundary(s) exist use those, else use first boundary that
                     %enables the merging.
-                    isTwin=GBTypeRlx(eAllIDAdd)>0;
-                    if any(isTwin)
-                        combineMergeByGeometry(eAllIDAdd(isTwin))=true;
-                    else
-                        combineMergeByGeometry(eAllIDAdd(1))=true;
+%                     isTwin=GBTypeRlx(eAllIDAdd)>0;
+%                     if any(isTwin)
+%                         combineMergeByGeometry(eAllIDAdd(isTwin))=true;
+%                     else
+%                         combineMergeByGeometry(eAllIDAdd(1))=true;
+%                     end
+                    if ~isempty(eAllIDAdd)
+%                         combineMergeByGeometry(eAllIDAdd(1))=true;
+%                         mnId = parentId(eAllIDAdd(1));
+                        meId=meEdgeId(parentId(pairs(eAllIDAdd(1),1)),parentId(pairs(eAllIDAdd(1),2)));
+                        meGID(meId)=eAllIDAdd(1);
+                        mnSBR(mergeBySBR(j))=true;
+                        mnType(mergeBySBR(j))=1;
                     end
                 end
             end
             
-            if smallmGrains(i) || largeARmGrains(i)
+            if (G_geo.Nodes.small(i) || G_geo.Nodes.largeAR(i)) && mnType(i)==0
                 %find neighboring merged grains
                 indNeighbors1=find(mPairs(:,1)==i);
                 indNeighbors2=find( mPairs(:,2)==i);
@@ -255,7 +289,7 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
 
                 %Based on the vote merge neighboring grains
                 [valMax,locMax]=max(mergeVote);
-                if valMax>0
+                if valMax>0 & mnType(nIdmNeighbors(locMax))==0
                     nIdNeighbors=find(nIdmNeighbors(locMax)==parentId);
                     eAllID_clust=nonzeros(eEdgeId(nIdNeighbors,:));
                     
@@ -270,29 +304,66 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
 
                         %If the a twin type boundary(s) exist use those, else use first boundary that
                         %enables the merging.
-                        isTwin=GBTypeRlx(eAllIDAdd)>0;
-                        if any(isTwin)
-                            combineMergeByGeometry(eAllIDAdd(isTwin))=true;
-                        elseif ~isempty(eAllIDAdd)
-                            combineMergeByGeometry(eAllIDAdd(1))=true;
+%                         isTwin=GBTypeRlx(eAllIDAdd)>0;
+%                         if any(isTwin)
+%                             combineMergeByGeometry(find(eAllIDAdd(isTwin))=true;
+                        if ~isempty(eAllIDAdd)
+%                             combineMergeByGeometry(eAllIDAdd(1))=true;
+                            meId=meEdgeId(parentId(pairs(eAllIDAdd(1),1)),parentId(pairs(eAllIDAdd(1),2)));
+                            meGID(meId)=eAllIDAdd(1);
+                            mnType(i)=2;
                         end
                     end
                 end
             end
         end
 
+        %Get the main grains using largeAR and small grains as mask
+        G_geo.Edges.combine=meGID~=0;
+        G_geo.Edges.eGID=meGID;
+        G_geo.Nodes.SBR=mnSBR;
+        G_geo.Nodes.eType=mnType;
+        G_geo.Nodes.centroids=mGrains.centroid;
+        %Remove edges to make reduced graph over the clusters
+        G_geo_clust=rmedge(G_geo,G_geo.Edges.EndNodes(~G_geo.Edges.combine,1),...
+            G_geo.Edges.EndNodes(~G_geo.Edges.combine,2));
+
+
+        %Find the large grains
+%         G_geo_clust.Nodes.isLarge=~(G_geo_clust.Nodes.largeAR & G_geo_clust.Nodes.small & G_geo_clust.Nodes.SBR);
+%         geo_connect = conncomp(G_geo_clust);
+%         geo_groups=unique(geo_connect);
+%         for i=1:length(geo_groups)
+%             %Extract the subgraph
+%             mnId=find(geo_connect==i);
+%             G_geo_clust_sub = subgraph(G_geo_clust,mnId);
+%             
+%             %Find any merged grains that include two or more large grains that shouldn't be merged
+%             nLarge=sum(G_geo_clust_sub.Nodes.isLarge);
+%             if nLarge>1
+% %                 %The only problem nodes are those that apply two merging operations on grain
+% %                 %We don't allow double merging from shareboundary and small grains, but double
+% %                 %merging can occur for 
+% %                 nType2=find(G_geo_clust_sub.Nodes.nType==2);
+% %                 
+% %                 
+% %                 meType(meId)=1;
+%                 G_geo_clust=rmnode(G_geo_clust,mnId);
+%             end
+%         end
+% 
+%         %Plot full graph
+%         labelNodes=true;labelEdges=false;plotG=true;legendOn=false;
+%         fhandle = plotGraph(grains,mGrains,G_geo_clust,...
+%          grains.meanOrientation,1:length(grains),...
+%          labelNodes,labelEdges,legendOn,plotG,[]);
+        
+        %Two large grains should not be combined. To avoid merging to the wrong cluster, the merge
+        %process is performed iteratively, and when two large grains are in a cluster, they are both
+        %removed. Next iteration the merging direction is determined. 
+        combineMergeByGeometry(G_geo.Edges.eGID(G_geo.Edges.combine))=true;
         if any(combineMergeByGeometry)
             
-            %Add edges
-%             eAddId=cell(size(eAddList,1),1);
-%             for i=1:size(eAddList,1)
-%                 eAddId{i}=find(all(eAddList(i,:)==G.Edges.pairs,2) | all(fliplr(eAddList(i,:))==G.Edges.pairs,2));
-%             end
-%             eAddId=cell2mat(eAddId);
-%             typeAdd=G.Edges.GBTypeRlx		;
-%             typeAdd(typeAdd==0)=opt.twinUnknown; %Unknown Type
-%           type  
-
             %Clean the type
             typeTmp=G.Edges.GBTypeRlx(combineMergeByGeometry);
             typeTmp(typeTmp==0)=opt.twinUnknown;

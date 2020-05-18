@@ -77,7 +77,6 @@ function [G_Family] = FamilyVotes(G_Family,G_clust,groupList,grains,opt)
             %Family Boundaries (returns a cell)
             [FgB] = FamilyGrainBoundary(nGrains,FID,nID,mineral);
             
-
             %Boundary length ratio between connected families
             [FRgB,FSgB,FgBL] = GrainBoundaryRatio(FgB,FamilyID);
             G_Family.Edges.FSgB(egroupFId) = FSgB;
@@ -164,8 +163,8 @@ function [FRgB,FSgB,FgBL] = GrainBoundaryRatio(FgB,FamilyID)
         FgBL(FamilyID(j,2))=n2gBLength;
         n12gBLength=sum((~has0 & hasn1));
         FSgB(j)=sum(hasn1&hasn2);
-        FRgB(j,1)=(n12gBLength/n2gBLength-n12gBLength/n1gBLength);
-        FRgB(j,2)=(n12gBLength/n1gBLength-n12gBLength/n2gBLength);
+        FRgB(j,1)=(FSgB(j)/n2gBLength-FSgB(j)/n1gBLength);
+        FRgB(j,2)=(FSgB(j)/n1gBLength-FSgB(j)/n2gBLength);
     end
 
 end
