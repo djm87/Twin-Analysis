@@ -9,8 +9,8 @@ function [twinOut,nTwin,twinUnknown] = getTwinProperties(twin)
     for i=1:ntwin
                 
         %Define the transformation types
-        tType{1}=orientation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
-        tType{2}=orientation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS);   
+        tType{1}=rotation.byMatrix([-1  0  0;0 -1  0;0  0 1],twin{i}.CS);
+        tType{2}=rotation.byMatrix([1  0  0;0 -1  0;0  0 -1],twin{i}.CS);   
         
         %handle double and single twins
         if length(twin{i}.k1)==2
@@ -53,14 +53,22 @@ function [twinOut,nTwin,twinUnknown] = getTwinProperties(twin)
 
             % Compute misorientation axis and angle
             twin{i}.axis=round(twin{i}.RMT.axis);
-            twin{i}.angle=angle(twin{i}.RMT)/degree;
+            twin{i}.angle=angle(twin{i}.RMT)/degree;            
+%             twin{1}.Rtw
+%             [round(twin{1}.RMT.axis.symmetrise('unique'));-round(twin{1}.RMT.axis.symmetrise('unique'))]
+%             tmp=orientation.byMiller(twin{1}.eta1,twin{1}.k1,twin{1}.CS)
+%             tmp.symmetrise('unique')
             
             % Compute twin axis variants 
-            twin{i}.axisVariants=[twin{i}.axis.symmetrise('unique');-twin{i}.axis.symmetrise('unique')];
+            twin{i}.axisVariants=twin{i}.variantRotations*twin{i}.axis;
             
             % Compute the slip systems for schmid calculations
-            twin{i}.sS=slipSystem(twin{i}.eta1,twin{i}.k1);
-
+            twin{i}.sS=twin{i}.variantRotations*slipSystem(twin{i}.eta1,twin{i}.k1);
+            
+            %Redefine the Rtw based on the variants 
+            twin{i}.Rtw=orientation.map(twin{i}.sS.n,twin{i}.CS.cAxis,...
+                twin{i}.sS.b,twin{i}.CS.aAxis); 
+            
             %Transfer to twinOut
             twinOut{cnt}=twin{i};
             cnt=cnt+1;

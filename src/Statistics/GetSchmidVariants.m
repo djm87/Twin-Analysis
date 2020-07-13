@@ -34,6 +34,44 @@ function [schmidVariantRank,k1NormalAngle]=GetSchmidVariants(G_Family_sub,nParen
     %Loop over edges
     for i = 1:ngrains  
         
+            vari = grainsA(i)*opt.twin{type}.axisVariants;
+
+            %set a rotation around that axis
+            rot = rotation('axis',vari,'angle',opt.twin{type}.angle*degree);
+
+            % rotate the c axis around the twin axis, and save orientation of the
+            % variant
+            oriV=rot*grainsA(i);
+        %     round(oriV(j)*sSLocal.n)    %save the deviation of the varinat from the other grain
+            angV=angle(oriV, grainsB(i))/degree
+   
+        for j=1:6
+            
+%             gA = inv(grainsA(i).symmetrise); 
+            gB = inv(oriV(j).symmetrise);
+
+            %Compute grain misorientation                
+            mori = gA * oriV(j).symmetrise;
+            MM = mori(:,:) * twin{type}.RMT'; 
+
+            %Get the smallest misorientation and its sym operation
+            angs = angle(MM, 'noSymmetry') ./ degree;
+            [~,id] = min(angs);
+
+            [sym_ops1,sym_ops2] = ...
+                ind2sub([sqrt(length(MM)) sqrt(length(MM))],id);
+            
+            %Get the stress in the twin frame i.e. s->c->t
+            sigmaA = matrix(twin{type}.Rtw * (gA(sym_ops1) * sigma));
+            sigmaB = matrix(twin{type}.Rtw * (gB(sym_ops2) * sigma));
+
+            %Extract the stress on the k1 plane in eta1 direction
+            sigma13(i,:) = [sigmaA(1,3),sigmaB(1,3)];
+
+            %Compute the effective schmid factor
+            values(j)=sigmaA(1,3) / (2*tauMax)
+        end
+        
         %For each possible variant determine the ideal child grain and the
         %corresponding schmid factor
         %Get the rotation axes

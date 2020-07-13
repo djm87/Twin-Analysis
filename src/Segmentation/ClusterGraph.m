@@ -8,7 +8,7 @@ function [G_clust,G,mGrains] = ClusterGraph(G,grains,opt)
     
     % Load content of files
     eAddList=load(flist{1}); %Adds edge and tries to give it a twin relationship, otherwise type twin unknown
-    eAddList(eAddList>G.numedges)=[];
+    eAddList(find(any(eAddList>G.numedges,2)),:)=[];
     eRemoveList=load(flist{2}); %Remove the edge 
     eRemoveList(eRemoveList>G.numedges)=[];
     nRemoveList=load(flist{3}); %Removes all edges associated with node
@@ -89,6 +89,7 @@ function [G_clust,G,mGrains] = ClusterGraph(G,grains,opt)
     
     %Assign group Ids using mGrains id
     [G_clust.Nodes.Group,G_clust.Edges.Group] = GroupsFromGraph(G_clust.Edges.pairs,length(grains),length(mGrains),parentId);
+    G.Nodes.Group=G_clust.Nodes.Group;
     
     %Transfer still valid Family and family vote info to G_clust.. build
     %list of groups that need to be computed
@@ -187,7 +188,15 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
     while cnt<=opt.mergeByGeometry.itter    
         %Merge grains based on edge combineCleaned list
         [mGrains,parentId,mTwinGb,G.Edges.GbInd] = MergeByEdge(G.Edges.pairs,G.Edges.GbInd,G.Edges.combineCleaned,grains);    
-
+        
+        %Rebuild the family mean orientations 
+        mFamilyCenters=cell(length(mGrains),1);
+        for i=1:length(mGrains)
+            [~,mFamilyCenters{i}]=calcCluster(ori(parentId==i),'maxAngle',opt.grain_recon.FamilyMisTol,'method','hierarchical');
+%             misFamily=unique(angle_outer(mFamilyCenters{3214},mFamilyCenters{3214})./degree)
+%             min(misFamily(misFamily>opt.grain_recon.FamilyMisTol))/2;
+        end
+        
         %Plot full graph
 %         labelNodes=true;labelEdges=false;plotG=false;legendOn=false;
 %         fhandle = plotGraph(grains,mGrains,G,...
@@ -281,9 +290,9 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
                 %find neighbors that contain the orientation
                 mergeVote=zeros(length(nIdmNeighbors),1);
                 for k=1:length(nIdmNeighbors)
-                    nIdNeighbors=find(nIdmNeighbors(k)==parentId);
+%                     nIdNeighbors=find(nIdmNeighbors(k)==parentId);
                     for j=1:length(nIdsmallGrains)
-                        mergeVote(k)=mergeVote(k)+sum(angle(ori(nIdsmallGrains(j)),ori(nIdNeighbors)) <  opt.mergeByGeometry.FamilyMisTol);
+                        mergeVote(k)=mergeVote(k)+sum(angle(ori(nIdsmallGrains(j)),mFamilyCenters{nIdmNeighbors(k)}) <   opt.grain_recon.FamilyMisTol);
                     end
                 end
 
