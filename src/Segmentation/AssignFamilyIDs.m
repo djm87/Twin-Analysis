@@ -19,7 +19,7 @@ function [G_clust,G] = AssignFamilyIDs(G_clust,G,grains,mGrains,opt)
         egroupId= find((group==groups));
         ngroupId= find((group==groups));
 
-        FamilyID{i}=GetFamily(mOri(ngroupId),opt.grain_recon.FamilyMisTol); 
+        FamilyID{i}=GetFamily(mOri(ngroupId),opt.grain_recon.FamilyMisTol,opt.grain_recon.segAngle); 
         nodeID{i}=ngroupId;
         typeUnknownLocal{i}=typeunknown(ngroupId);
         %unknow types are ignored during the tree. So that we don't affect the

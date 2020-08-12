@@ -15,7 +15,7 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
    
     %loop over groups
     exflagGroup=zeros(length(groups),1);
-%     groups=268
+    groups=588
     for i=1:length(groups)
         group=groups(i);
         
@@ -221,7 +221,7 @@ function [G_Family_sub] = reduceGraph(G_Family_sub,opt)
 %     eMask(TR.Edges.Id)=false;
 %     G_Family_sub_tmp=rmedge(G_Family_sub_tmp,find(eMask)); 
 
-%     figure;p = plot(G_Family_sub_tmp);
+    figure;p = plot(G_Family_sub_tmp);
 %     highlight(p,TR,'EdgeColor','r')
     [G_Family_sub] = minSpanFamilyTree(G_Family_sub_tmp,root,opt);
 %     [T,pred,score,exflag,G_undir,gen] = minspangraph(G_Family_sub_tmp,root,opt);
@@ -470,10 +470,22 @@ function [G_Family_sub] = minSpanFamilyTree(G_Family_sub,root,opt)
         eRemove(eIdadd)=false;
     end
     
+    figure;p = plot(G_Family_sub);
+    pair1=G_Family_sub.Edges.EndNodes(:,1);
+    pair2=G_Family_sub.Edges.EndNodes(:,2);
+    npairs=length(pair1);
+    labeledge(p,pair1,pair2,G_Family_sub.Edges.meanType); 
+    
     %Create the MS
     G_MST=rmedge(G_undir,find(eRemove)); 
     G_Family_sub=rmedge(G_Family_sub,G_undir.Edges.Id(eRemove)); 
-  
+
+        figure;p = plot(G_Family_sub);
+    pair1=G_Family_sub.Edges.EndNodes(:,1);
+    pair2=G_Family_sub.Edges.EndNodes(:,2);
+    npairs=length(pair1);
+    labeledge(p,pair1,pair2,G_Family_sub.Edges.meanType); 
+    
 %     %Flip edges that so the predessesor (pred) from minspangraph is represented by the directional
 %     %graph
     eFlip = edgesToFlip(G_Family_sub,G_MST,pred,root);

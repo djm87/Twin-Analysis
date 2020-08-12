@@ -1,4 +1,4 @@
-function [Family] = GetFamily(ori,seg_angle)
+function [Family] = GetFamily(ori,misTol,LABTol)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 %     len=length(ori);
@@ -8,7 +8,73 @@ function [Family] = GetFamily(ori,seg_angle)
 %     cnt=1;
 %     misOriAng={};
 %     meanOri={};
-    [Family,center] = calcCluster(ori,'maxAngle',seg_angle,'method','hierarchical');
+    [cId,fCenters] = calcCluster(ori,'maxAngle',misTol,'method','hierarchical');
+
+    %Get the misorientation between family
+    while 1
+        FamilyMis=round(triu(angle_outer(fCenters,fCenters)./degree),4);
+        [r,c]=find(FamilyMis~=0);
+ 
+        if isempty(r) || isempty(c), break; end
+        unchangedCnt=0;
+        for j=1:size(r,1)
+            rid=find(cId==r(j));
+            cid=find(cId==c(j));
+            if ~isempty(rid) && ~isempty(cid)
+                orir=ori(rid);
+                oric=ori(cid);
+
+                d = full(abs(dot_outer(orir,oric)));
+                dr = full(abs(dot_outer(orir,orir)));
+                dc = full(abs(dot_outer(oric,oric)));
+
+                dstart=d;
+                cIdstart=cId;
+                % progress(0,length(ori));
+                while 1
+
+                  % find smallest pair
+                  [omega,id] = max(d(:));
+
+                  if omega<cos(LABTol), break; end
+
+                  [l,m] = ind2sub(size(d),id);
+
+                  cId(cid(m))=cId(rid(l));
+
+                  d(l,m)=0;
+                end
+                if all(d(:)==dstart(:)) && all(cId(:)==cIdstart(:))
+                    unchangedCnt=unchangedCnt+1;
+                end
+
+            else
+                unchangedCnt=unchangedCnt+1;
+            end
+        end
+        if unchangedCnt==size(r,1), break; end
+
+%         fcnt=1;
+%         for j=1:max(cId)
+%             ind=cId==j;
+%             if any(ind)
+%                 fCenters(fcnt)=mean(ori(ind));
+%                 fcnt=fcnt+1;
+%             end
+%         end
+    end
+    Family=cId;
+    
+    cnt=1;
+    for i=1:max(Family)
+        ind=i==Family;
+        if any(ind)
+            Family(ind)=cnt;
+            cnt=cnt+1;
+        end
+    end
+%     fCenters(fcnt:end)=[];
+    
     
 %     figure; 
 %     oR=fundamentalRegion(ori.CS)
