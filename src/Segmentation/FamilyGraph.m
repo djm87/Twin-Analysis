@@ -209,6 +209,8 @@ function [G_Family,nEdges] = InitializeFamilyGraph(pairSize,pairIndexes,nFamilyG
         G_Family.Edges.eRelationship=zeros(nEdges,2,'int8');
         G_Family.Edges.eGlobalID=[1:nEdges]';
         G_Family.Nodes.GlobalID=[1:numnodes(G_Family)]';
+        G_Family.Nodes.root=zeros(numnodes(G_Family),1,'logical');
+
         % Construct node Family and Group
         [~,ind]=unique(G_Family.Edges.pairs);
         G_Family.Nodes.Family=FamilyID(ind);

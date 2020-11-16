@@ -192,7 +192,7 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
         %Rebuild the family mean orientations 
         mFamilyCenters=cell(length(mGrains),1);
         for i=1:length(mGrains)
-            [~,mFamilyCenters{i}]=calcCluster(ori(parentId==i),'maxAngle',opt.grain_recon.FamilyMisTol,'method','hierarchical');
+            [~,mFamilyCenters{i}]=calcCluster(ori(parentId==i),'maxAngle',opt.mergeByGeometry.FamilyMisTol,'method','hierarchical');
 %             misFamily=unique(angle_outer(mFamilyCenters{3214},mFamilyCenters{3214})./degree)
 %             min(misFamily(misFamily>opt.grain_recon.FamilyMisTol))/2;
         end
@@ -292,7 +292,7 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
                 for k=1:length(nIdmNeighbors)
 %                     nIdNeighbors=find(nIdmNeighbors(k)==parentId);
                     for j=1:length(nIdsmallGrains)
-                        mergeVote(k)=mergeVote(k)+sum(angle(ori(nIdsmallGrains(j)),mFamilyCenters{nIdmNeighbors(k)}) <   opt.grain_recon.FamilyMisTol);
+                        mergeVote(k)=mergeVote(k)+sum(angle(ori(nIdsmallGrains(j)),mFamilyCenters{nIdmNeighbors(k)}) <   opt.mergeByGeometry.FamilyMisTol);
                     end
                 end
 

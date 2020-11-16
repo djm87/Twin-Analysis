@@ -100,6 +100,7 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
                 mode,value,plotNeighbors]=familyEditorInterface(group,igroup,iouterGroup,...
                 G_Family,G_Family_sub,G_clust,grains,exitExternal,mode,value) 
     try
+    fprintf('Current root: %d\n',unique(G_clust.Nodes.FamilyID(group==G_clust.Nodes.Group & G_clust.Nodes.type==0)))
     fprintf('Edge List \n')
     for j=1:numedges(G_Family_sub)
         fprintf('Id: %5d, type: %3d, Pair/Parent: %5d %5d,  %1d %1d\n',j,...
@@ -116,9 +117,10 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
     fprintf('2 to remove edges connected to Family\n')
     fprintf('3 to flip parent relationship\n')
     fprintf('4 to plot the grain a different way\n')
-    fprintf('5 to switch editor mode to cluster\n')
-    fprintf('6 go back to previous grain\n')
-    fprintf('7 cycle\n')
+    fprintf('5 to specify root\n')
+    fprintf('6 to switch editor mode to cluster\n')
+    fprintf('7 go back to previous grain\n')
+    fprintf('8 cycle\n')
     
     %Initialize
     plotNeighbors=false;
@@ -203,6 +205,7 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
             fprintf('2 to plot FamilyId\n')
             fprintf('3 to plot EffSchmid\n')
             fprintf('4 to plot Initial ODF VF\n')
+%             fprintf('5 to current Twin and Gen Map\n')
             while true
                 inputMsg='Enter plot option number: ';
                 errorMsg='Please input a valid option or hit enter to go back to menu';
@@ -237,10 +240,26 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
             end
             exitExternal=false;
             return
-        elseif option==5
+        elseif option==5 
+            while true
+                inputMsg='Specify Family: ';
+                errorMsg='Must specify a valid family number';
+                fId_sub = getUserInput(inputMsg,errorMsg,'scalar',true);
+                if fId_sub>0 && fId_sub<=max(G_Family_sub.Nodes.Family)
+                    G_Family.Nodes.root(group==G_Family.Nodes.Group)=false;
+                    G_Family.Nodes.root(group==G_Family.Nodes.Group &...
+                        fId_sub==G_Family.Nodes.Family)=true;
+                    return;
+                elseif isempty(nodeId)
+                    break;
+                else
+                    fprintf('%s\n',errorMsg)
+                end
+            end
+        elseif option==6
             mode=2;
             return;
-        elseif option==6
+        elseif option==7
             fprintf('going back to previous grain\n');
             igroup=igroup-1;
             iouterGroup=iouterGroup-1;
@@ -250,7 +269,7 @@ function [G_Family_sub,G_Family,igroup,iouterGroup,exitExternal,...
             else
                 return
             end
-        elseif option==7
+        elseif option==8
             fprintf('Cycle GraphEditor\n');
             return
         elseif isempty(option)

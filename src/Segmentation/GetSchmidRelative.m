@@ -52,12 +52,13 @@ function [G_Family,edgeList] = GetSchmidRelative(G_Family,groupList,oriFamily,ty
             
             sigmaA=matrix(twin{type}.Rtw * inv(grainsA(i)) * sigma);
             sigmaB=matrix(twin{type}.Rtw * inv(grainsB(i)) * sigma);
+            reshape(sigmaA(1,3,:),6,1)
 
             %Extract the stress on the k1 plane in eta1 direction
             sigma13(i,:) = [sigmaA(1,3,aVB),sigmaB(1,3,aVA)];
 
             %Compute the effective schmid factor
-            EffSF(i,:) = [sigmaA(1,3) / (2*tauMax),sigmaB(1,3) / (2*tauMax)];
+            EffSF(i,:) = [sigmaA(1,3,aVA) / (2*tauMax),sigmaB(1,3,AVB) / (2*tauMax)];
             
             %Active variant 
             SFAV(i,:) = [aVA,aVB];

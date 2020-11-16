@@ -67,6 +67,7 @@ function [G_Family] = FamilyVotes(G_Family,G_clust,groupList,grains,opt)
             G_Family.Edges.FRArea(egroupFId,:) = FRArea; 
 
             %Max Family initial ODF volume
+            
             [FVol,nFVol] = InitialODFVol(Vol,FID,nFID);
             G_Family.Nodes.FVol(ngroupFId) = nFVol;
 
@@ -122,8 +123,11 @@ function [FVol,nFVol] = InitialODFVol(Vol,FID,nFID)
         nFVol(:)=1;
     else
         for j=1:max(FID)
-            FVol(j)=max(Vol(FID==j));
-            nFVol(nFID==j)=FVol(j);
+            tmp=max(Vol(FID==j));
+            if ~isempty(tmp)
+                FVol(j)=tmp;
+                nFVol(nFID==j)=tmp;
+            end
         end 
     end
 end

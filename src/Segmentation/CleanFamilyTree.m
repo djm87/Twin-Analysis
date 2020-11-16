@@ -14,8 +14,12 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
 %==========================================================================
    
     %loop over groups
+    G_clust.Nodes.SFAV=zeros(G_clust.numnodes,1);
+    G_clust.Nodes.SFAVR=zeros(G_clust.numnodes,1);
+    G_clust.Nodes.EffSF=zeros(G_clust.numnodes,1);
     exflagGroup=zeros(length(groups),1);
-    groups=588
+    progress(0,length(groups));
+%     groups=588
     for i=1:length(groups)
         group=groups(i);
         
@@ -31,8 +35,11 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
         nClustGeneration = -ones(numnodes(G_clust_sub),1,'int8');
         nClustType = -ones(numnodes(G_clust_sub),1,'int8');     
         nClustParentFamilyId = zeros(numnodes(G_clust_sub),1,'int8'); 
-        nClustSchmidVariant = zeros(numnodes(G_clust_sub),1,'int8'); 
-        nClustK1NAng = zeros(numnodes(G_clust_sub),1);
+%         nClustSchmidVariant = zeros(numnodes(G_clust_sub),1,'int8'); 
+%         nClustK1NAng = zeros(numnodes(G_clust_sub),1);
+        nSFAV = zeros(numnodes(G_clust_sub),1,'int8'); 
+        nSFAVR = zeros(numnodes(G_clust_sub),1,'int8'); 
+        nEffSF = zeros(numnodes(G_clust_sub),1); 
         
         loopcnt=1;maxloopcnt=3;
         while loopcnt<maxloopcnt
@@ -64,7 +71,8 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
                 G_clust.Nodes.K1NAng(nClustgroupId)=0;
                 break
             else
-                fprintf('group:%d, progress: %d/%d\n',group,i,length(groups))
+                progress(i,length(groups));
+%                 fprintf('group:%d, progress: %d/%d\n',group,i,length(groups))
                 ismg = ismultigraph(G_Family_sub);
                 if ~ismg & opt.familyTree.useMinSpanTree
                     [G_Family_sub] = reduceGraph(G_Family_sub,opt);
@@ -113,7 +121,7 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
                     exflag=0;
                     nGeneration=-ones(max(nFamily),1,'int8');
                     nType=zeros(max(nFamily),1,'int8');
-                    nParentFamilyId=zeros(max(nFamily),1,'int8');
+                    nParentFamilyId=zeros(max(nFamily),1);
                     [nGeneration,nType,nParentFamilyId,exflag] = fillGenerations(...
                         FamilyMatrixType,nGeneration,nType,nParentFamilyId,[],0,exflag,opt);
 
@@ -124,21 +132,31 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
                     if exflag==0
                         
 %                         [nSchmidVariant,nK1NAng]=GetSchmidVariants(G_Family_sub,nParentFamilyId,nType,opt);
-                        
+%                         [G_Family,edgeList] = GetSchmidRelative(G_Family_sub,1,G_Family_sub.Nodes.meanOri,eType,opt)
                         for j=1:max(nFamily)
                             lInd=nClustFamily==j;
                             nClustType(lInd)=nType(j);
                             nClustParentFamilyId(lInd)=nParentFamilyId(j);
                             nClustGeneration(lInd)=nGeneration(j);
-%                             nClustSchmidVariant(lInd)=nSchmidVariant(j);
-%                             nClustK1NAng(lInd)=nK1NAng(j);
+                            tmppair=[nParentFamilyId(j),j];
+                            tmpEId=all(G_Family_sub.Edges.pairs==tmppair,2) | all(G_Family_sub.Edges.pairs==fliplr(tmppair),2);
+                            isParent=G_Family_sub.Edges.pairs(tmpEId,:)==nParentFamilyId(j);
+                            if ~isempty(isParent) && any(isParent)
+                                nSFAV(lInd)=G_Family_sub.Edges.SFAV(tmpEId,isParent);
+                                nSFAVR(lInd)=G_Family_sub.Edges.SFAVR(tmpEId,isParent);
+                                nEffSF(lInd)=G_Family_sub.Edges.sigma13(tmpEId,isParent);
+                            end
+
+                            %                             nClustK1NAng(lInd)=nK1NAng(j);
                         end
 
                         G_clust.Nodes.type(nClustgroupId)=nClustType;
                         G_clust.Nodes.Generation(nClustgroupId)=nClustGeneration;
                         G_clust.Nodes.ParentFamilyId(nClustgroupId)=nClustParentFamilyId;
-%                         G_clust.Nodes.SchmidVariant(nClustgroupId)=G_Family_sub;
-%                         G_clust.Nodes.K1NAng(nClustgroupId)=nClustK1NAng;
+                        G_clust.Nodes.nSFAV(nClustgroupId)=nSFAV;
+                        G_clust.Nodes.nSFAVR(nClustgroupId)=nSFAVR;
+                        G_clust.Nodes.nEffSF(nClustgroupId)=nEffSF;
+                        %                         G_clust.Nodes.K1NAng(nClustgroupId)=nClustK1NAng;
                         G_clust.Nodes.computeFamily(nClustgroupId)=false;
                     end
 
@@ -153,9 +171,13 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
     G.Nodes.type = G_clust.Nodes.type;
     G.Nodes.Generation = G_clust.Nodes.Generation;
     G.Nodes.ParentFamilyId =G_clust.Nodes.ParentFamilyId;
-    G.Nodes.SchmidVariant=G_clust.Nodes.SchmidVariant;
+%     G.Nodes.SchmidVariant=G_clust.Nodes.SchmidVariant;
+    G.Nodes.nSFAV=G_clust.Nodes.nSFAV;
+    G.Nodes.nSFAVR=G_clust.Nodes.nSFAVR;
+    G.Nodes.nEffSF=G_clust.Nodes.nEffSF;
 %     G.Nodes.K1NAng=G_clust.Nodes.K1NAng;
     G.Nodes.computeFamily = G_clust.Nodes.computeFamily;
+    progress(length(groups),length(groups));
 
 end
 function [G_Family_sub] = reduceGraph(G_Family_sub,opt)
@@ -202,6 +224,7 @@ function [G_Family_sub] = reduceGraph(G_Family_sub,opt)
 
     root = findroot(G_Family_sub_tmp,opt);
 
+    
     %Get the shortest path directed tree
 %     gen=zeros(G_Family_sub_tmp.numnodes,1);
 %     eLen = edgeLength(G_Family_sub_tmp,gen,opt);
@@ -221,7 +244,7 @@ function [G_Family_sub] = reduceGraph(G_Family_sub,opt)
 %     eMask(TR.Edges.Id)=false;
 %     G_Family_sub_tmp=rmedge(G_Family_sub_tmp,find(eMask)); 
 
-    figure;p = plot(G_Family_sub_tmp);
+%     figure;p = plot(G_Family_sub_tmp);
 %     highlight(p,TR,'EdgeColor','r')
     [G_Family_sub] = minSpanFamilyTree(G_Family_sub_tmp,root,opt);
 %     [T,pred,score,exflag,G_undir,gen] = minspangraph(G_Family_sub_tmp,root,opt);
@@ -272,24 +295,28 @@ return
 end
 function root = findroot(G_Family_sub,opt)
    
-    %Find the candidate parents using the outcloseness metric
-    gen=zeros(G_Family_sub.numnodes,1);
-    eLen = edgeLength(G_Family_sub,gen,opt);
-    outCloseness=centrality(G_Family_sub,'outcloseness','cost',eLen);
-    
-    if opt.rootFamily.weightByFVOL
-        outCloseness=outCloseness.*G_Family_sub.Nodes.FVol;
-    end
-    
-    isCandidate=outCloseness>0;
-    numCandidates=sum(isCandidate);
-    if numCandidates==1
-        root=find(isCandidate);
+    if any(G_Family_sub.Nodes.root)
+        root=G_Family_sub.Nodes.Family(G_Family_sub.Nodes.root);
     else
-        [~,ind] = sort(outCloseness(isCandidate));
-        rootCandidates=find(isCandidate);
-        rootCandidates=rootCandidates(ind);
-        root=rootCandidates(end);
+        %Find the candidate parents using the outcloseness metric
+        gen=zeros(G_Family_sub.numnodes,1);
+        eLen = edgeLength(G_Family_sub,gen,opt);
+        outCloseness=centrality(G_Family_sub,'outcloseness','cost',eLen);
+
+        if opt.rootFamily.weightByFVOL
+            outCloseness=outCloseness.*G_Family_sub.Nodes.FVol;
+        end
+
+        isCandidate=outCloseness>0;
+        numCandidates=sum(isCandidate);
+        if numCandidates==1
+            root=find(isCandidate);
+        else
+            [~,ind] = sort(outCloseness(isCandidate));
+            rootCandidates=find(isCandidate);
+            rootCandidates=rootCandidates(ind);
+            root=rootCandidates(end);
+        end
     end
 end
 function eLen = edgeLength(G,gen,opt)
@@ -333,7 +360,7 @@ function eLen = edgeLength(G,gen,opt)
     end
     
 end
-function eLen = edgeLength2(G,eLen,gen,ploc,cloc,pairs,opt)
+function eLen = edgeLength2(G,eLen,gen,ploc,cloc,pairs,nType,opt)
 %EdgeLength computes the distance to traverse a twin edge relationship.
     %Get whether the predecessor node is first or second column
 
@@ -359,18 +386,23 @@ function eLen = edgeLength2(G,eLen,gen,ploc,cloc,pairs,opt)
     for i=ind'
         w=opt.twin{eType(i)}.voteWeights;
         genp=gen(pairs(i,ploc(i)));
+        nTypep=nType(pairs(i,ploc(i)));
         
-        %Only consider texture weighting if the generation is root
-        if genp==0
-            eLen(i)=(1/sum(w(1:4))*(w(1)*FSgB(i)./FgBL(pairs(i,cloc(i))) +...
-                 w(2)*(EFFSF(i,ploc(i))+0.5)/1.0 +... 
-                 w(3)*FArea(pairs(i,ploc(i)))./FPArea(i) +...
-                 w(4)*FVOL(pairs(i,ploc(i)))./FPVOL(i)))^-1; 
+        if nTypep==eType(i) && opt.familyTree.noSameType
+            eLen(i)=100;
         else
-            eLen(i)=(1 + opt.familyTree.genWeight*(genp)).*...
-                (1/sum(w(1:3))*(w(1)*FSgB(i)./FgBL(pairs(i,cloc(i))) +...
-                 w(2)*(EFFSF(i,ploc(i))+0.5) +... 
-                 w(3)*FArea(pairs(i,ploc(i)))./FPArea(i)))^-1; 
+            %Only consider texture weighting if the generation is root
+            if genp==0
+                eLen(i)=(1/sum(w(1:4))*(w(1)*FSgB(i)./FgBL(pairs(i,cloc(i))) +...
+                     w(2)*(EFFSF(i,ploc(i))+0.5)/1.0 +... 
+                     w(3)*FArea(pairs(i,ploc(i)))./FPArea(i) +...
+                     w(4)*FVOL(pairs(i,ploc(i)))./FPVOL(i)))^-1; 
+            else
+                eLen(i)=(1 + opt.familyTree.genWeight*(genp)).*...
+                    (1/sum(w(1:3))*(w(1)*FSgB(i)./FgBL(pairs(i,cloc(i))) +...
+                     w(2)*(EFFSF(i,ploc(i))+0.5) +... 
+                     w(3)*FArea(pairs(i,ploc(i)))./FPArea(i)))^-1; 
+            end
         end
     end
     
@@ -381,8 +413,25 @@ function [G_Family_sub] = minSpanFamilyTree(G_Family_sub,root,opt)
 
     %Make an undirected graph based on the nodes and edges of G_Family_sub
     G_Family_sub.Edges.Id=[1:G_Family_sub.numedges]';
+    
+%     FamilyMat=full(adjacency(G_Family_sub))
+
+    
     G_undir=graph(G_Family_sub.Edges,G_Family_sub.Nodes);
-      
+    eType=G_undir.Edges.meanType;
+    
+    
+%         figure
+%     p=plot(G_Family_sub);
+% %     layout(p,'force','Iterations',30)
+%     p.EdgeFontSize=13;p.NodeFontSize=14;p.ArrowSize=15;p.EdgeColor=[0,0,0];
+%     p.NodeColor=[1,0,0];p.MarkerSize=8;
+%     pair1=G_Family_sub.Edges.EndNodes(:,1);
+%     pair2=G_Family_sub.Edges.EndNodes(:,2);
+%     npairs=length(pair1);
+%     labeledge(p,pair1(G_undir.Edges.Id),pair2(G_undir.Edges.Id),1:npairs); 
+%     
+%     
     %Compute the laplacian (number of edge relationships for a node)
     L = laplacian(G_undir);
     Ldiag=diag(L);
@@ -400,6 +449,7 @@ function [G_Family_sub] = minSpanFamilyTree(G_Family_sub,root,opt)
     Q=zeros(G_undir.numnodes,1,'logical'); %nodes that are a part of the MST
     eLen=inf(G_undir.numedges,1); %Weights matrix
     eId=1:G_undir.numedges; %Edge id
+    nType=zeros(G_undir.numnodes,1);
     gen=-ones(G_undir.numnodes,1); %Generation of node 
     pred=-ones(G_undir.numnodes,1); %Predecessor of node
     eRemove=ones(G_undir.numedges,1,'logical');
@@ -414,6 +464,9 @@ function [G_Family_sub] = minSpanFamilyTree(G_Family_sub,root,opt)
     gen(root)=0;
     pred(root)=0;
     Q(root)=true;
+    
+    %Try merging the root with similar families 
+%     angle(G_undir.Nodes.meanOri,G_undir.Nodes.meanOri(9))/degree
     
     %Start loop to build graph
     nNodes=length(Q)-sum(Q);
@@ -435,7 +488,7 @@ function [G_Family_sub] = minSpanFamilyTree(G_Family_sub,root,opt)
         ploc(newNode==pairs(:,2))=2;
         cloc(newNode==pairs(:,2))=1;
         
-        eLen = edgeLength2(G_undir,eLen,gen,ploc,cloc,pairs,opt);
+        eLen = edgeLength2(G_undir,eLen,gen,ploc,cloc,pairs,nType,opt);
         
         %Only consider edges whose nodes aren't both in the MST 
         %and whose weights are computed. This takes care of 
@@ -461,30 +514,33 @@ function [G_Family_sub] = minSpanFamilyTree(G_Family_sub,root,opt)
             oldNode=pairs(eIdadd,1);
         else
             newNode=pairs(eIdadd,1);
+            
             oldNode=pairs(eIdadd,2);
         end
-        
+               
+        %Update arrays
         Q(newNode)=true;
         gen(newNode)=gen(oldNode)+1;
         pred(newNode)=oldNode;
+        nType(newNode)=eType(eIdadd);
         eRemove(eIdadd)=false;
     end
     
-    figure;p = plot(G_Family_sub);
+%     figure;p = plot(G_Family_sub);
     pair1=G_Family_sub.Edges.EndNodes(:,1);
     pair2=G_Family_sub.Edges.EndNodes(:,2);
     npairs=length(pair1);
-    labeledge(p,pair1,pair2,G_Family_sub.Edges.meanType); 
+%     labeledge(p,pair1,pair2,G_Family_sub.Edges.meanType); 
     
     %Create the MS
     G_MST=rmedge(G_undir,find(eRemove)); 
     G_Family_sub=rmedge(G_Family_sub,G_undir.Edges.Id(eRemove)); 
 
-        figure;p = plot(G_Family_sub);
+%         figure;p = plot(G_Family_sub);
     pair1=G_Family_sub.Edges.EndNodes(:,1);
     pair2=G_Family_sub.Edges.EndNodes(:,2);
     npairs=length(pair1);
-    labeledge(p,pair1,pair2,G_Family_sub.Edges.meanType); 
+%     labeledge(p,pair1,pair2,G_Family_sub.Edges.meanType); 
     
 %     %Flip edges that so the predessesor (pred) from minspangraph is represented by the directional
 %     %graph

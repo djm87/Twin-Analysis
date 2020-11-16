@@ -12,8 +12,8 @@ function [schmidVariantRank,k1NormalAngle]=GetSchmidVariants(G_Family_sub,nParen
     %Remember that principle stresses are eigenvalues and the ordering of
     %the principle stress is from large (1) to small (3). Look at mohrs 
     %circle for info.
-%     sigmaPrinciple = opt.sigma.eig;
-%     tauMax = (max(sigmaPrinciple) - min(sigmaPrinciple)) / 2;  
+    sigmaPrinciple = opt.sigma.eig;
+    tauMax = (max(sigmaPrinciple) - min(sigmaPrinciple)) / 2;  
     
     %Get table array sizes 
     ngrains = length(grainsP);
@@ -34,25 +34,25 @@ function [schmidVariantRank,k1NormalAngle]=GetSchmidVariants(G_Family_sub,nParen
     %Loop over edges
     for i = 1:ngrains  
         
-            vari = grainsA(i)*opt.twin{type}.axisVariants;
+            vari = grainsP(i).*opt.twin{typeC(i)}.axisVariants;
 
             %set a rotation around that axis
-            rot = rotation('axis',vari,'angle',opt.twin{type}.angle*degree);
+            rot = rotation('axis',vari,'angle',opt.twin{typeC(i)}.angle*degree);
 
             % rotate the c axis around the twin axis, and save orientation of the
             % variant
-            oriV=rot*grainsA(i);
+            oriV=rot*grainsP(i);
         %     round(oriV(j)*sSLocal.n)    %save the deviation of the varinat from the other grain
-            angV=angle(oriV, grainsB(i))/degree
+            angV=angle(oriV, grainsC(i))/degree
    
         for j=1:6
             
-%             gA = inv(grainsA(i).symmetrise); 
+            gA = inv(grainsC(i).symmetrise); 
             gB = inv(oriV(j).symmetrise);
 
             %Compute grain misorientation                
             mori = gA * oriV(j).symmetrise;
-            MM = mori(:,:) * twin{type}.RMT'; 
+            MM = mori(:,:) * opt.twin{typeC(i)}.RMT'; 
 
             %Get the smallest misorientation and its sym operation
             angs = angle(MM, 'noSymmetry') ./ degree;
@@ -62,8 +62,8 @@ function [schmidVariantRank,k1NormalAngle]=GetSchmidVariants(G_Family_sub,nParen
                 ind2sub([sqrt(length(MM)) sqrt(length(MM))],id);
             
             %Get the stress in the twin frame i.e. s->c->t
-            sigmaA = matrix(twin{type}.Rtw * (gA(sym_ops1) * sigma));
-            sigmaB = matrix(twin{type}.Rtw * (gB(sym_ops2) * sigma));
+            sigmaA = matrix(opt.twin{typeC(i)}.Rtw(j) * (gA(sym_ops1) * opt.sigma));
+            sigmaB = matrix(opt.twin{typeC(i)}.Rtw(j) * (gB(sym_ops2) * opt.sigma));
 
             %Extract the stress on the k1 plane in eta1 direction
             sigma13(i,:) = [sigmaA(1,3),sigmaB(1,3)];
@@ -90,7 +90,7 @@ function [schmidVariantRank,k1NormalAngle]=GetSchmidVariants(G_Family_sub,nParen
         %determine the schmid on each twin variant. The schmid in the twin
         %is the negative of the parent. We want the parent stats so multipy
         %by -
-        schmidVariants = -opt.twin{typeC(i)}.sS.SchmidFactor( oriV \ opt.sigma);
+        schmidVariants = -opt.twin{typeC(i)}.sS.SchmidFactor( grainsC(i) \ opt.sigma);
 
         %rank the twin variant
         [~,schmidVariantRank] = sort(schmidVariants,'descend');
