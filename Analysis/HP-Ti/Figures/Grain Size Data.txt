@@ -1,0 +1,180 @@
+625C-initial-ND
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 15.696 um
+Mean grain MINOR axis (FREQ. weight)  = 11.655 um
+Mean grain MAJOR axis (AREA weight)   = 24.417 um
+Mean grain MINOR axis (AREA weight)   = 18.488 um
+Mean equiv. grain diam. (AREA weight) = 21.179 um
+Nfrag  =      2262.000000
+==================================================
+
+625C-5pct-strain-ND
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 16.094 um
+Mean grain MINOR axis (FREQ. weight)  = 11.403 um
+Mean grain MAJOR axis (AREA weight)   = 26.383 um
+Mean grain MINOR axis (AREA weight)   = 19.207 um
+Mean equiv. grain diam. (AREA weight) = 22.417 um
+Nfrag  =      5605.000000
+==================================================
+
+625C-20pct-strain-ND
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 13.326 um
+Mean grain MINOR axis (FREQ. weight)  = 7.131 um
+Mean grain MAJOR axis (AREA weight)   = 30.507 um
+Mean grain MINOR axis (AREA weight)   = 19.210 um
+Mean equiv. grain diam. (AREA weight) = 23.882 um
+Nfrag  =      1955.000000
+==================================================
+
+625C-initial-TD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 58.276 um
+Mean grain MINOR axis (FREQ. weight)  = 42.952 um
+Mean grain MAJOR axis (AREA weight)   = 93.073 um
+Mean grain MINOR axis (AREA weight)   = 71.152 um
+Mean equiv. grain diam. (AREA weight) = 81.146 um
+Nfrag  =      4808.000000
+==================================================
+
+625C-5pct-strain-TD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 17.502 um
+Mean grain MINOR axis (FREQ. weight)  = 11.480 um
+Mean grain MAJOR axis (AREA weight)   = 32.209 um
+Mean grain MINOR axis (AREA weight)   = 22.569 um
+Mean equiv. grain diam. (AREA weight) = 26.801 um
+Nfrag  =      4428.000000
+==================================================
+
+625C-20pct-strain-TD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 10.775 um
+Mean grain MINOR axis (FREQ. weight)  = 5.704 um
+Mean grain MAJOR axis (AREA weight)   = 30.259 um
+Mean grain MINOR axis (AREA weight)   = 18.663 um
+Mean equiv. grain diam. (AREA weight) = 23.512 um
+Nfrag  =      2930.000000
+==================================================
+
+625C-initial-RD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 59.204 um
+Mean grain MINOR axis (FREQ. weight)  = 44.123 um
+Mean grain MAJOR axis (AREA weight)   = 94.135 um
+Mean grain MINOR axis (AREA weight)   = 73.288 um
+Mean equiv. grain diam. (AREA weight) = 82.821 um
+Nfrag  =      4556.000000
+==================================================
+
+625C-5pct-strain-RD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 19.264 um
+Mean grain MINOR axis (FREQ. weight)  = 12.984 um
+Mean grain MAJOR axis (AREA weight)   = 33.956 um
+Mean grain MINOR axis (AREA weight)   = 24.879 um
+Mean equiv. grain diam. (AREA weight) = 28.902 um
+Nfrag  =      3624.000000
+==================================================
+
+625C-20pct-strain-RD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 8.795 um
+Mean grain MINOR axis (FREQ. weight)  = 4.391 um
+Mean grain MAJOR axis (AREA weight)   = 22.734 um
+Mean grain MINOR axis (AREA weight)   = 12.704 um
+Mean equiv. grain diam. (AREA weight) = 16.730 um
+Nfrag  =      4660.000000
+==================================================
+
+800C-initial-ND
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 118.557 um
+Mean grain MINOR axis (FREQ. weight)  = 88.576 um
+Mean grain MAJOR axis (AREA weight)   = 196.266 um
+Mean grain MINOR axis (AREA weight)   = 151.725 um
+Mean equiv. grain diam. (AREA weight) = 172.069 um
+Nfrag  =      1188.000000
+==================================================
+
+800C-5pct-strain-ND
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 48.745 um
+Mean grain MINOR axis (FREQ. weight)  = 19.511 um
+Mean grain MAJOR axis (AREA weight)   = 127.135 um
+Mean grain MINOR axis (AREA weight)   = 79.944 um
+Mean equiv. grain diam. (AREA weight) = 98.864 um
+Nfrag  =      2645.000000
+==================================================
+
+800C-20pct-strain-ND
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 21.889 um
+Mean grain MINOR axis (FREQ. weight)  = 8.767 um
+Mean grain MAJOR axis (AREA weight)   = 69.813 um
+Mean grain MINOR axis (AREA weight)   = 33.864 um
+Mean equiv. grain diam. (AREA weight) = 47.365 um
+Nfrag  =     14151.000000
+==================================================
+
+800C-initial-TD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 108.506 um
+Mean grain MINOR axis (FREQ. weight)  = 78.809 um
+Mean grain MAJOR axis (AREA weight)   = 174.484 um
+Mean grain MINOR axis (AREA weight)   = 133.110 um
+Mean equiv. grain diam. (AREA weight) = 151.919 um
+Nfrag  =      1313.000000
+==================================================
+
+800C-5pct-strain-TD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 60.246 um
+Mean grain MINOR axis (FREQ. weight)  = 33.619 um
+Mean grain MAJOR axis (AREA weight)   = 166.762 um
+Mean grain MINOR axis (AREA weight)   = 120.360 um
+Mean equiv. grain diam. (AREA weight) = 140.692 um
+Nfrag  =      1174.000000
+==================================================
+
+800C-20pct-strain-TD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 27.023 um
+Mean grain MINOR axis (FREQ. weight)  = 11.682 um
+Mean grain MAJOR axis (AREA weight)   = 128.879 um
+Mean grain MINOR axis (AREA weight)   = 79.668 um
+Mean equiv. grain diam. (AREA weight) = 99.631 um
+Nfrag  =      6048.000000
+==================================================
+
+800C-initial-RD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 108.434 um
+Mean grain MINOR axis (FREQ. weight)  = 80.633 um
+Mean grain MAJOR axis (AREA weight)   = 164.586 um
+Mean grain MINOR axis (AREA weight)   = 126.200 um
+Mean equiv. grain diam. (AREA weight) = 143.683 um
+Nfrag  =      1547.000000
+==================================================
+
+800C-5pct-strain-RD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 54.273 um
+Mean grain MINOR axis (FREQ. weight)  = 24.319 um
+Mean grain MAJOR axis (AREA weight)   = 145.042 um
+Mean grain MINOR axis (AREA weight)   = 98.208 um
+Mean equiv. grain diam. (AREA weight) = 117.698 um
+Nfrag  =      1671.000000
+==================================================
+
+800C-20pct-strain-RD
+==================================================
+Mean grain MAJOR axis (FREQ. weight)  = 22.523 um
+Mean grain MINOR axis (FREQ. weight)  = 9.516 um
+Mean grain MAJOR axis (AREA weight)   = 83.152 um
+Mean grain MINOR axis (AREA weight)   = 45.126 um
+Mean equiv. grain diam. (AREA weight) = 59.963 um
+Nfrag  =     10820.000000
+==================================================
+
