@@ -1,6 +1,5 @@
-/Data
-/Database
-/Analysis Database
+/data
+/analysis
 *.mat
 *.ang
 *.asv
