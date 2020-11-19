@@ -9,7 +9,9 @@ Add publication link and archived DOI link here.
 ## Getting started
 To begin, clone the repository to your Matlab folder and make sure MTEX version 5.4 or greater is installed. To make the functions in the repository available on the matlab path, run InstallRepo2Path.m. 
 
-For information on how to use the code, download one or several of the example datasets to the Data folder and run the prebuilt examples in the Analysis folder. For discussion of the setup and analysis of the examples see the wiki.
+For information on how to use the code read the publication linked above. Examples 1 and 2 are provided using MTEX  Ti and Mg twin datasets which are downloaded with your MTEX installation. The datasets for the remaining examples can be downloaded from the following links:  
+
+For discussion of the setup and analysis of the examples see the github wiki.
 
 ## Example data 
 Add links here
