@@ -7,7 +7,7 @@ The objective of this project was to recreate and improve on the descriptions of
 Add publication link and archived DOI link here. 
 
 ## Getting started
-To begin, clone the repository to your desktop and make sure MTEX version 5.4 or greater is installed. To make the functions in the repository available on the matlab path, run InstallReop2Path.m. 
+To begin, clone the repository to your Matlab folder and make sure MTEX version 5.4 or greater is installed. To make the functions in the repository available on the matlab path, run InstallRepo2Path.m. 
 
 For information on how to use the code, download one or several of the example datasets to the Data folder and run the prebuilt examples in the Analysis folder. For discussion of the setup and analysis of the examples see the wiki.
 
