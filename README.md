@@ -4,9 +4,12 @@ A twin analysis code built on MTEX and Matlab's graph toolbox
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/djm87/Twin-Analysis/blob/master/LICENSE)[![Github all releases](https://img.shields.io/github/downloads/Naereen/StrapDown.js/total.svg)](https://github.com/djm87/Twin-Analysis/releases/)
 
 ## Summary
-The objective of this project was to recreate and improve on the descriptions of twin analysis presented in [graph theory](https://link.springer.com/article/10.1007/s40192-018-0106-y) and [hierarchy](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1365-2818.2009.03343.x) based twin analysis methodologies using an open source toolset.
+To perform quantitative twin analysis each twinned grain fragment reconstructed from EBSD scans needs to have properties of twin type, generation, and the parent grain (pretwinned ). For small volume fractions of twins this is a trivial task; however, for highly twinned or deformed scans the task becomes non-trival.
 
-Add publication link and archived DOI link here. 
+The objective of this project is to recreate and improve on the descriptions of twin analysis presented in [graph theory](https://link.springer.com/article/10.1007/s40192-018-0106-y) and [hierarchy](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1365-2818.2009.03343.x) based twin analysis methodologies using an open source toolset. MTEX was chosen for its extensive high level toolsets in orientation analysis, EBSD, and texture. Unfortunately this also means you need Matlab to use the source code provided here.
+
+Please cite our recent paper on hiearchial twinning in Ti if you use this code.
+added publication link and archived DOI link here. 
 
 ## Getting started
 Look at the [wiki](https://github.com/djm87/Twin-Analysis/wiki) for examples and technical documentation.
