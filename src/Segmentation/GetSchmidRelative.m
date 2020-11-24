@@ -58,7 +58,7 @@ function [G_Family,edgeList] = GetSchmidRelative(G_Family,groupList,oriFamily,ty
             sigma13(i,:) = [sigmaA(1,3,aVB),sigmaB(1,3,aVA)];
 
             %Compute the effective schmid factor
-            EffSF(i,:) = [sigmaA(1,3,aVA) / (2*tauMax),sigmaB(1,3,AVB) / (2*tauMax)];
+            EffSF(i,:) = [sigmaA(1,3,aVA) / (2*tauMax),sigmaB(1,3,aVB) / (2*tauMax)];
             
             %Active variant 
             SFAV(i,:) = [aVA,aVB];
