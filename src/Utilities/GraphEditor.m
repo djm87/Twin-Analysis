@@ -296,7 +296,7 @@ function plotClusterGraph(group,G_clust_sub,G_clust,...
     %if plot neighbors 
     mGrainInd=group;
     if plotNeighbors
-        pairsTmp=neighbors(mergedGrains);
+        [~,pairsTmp]=neighbors(mergedGrains);
         isPair=pairsTmp(:,1)==group | pairsTmp(:,2)==group;
         allGroupsInd=unique(pairsTmp([isPair,isPair]));
         nId=intersect_wrepeat(allGroupsInd,G_clust.Nodes.Group);

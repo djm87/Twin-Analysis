@@ -15,7 +15,7 @@ function fhandle = plotGraph(grains,mergedGrains,graph,grainPlot,nId,labelNodes,
     end
     if isempty(options)
         p.EdgeColor='k';p.MarkerSize=2;p.Marker='s';p.NodeColor='k';
-        mGlc='w'; mGlw=2;p.NodeFontSize=18;p.EdgeFontSize=14;p.LineWidth=1
+        mGlc='k'; mGlw=2;p.NodeFontSize=18;p.EdgeFontSize=14;p.LineWidth=1
     else
         p.EdgeColor=options{1};p.MarkerSize=options{2};p.Marker=options{3};p.NodeColor=options{4};p.EdgeFontSize=options{5};
         mGlc=options{6}; mGlw=options{7};
