@@ -13,7 +13,7 @@ function [moriOut,nMori,moriUnknown,moriLAGB] = getMoriProperties(mori)
         %Loop over the mapping specified (j>1 is double mis, tripple mis,
         %etc...)
         for j=1:length(mori{i}.u1)
-            %Define the Rtw such that Rtw transforms crystal to twin or
+            %Define the Rtw such that Rtw transforms crystal to twin frame or
             %phase to phase if not twin
             mori{i}.Rtw(j)=orientation.map(mori{i}.u1,mori{i}.v1,...
                 mori{i}.u2,mori{i}.v2); 
