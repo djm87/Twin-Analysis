@@ -111,26 +111,40 @@ value=G.Nodes.FamilyID;
 
 [mGrains,twinVF] = getTwinFractions(G,grains,mGrains,opt);
 
+twinVF.perMode
+twinVF.perModeAndGen
 
 %% Twin thickness 
 
 [G] = TwinThickness(G,grains,opt);
 figure;histogram(G.Nodes.twinThickness(G.Nodes.twinThickness>0));
-title('# Twin Fragment thickness');
-
+xlabel('Twin Fragment thickness (um)')
+ylabel('Counts')
+saveFigure('Twin Fragment Thickness')
 
 
 %% Twin count
 
 [mGrains] = CountTwins(G,grains,mGrains,opt);
 
-figure;histogram(mGrains.prop.twinCount,'BinMethod','integers');title('# Twin Fragments per cluster');
-figure;histogram(mGrains.prop.twinFamilyCount,'BinMethod','integers');title('# Unique Twin Families per cluster');xticks([0,1,2]); 
+figure;histogram(mGrains.prop.twinCount,'BinMethod','integers');
+xlabel('Number of twin fragments in cluster')
+ylabel('Counts')
+saveFigure('Twin Fragments in cluster')
+figure;histogram(mGrains.prop.twinFamilyCount,'BinMethod','integers');
+xticks([0,1,2,3,4]);  
+xlabel('Unique twin fragments in cluster')
+ylabel('Counts')
+saveFigure('Unique twin fragments in cluster')
 
 
 %% Twin variant ranking
 
-figure;histogram(G.Nodes.nSFAVR(G.Nodes.nSFAVR>0),'BinLimits',[0.5,6.5],'BinMethod','integers');title('# Twin Schmid Rank');xticks([1,2,3,4,5,6]); 
+figure;histogram(G.Nodes.nSFAVR(G.Nodes.nSFAVR>0),'BinLimits',[0.5,6.5],'BinMethod','integers');
+xlabel('Rank (1 is largest schmid factor)')
+ylabel('Counts')
+xticks([1,2,3,4,5,6]); 
+saveFigure('Twin Variant Rank')
 
 
 %% Transfer results to grains 
