@@ -1,7 +1,8 @@
 # Twin-Analysis
 A twin analysis code built on MTEX and Matlab's graph toolbox
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/djm87/Twin-Analysis/blob/master/LICENSE)[![Github all releases](https://img.shields.io/github/downloads/Naereen/StrapDown.js/total.svg)](https://github.com/djm87/Twin-Analysis/releases/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/djm87/Twin-Analysis/blob/master/LICENSE)[![Github All Releases](https://img.shields.io/github/downloads/djm87/Twin-Analysis/total.svg)]()
+
 
 ## Summary
 To perform quantitative twin analysis each twinned grain fragment reconstructed from EBSD scans needs to have properties of twin type, generation, and the parent grain (pretwinned). For small volume fractions of twins, this is a trivial task; however, for highly twinned or deformed microstructures the task becomes non-trival.
