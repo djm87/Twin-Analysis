@@ -1,10 +1,9 @@
 /data
 /bk
 /analysis
-*.mat
 *.ang
 *.asv
 *.osc
 *.oim
 *.ang
-/Examples
+*.png
