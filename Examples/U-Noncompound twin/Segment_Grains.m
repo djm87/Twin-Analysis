@@ -66,12 +66,14 @@ figure; plot(grains,G.Nodes.type,'noBoundary');
 hold on;plot(mGrains.boundary,'linecolor','w','linewidth',2.5,'linestyle','-','displayName',...
     'merged grains');hold off
 mtexColorbar;mtexTitle('Twin Type');
+saveFigure('Twin type')
 
 %Plot the number of generations in each cluster
 figure; plot(grains,G.Nodes.Generation,'noBoundary');
 hold on;plot(mGrains.boundary,'linecolor','w','linewidth',2.5,'linestyle','-','displayName',...
     'merged grains');hold off;
 mtexColorbar;mtexTitle('Generation');
+saveFigure('Twin Generation')
 
 figure; plot(grains,G.Nodes.EffSF,'noBoundary');
 hold on;plot(mGrains.boundary,'linecolor','w','linewidth',2.5,'linestyle','-','displayName',...
