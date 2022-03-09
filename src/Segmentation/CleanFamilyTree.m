@@ -143,7 +143,7 @@ function [G_Family,G_clust,G,exflagGroup]= CleanFamilyTree(groups,G_Family,G_clu
                             isParent=G_Family_sub.Edges.pairs(tmpEId,:)==nParentFamilyId(j);
                             if ~isempty(isParent) && any(isParent)
                                 nSFAV(lInd)=G_Family_sub.Edges.SFAV(tmpEId,isParent);
-                                nSFAVR(lInd)=G_Family_sub.Edges.SFAVR(tmpEId,isParent);
+                                nSFAVR(lInd)=G_Family_sub.Edges.SFAVR(tmpEId,~isParent);
                                 nEffSF(lInd)=G_Family_sub.Edges.sigma13(tmpEId,isParent);
                             end
 

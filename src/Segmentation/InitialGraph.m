@@ -4,7 +4,7 @@ function [G,mGrains,twinGb] = InitialGraph(ebsd,grains,opt)
     %graph is constructed from.
 
     %Compute grain neighbors
-    [~,pairs] = neighbors(grains);
+    pairs = neighbors(grains);
 
     %Initialize graph
     s=pairs(:,1);

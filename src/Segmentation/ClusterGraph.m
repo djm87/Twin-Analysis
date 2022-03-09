@@ -207,7 +207,7 @@ function [G] = MergeByGeometry(G,eEdgeId,grains,opt)
         SBR = SharedBoundaryRatio(mGrains);
 
         %Create merged graph to handle cluster merging
-        [~,mPairs]=neighbors(mGrains);
+        mPairs=neighbors(mGrains);
         s=mPairs(:,1);
         t=mPairs(:,2);
         G_geo=graph(s,t);

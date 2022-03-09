@@ -11,7 +11,7 @@ function [combine,mergedGrains,twinBoundary,GBType] = MergeByBoundary(G,grains,m
 
     %Construct the merge matrix
     combinedTwinBoundary=vertcat(twinBoundary{:});
-    maxId = max(grains.id)+1;
+    maxId = max(grains.id);
     mergeId=combinedTwinBoundary.grainId;
     M = sparse(mergeId(:,1),mergeId(:,2),1,maxId,maxId);
     [mergedGrains,parentId] = merge(grains,M);
