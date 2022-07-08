@@ -112,6 +112,7 @@ function [G_Family,G_clust] = getParent(groupList,G_Family,G_clust)
         G_Family.Edges.FRgB(toFlip,:)=fliplr(G_Family.Edges.FRgB(toFlip,:));
         G_Family.Edges.FREffSF(toFlip,:)=fliplr(G_Family.Edges.FREffSF(toFlip,:));
         G_Family.Edges.Vote(toFlip,:)=fliplr(G_Family.Edges.Vote(toFlip,:));
+        G_Family.Edges.EffSF(toFlip,:)=fliplr(G_Family.Edges.EffSF(toFlip,:));
         G_Family.Edges.Parent(toFlip,:)=fliplr(G_Family.Edges.Parent(toFlip,:));
         G_Family=flipedge(G_Family,find(toFlip));
     catch
