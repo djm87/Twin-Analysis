@@ -1,7 +1,7 @@
 # Twin-Analysis
 A twin analysis code built on MTEX and Matlab's graph toolbox
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/djm87/Twin-Analysis/blob/master/LICENSE)[![Github All Releases](https://img.shields.io/github/downloads/djm87/Twin-Analysis/total.svg)]()
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/djm87/Twin-Analysis/blob/master/LICENSE)[![Github 
 
 
 ## Summary
